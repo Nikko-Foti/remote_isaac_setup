@@ -13,7 +13,7 @@ from . import agents
 
 
 gym.register(
-    id="Template-Object-In-Bowl-v0",
+    id="Isaac-Object-In-Bowl-Franka-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
