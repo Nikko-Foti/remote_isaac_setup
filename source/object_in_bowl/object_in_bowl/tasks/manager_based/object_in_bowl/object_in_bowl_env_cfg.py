@@ -29,7 +29,10 @@ from isaaclab.markers.config import FRAME_MARKER_CFG  # isort:skip
 from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
-PLACEMENT_TARGET_POSITION = (0.55, 0.20, 0.061)
+PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
+OBJECT_LIFTED_HEIGHT = 0.12
+PLACEMENT_TARGET_RADIUS = 0.08
+
 
 
 ##
@@ -189,13 +192,44 @@ class EventCfg:
     )
 
 
-# Defines temporary rewards used only to keep the scene runnable for now.
+# Defines the first simple reward terms for the placement task.
 @configclass
 class RewardsCfg:
-    """Temporary rewards for scene smoke tests."""
+    """Reward terms for the first coordinate-based placement task."""
 
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")})
+    reaching_object = RewTerm(
+        func=mdp.compute_reaching_object_reward,
+        weight=0.5,
+        params={"std": 0.15, "minimal_height": OBJECT_LIFTED_HEIGHT},
+    )
+    object_lifted = RewTerm(
+        func=mdp.compute_object_lifted_reward,
+        weight=0.5,
+        params={"minimal_height": OBJECT_LIFTED_HEIGHT},
+    )
+    object_to_target_xy = RewTerm(
+        func=mdp.compute_object_to_target_xy_reward,
+        weight=4.0,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "std": 0.20,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
+    object_at_target = RewTerm(
+        func=mdp.compute_object_at_target_reward,
+        weight=25.0,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
+    action_rate_penalty = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
+    joint_velocity_penalty = RewTerm(
+        func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")}
+    )
 
 
 # Defines when an episode should stop.
@@ -204,6 +238,14 @@ class TerminationsCfg:
     """Termination terms for the MDP."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
+    object_at_target = DoneTerm(
+        func=mdp.check_object_at_target,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum,
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")},
