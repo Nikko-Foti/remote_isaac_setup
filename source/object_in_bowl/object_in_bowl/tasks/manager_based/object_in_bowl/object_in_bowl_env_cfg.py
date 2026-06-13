@@ -154,10 +154,10 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        ee_position = ObsTerm(func=mdp.ee_position)
+        ee_position = ObsTerm(func=mdp.get_ee_position)
         object_position = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("object")})
         placement_target_position = ObsTerm(
-            func=mdp.placement_target_position,
+            func=mdp.get_placement_target_position,
             params={"target_position": PLACEMENT_TARGET_POSITION},
         )
         actions = ObsTerm(func=mdp.last_action)
