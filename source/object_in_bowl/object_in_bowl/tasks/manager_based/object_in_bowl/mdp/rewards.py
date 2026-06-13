@@ -9,27 +9,15 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from isaaclab.assets import RigidObject
 from isaaclab.managers import SceneEntityCfg
 
-from .observations import get_ee_position
+from .observations import get_ee_position, get_object_position, get_placement_target_position
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
 
 
-def get_object_position(env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg = SceneEntityCfg("object")) -> torch.Tensor:
-    """Object position in each environment's local frame."""
-    object_asset: RigidObject = env.scene[object_cfg.name]
-    return object_asset.data.root_pos_w[:, :3] - env.scene.env_origins
-
-
-def get_target_position(env: ManagerBasedRLEnv, target_position: tuple[float, float, float]) -> torch.Tensor:
-    """Placement target position repeated once per environment."""
-    target = env.scene.env_origins.new_tensor(target_position)
-    return target.repeat(env.scene.env_origins.shape[0], 1)
-
-
+# Checks if the cube has been lifted off the table.
 def check_object_lifted(
     env: ManagerBasedRLEnv,
     minimal_height: float,
@@ -40,20 +28,22 @@ def check_object_lifted(
     return object_position[:, 2] > minimal_height
 
 
-def check_object_at_target(
+# Checks if the lifted cube is over the target area.
+def check_object_above_target(
     env: ManagerBasedRLEnv,
     target_position: tuple[float, float, float],
     radius: float,
     minimal_height: float,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Check whether the lifted object is within the placement target's XY radius."""
+    """Check whether the lifted object is over the placement target's XY radius."""
     object_position = get_object_position(env, object_cfg)
-    target = get_target_position(env, target_position)
+    target = get_placement_target_position(env, target_position)
     xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
     return torch.logical_and(xy_distance < radius, object_position[:, 2] > minimal_height)
 
 
+# Rewards the hand for getting close to the cube before lifting it.
 def compute_reaching_object_reward(
     env: ManagerBasedRLEnv,
     std: float,
@@ -68,6 +58,7 @@ def compute_reaching_object_reward(
     return (1.0 - torch.tanh(distance / std)) * not_lifted.float()
 
 
+# Rewards the cube for clearing the table.
 def compute_object_lifted_reward(
     env: ManagerBasedRLEnv,
     minimal_height: float,
@@ -77,6 +68,7 @@ def compute_object_lifted_reward(
     return check_object_lifted(env, minimal_height, object_cfg).float()
 
 
+# Rewards the lifted cube for moving toward the target in XY.
 def compute_object_to_target_xy_reward(
     env: ManagerBasedRLEnv,
     target_position: tuple[float, float, float],
@@ -87,19 +79,20 @@ def compute_object_to_target_xy_reward(
 ) -> torch.Tensor:
     """Reward XY progress toward the target after the object is lifted."""
     object_position = get_object_position(env, object_cfg)
-    target = get_target_position(env, target_position)
+    target = get_placement_target_position(env, target_position)
     xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
     is_lifted = check_object_lifted(env, minimal_height, object_cfg)
-    is_at_target = check_object_at_target(env, target_position, radius, minimal_height, object_cfg)
-    return (1.0 - torch.tanh(xy_distance / std)) * is_lifted.float() * torch.logical_not(is_at_target).float()
+    is_above_target = check_object_above_target(env, target_position, radius, minimal_height, object_cfg)
+    return (1.0 - torch.tanh(xy_distance / std)) * is_lifted.float() * torch.logical_not(is_above_target).float()
 
 
-def compute_object_at_target_reward(
+# Rewards the current success milestone.
+def compute_object_above_target_reward(
     env: ManagerBasedRLEnv,
     target_position: tuple[float, float, float],
     radius: float,
     minimal_height: float,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Reward success when the lifted object reaches the placement target."""
-    return check_object_at_target(env, target_position, radius, minimal_height, object_cfg).float()
+    """Reward the current milestone: lifted object reaches the target XY area."""
+    return check_object_above_target(env, target_position, radius, minimal_height, object_cfg).float()

@@ -34,7 +34,6 @@ OBJECT_LIFTED_HEIGHT = 0.12
 PLACEMENT_TARGET_RADIUS = 0.08
 
 
-
 ##
 # Scene definition
 ##
@@ -158,7 +157,7 @@ class ObservationsCfg:
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         ee_position = ObsTerm(func=mdp.get_ee_position)
-        object_position = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("object")})
+        object_position = ObsTerm(func=mdp.get_object_position, params={"object_cfg": SceneEntityCfg("object")})
         placement_target_position = ObsTerm(
             func=mdp.get_placement_target_position,
             params={"target_position": PLACEMENT_TARGET_POSITION},
@@ -199,17 +198,17 @@ class RewardsCfg:
 
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
-        weight=0.5,
+        weight=0.05,
         params={"std": 0.15, "minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lifted = RewTerm(
         func=mdp.compute_object_lifted_reward,
-        weight=0.5,
+        weight=0.02,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_to_target_xy = RewTerm(
         func=mdp.compute_object_to_target_xy_reward,
-        weight=4.0,
+        weight=0.08,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "std": 0.20,
@@ -217,9 +216,9 @@ class RewardsCfg:
             "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
     )
-    object_at_target = RewTerm(
-        func=mdp.compute_object_at_target_reward,
-        weight=25.0,
+    object_above_target = RewTerm(
+        func=mdp.compute_object_above_target_reward,
+        weight=50.0,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": PLACEMENT_TARGET_RADIUS,
@@ -238,8 +237,9 @@ class TerminationsCfg:
     """Termination terms for the MDP."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    object_at_target = DoneTerm(
-        func=mdp.check_object_at_target,
+    # Current milestone: stop once the lifted cube reaches the target XY area.
+    object_above_target = DoneTerm(
+        func=mdp.check_object_above_target,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": PLACEMENT_TARGET_RADIUS,
