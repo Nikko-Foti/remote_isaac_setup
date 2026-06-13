@@ -34,6 +34,7 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 ##
 
 
+# Builds the sensor that tells Isaac Lab where the Franka hand is.
 def _make_ee_frame_cfg() -> FrameTransformerCfg:
     """Create the end-effector frame sensor without adding marker config as a scene entity."""
     marker_cfg = FRAME_MARKER_CFG.copy()
@@ -53,6 +54,7 @@ def _make_ee_frame_cfg() -> FrameTransformerCfg:
     )
 
 
+# Defines what physical things exist in each copy of the environment.
 @configclass
 class ObjectInBowlSceneCfg(InteractiveSceneCfg):
     """Configuration for the first Franka object-in-bowl scene."""
@@ -117,6 +119,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 ##
 
 
+# Defines what commands the policy can send to the robot.
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
@@ -135,10 +138,12 @@ class ActionsCfg:
     )
 
 
+# Defines what information the policy gets to observe.
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
 
+    # This is the observation group used by the learning policy.
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
@@ -149,6 +154,7 @@ class ObservationsCfg:
         object_position = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("object")})
         actions = ObsTerm(func=mdp.last_action)
 
+        # Tells Isaac Lab to combine these observations into one policy input vector.
         def __post_init__(self) -> None:
             self.enable_corruption = False
             self.concatenate_terms = True
@@ -157,6 +163,7 @@ class ObservationsCfg:
     policy: PolicyCfg = PolicyCfg()
 
 
+# Defines what gets reset at the start of each episode.
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -174,6 +181,7 @@ class EventCfg:
     )
 
 
+# Defines temporary rewards used only to keep the scene runnable for now.
 @configclass
 class RewardsCfg:
     """Temporary rewards for scene smoke tests."""
@@ -182,6 +190,7 @@ class RewardsCfg:
     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")})
 
 
+# Defines when an episode should stop.
 @configclass
 class TerminationsCfg:
     """Termination terms for the MDP."""
@@ -198,6 +207,7 @@ class TerminationsCfg:
 ##
 
 
+# Connects the scene, actions, observations, rewards, and stopping rules.
 @configclass
 class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
@@ -211,6 +221,7 @@ class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
     terminations: TerminationsCfg = TerminationsCfg()
 
     # Post initialization
+    # Fills in timing, camera, and simulator settings after the config is created.
     def __post_init__(self) -> None:
         """Post initialization."""
         # general settings
