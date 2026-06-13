@@ -52,14 +52,20 @@ It allows you to develop in an isolated environment, outside of the core Isaac L
 
             ```bash
             # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-            python scripts/zero_agent.py --task=<TASK_NAME>
+            python scripts/zero_agent.py --task=<TASK_NAME> --max_steps=25
             ```
         - Random-action agent
 
             ```bash
             # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-            python scripts/random_agent.py --task=<TASK_NAME>
+            python scripts/random_agent.py --task=<TASK_NAME> --max_steps=25
             ```
+
+        For this project, the first headless smoke test should be:
+
+        ```bash
+        python scripts/random_agent.py --task=Isaac-Object-In-Bowl-Franka-v0 --num_envs=1 --headless --max_steps=25
+        ```
 
 ### Set up IDE (Optional)
 

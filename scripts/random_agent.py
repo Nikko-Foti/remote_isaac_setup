@@ -18,6 +18,7 @@ parser.add_argument(
 )
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser.add_argument("--max_steps", type=int, default=None, help="Stop after this many environment steps.")
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -53,13 +54,17 @@ def main():
     # reset environment
     env.reset()
     # simulate environment
-    while simulation_app.is_running():
+    step_count = 0
+    while simulation_app.is_running() and (args_cli.max_steps is None or step_count < args_cli.max_steps):
         # run everything in inference mode
         with torch.inference_mode():
             # sample actions from -1 to 1
             actions = 2 * torch.rand(env.action_space.shape, device=env.unwrapped.device) - 1
             # apply actions
             env.step(actions)
+            step_count += 1
+
+    print(f"[INFO]: Completed {step_count} environment steps.")
 
     # close the simulator
     env.close()
