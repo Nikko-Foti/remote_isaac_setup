@@ -1,0 +1,33 @@
+# Python caches and package metadata
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Local environments and secrets
+.env
+.env.*
+env_isaaclab/
+
+# Isaac Lab / training outputs
+logs/
+runs/
+output/
+outputs/
+videos/
+recordings/
+wandb/
+*.pt
+*.pth
+*.onnx
+*.mp4
+
+# Isaac Sim local links/cache
+_isaac_sim/
+_isaac_sim
+
+# Temporary files
+.DS_Store
+*.tmp
+*.log
