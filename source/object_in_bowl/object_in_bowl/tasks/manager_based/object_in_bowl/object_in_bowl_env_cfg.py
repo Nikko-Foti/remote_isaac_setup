@@ -29,6 +29,9 @@ from isaaclab.markers.config import FRAME_MARKER_CFG  # isort:skip
 from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
+PLACEMENT_TARGET_POSITION = (0.55, 0.20, 0.061)
+
+
 ##
 # Scene definition
 ##
@@ -99,7 +102,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
     # visual-only bowl placeholder for the first scene milestone
     bowl_target = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/BowlTarget",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.55, 0.20, 0.061]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=list(PLACEMENT_TARGET_POSITION)),
         spawn=sim_utils.CylinderCfg(
             radius=0.13,
             height=0.012,
@@ -151,7 +154,12 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        ee_position = ObsTerm(func=mdp.ee_position)
         object_position = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("object")})
+        placement_target_position = ObsTerm(
+            func=mdp.placement_target_position,
+            params={"target_position": PLACEMENT_TARGET_POSITION},
+        )
         actions = ObsTerm(func=mdp.last_action)
 
         # Tells Isaac Lab to combine these observations into one policy input vector.
