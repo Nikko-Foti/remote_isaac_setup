@@ -29,6 +29,10 @@ from isaaclab.markers.config import FRAME_MARKER_CFG  # isort:skip
 from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
+OBJECT_START_POSITION = (0.50, -0.18, 0.055)
+LIFT_TARGET_POSITION = (0.50, -0.18, 0.25)
+OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
+OBJECT_TINY_LIFTED_HEIGHT = 0.070
 PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
@@ -86,7 +90,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
     # cube first; a ball can come later after the pick/place loop works
     object = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Object",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, -0.18, 0.055], rot=[1.0, 0.0, 0.0, 0.0]),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=list(OBJECT_START_POSITION), rot=[1.0, 0.0, 0.0, 0.0]),
         spawn=UsdFileCfg(
             usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
             scale=(0.8, 0.8, 0.8),
@@ -158,9 +162,9 @@ class ObservationsCfg:
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         ee_position = ObsTerm(func=mdp.get_ee_position)
         object_position = ObsTerm(func=mdp.get_object_position, params={"object_cfg": SceneEntityCfg("object")})
-        placement_target_position = ObsTerm(
+        lift_target_position = ObsTerm(
             func=mdp.get_placement_target_position,
-            params={"target_position": PLACEMENT_TARGET_POSITION},
+            params={"target_position": LIFT_TARGET_POSITION},
         )
         actions = ObsTerm(func=mdp.last_action)
 
@@ -184,7 +188,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (0.0, 0.0)},
+            "pose_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
@@ -201,10 +205,33 @@ class RewardsCfg:
         weight=1.0,
         params={"std": 0.10},
     )
+    object_tiny_lifted = RewTerm(
+        func=mdp.compute_object_lifted_reward,
+        weight=15.0,
+        params={"minimal_height": OBJECT_TINY_LIFTED_HEIGHT},
+    )
     object_lifted = RewTerm(
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
+    )
+    object_to_lift_target = RewTerm(
+        func=mdp.compute_object_to_target_reward,
+        weight=16.0,
+        params={
+            "target_position": LIFT_TARGET_POSITION,
+            "std": 0.30,
+            "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+        },
+    )
+    object_to_lift_target_fine = RewTerm(
+        func=mdp.compute_object_to_target_reward,
+        weight=5.0,
+        params={
+            "target_position": LIFT_TARGET_POSITION,
+            "std": 0.05,
+            "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+        },
     )
     object_to_target_xy = RewTerm(
         func=mdp.compute_object_to_target_xy_reward,
@@ -237,15 +264,6 @@ class TerminationsCfg:
     """Termination terms for the MDP."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    # Current milestone: stop once the lifted cube reaches the target XY area.
-    object_above_target = DoneTerm(
-        func=mdp.check_object_above_target,
-        params={
-            "target_position": PLACEMENT_TARGET_POSITION,
-            "radius": PLACEMENT_TARGET_RADIUS,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
-        },
-    )
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum,
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")},

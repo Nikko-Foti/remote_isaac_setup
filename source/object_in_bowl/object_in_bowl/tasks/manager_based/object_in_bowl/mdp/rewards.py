@@ -97,6 +97,22 @@ def compute_object_lifted_reward(
     return check_object_lifted(env, minimal_height, object_cfg).float()
 
 
+# Rewards the cube for moving toward a 3D target position.
+def compute_object_to_target_reward(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    std: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward full 3D object progress toward the target after it clears a low height gate."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    distance = torch.linalg.norm(object_position - target, dim=1)
+    is_high_enough = check_object_lifted(env, minimal_height, object_cfg)
+    return (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
+
+
 # Rewards the lifted cube for moving toward the target in XY.
 def compute_object_to_target_xy_reward(
     env: ManagerBasedRLEnv,
