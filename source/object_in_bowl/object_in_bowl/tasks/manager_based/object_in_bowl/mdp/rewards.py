@@ -45,6 +45,36 @@ def check_object_above_target(
     return torch.logical_and(xy_distance < radius, object_position[:, 2] > minimal_height)
 
 
+# Checks if the cube is inside the bowl and mostly settled.
+def check_object_in_bowl(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    min_height: float,
+    max_height: float,
+    max_speed: float,
+    max_angular_speed: float,
+    min_gripper_open: float,
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Check whether the object is inside the bowl area and moving slowly."""
+    robot: Articulation = env.scene[robot_cfg.name]
+    object_asset: RigidObject = env.scene[object_cfg.name]
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
+    object_angular_speed = torch.linalg.norm(object_asset.data.root_ang_vel_w[:, :3], dim=1)
+    finger_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
+    is_inside_radius = xy_distance < radius
+    is_inside_height = torch.logical_and(object_position[:, 2] > min_height, object_position[:, 2] < max_height)
+    is_settled = object_speed < max_speed
+    is_not_spinning = object_angular_speed < max_angular_speed
+    is_gripper_open = torch.all(finger_joint_pos > min_gripper_open, dim=1)
+    return is_inside_radius & is_inside_height & is_settled & is_not_spinning & is_gripper_open
+
+
 # Rewards the hand for getting close to the cube.
 def compute_reaching_object_reward(
     env: ManagerBasedRLEnv,
@@ -163,3 +193,59 @@ def compute_object_above_target_reward(
 ) -> torch.Tensor:
     """Reward the current milestone: lifted object reaches the target XY area."""
     return check_object_above_target(env, target_position, radius, minimal_height, object_cfg).float()
+
+
+# Rewards the cube for ending up inside the bowl.
+def compute_object_in_bowl_success_reward(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    min_height: float,
+    max_height: float,
+    max_speed: float,
+    max_angular_speed: float,
+    min_gripper_open: float,
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward the successful placement state."""
+    return check_object_in_bowl(
+        env,
+        target_position,
+        radius,
+        min_height,
+        max_height,
+        max_speed,
+        max_angular_speed,
+        min_gripper_open,
+        robot_cfg,
+        object_cfg,
+    ).float()
+
+
+# Stops the episode once the cube is successfully in the bowl.
+def terminate_on_object_in_bowl_success(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    min_height: float,
+    max_height: float,
+    max_speed: float,
+    max_angular_speed: float,
+    min_gripper_open: float,
+    robot_cfg: SceneEntityCfg,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """End the episode when the object is inside the bowl and settled."""
+    return check_object_in_bowl(
+        env,
+        target_position,
+        radius,
+        min_height,
+        max_height,
+        max_speed,
+        max_angular_speed,
+        min_gripper_open,
+        robot_cfg,
+        object_cfg,
+    )
