@@ -15,7 +15,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg, OffsetCfg
-from isaaclab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
+from isaaclab.sim.schemas.schemas_cfg import CollisionPropertiesCfg, RigidBodyPropertiesCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
@@ -39,6 +39,16 @@ PLACEMENT_COMMAND_Y_RANGE = (0.22, 0.38)
 PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
+BOWL_INNER_HALF_SIZE = 0.13
+BOWL_WALL_THICKNESS = 0.025
+BOWL_WALL_HEIGHT = 0.08
+BOWL_BASE_THICKNESS = 0.012
+BOWL_OUTER_SIZE = 2.0 * (BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS)
+BOWL_WALL_CENTER_Z = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT / 2.0
+BOWL_SUCCESS_RADIUS = 0.11
+BOWL_SUCCESS_MIN_HEIGHT = 0.04
+BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT
+BOWL_SUCCESS_MAX_SPEED = 0.30
 
 
 ##
@@ -108,14 +118,78 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
     )
 
-    # visual-only bowl placeholder for the first scene milestone
-    bowl_target = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlTarget",
+    # physical tray-style bowl at the placement corner
+    bowl_base = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlBase",
         init_state=AssetBaseCfg.InitialStateCfg(pos=list(PLACEMENT_TARGET_POSITION)),
-        spawn=sim_utils.CylinderCfg(
-            radius=0.13,
-            height=0.012,
+        spawn=sim_utils.CuboidCfg(
+            size=(BOWL_OUTER_SIZE, BOWL_OUTER_SIZE, BOWL_BASE_THICKNESS),
+            collision_props=CollisionPropertiesCfg(),
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.45),
+        ),
+    )
+
+    bowl_wall_front = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlWallFront",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[
+                PLACEMENT_TARGET_POSITION[0],
+                PLACEMENT_TARGET_POSITION[1] + BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS / 2.0,
+                BOWL_WALL_CENTER_Z,
+            ]
+        ),
+        spawn=sim_utils.CuboidCfg(
+            size=(BOWL_OUTER_SIZE, BOWL_WALL_THICKNESS, BOWL_WALL_HEIGHT),
+            collision_props=CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+        ),
+    )
+
+    bowl_wall_back = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlWallBack",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[
+                PLACEMENT_TARGET_POSITION[0],
+                PLACEMENT_TARGET_POSITION[1] - BOWL_INNER_HALF_SIZE - BOWL_WALL_THICKNESS / 2.0,
+                BOWL_WALL_CENTER_Z,
+            ]
+        ),
+        spawn=sim_utils.CuboidCfg(
+            size=(BOWL_OUTER_SIZE, BOWL_WALL_THICKNESS, BOWL_WALL_HEIGHT),
+            collision_props=CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+        ),
+    )
+
+    bowl_wall_left = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlWallLeft",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[
+                PLACEMENT_TARGET_POSITION[0] - BOWL_INNER_HALF_SIZE - BOWL_WALL_THICKNESS / 2.0,
+                PLACEMENT_TARGET_POSITION[1],
+                BOWL_WALL_CENTER_Z,
+            ]
+        ),
+        spawn=sim_utils.CuboidCfg(
+            size=(BOWL_WALL_THICKNESS, 2.0 * BOWL_INNER_HALF_SIZE, BOWL_WALL_HEIGHT),
+            collision_props=CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+        ),
+    )
+
+    bowl_wall_right = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlWallRight",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[
+                PLACEMENT_TARGET_POSITION[0] + BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS / 2.0,
+                PLACEMENT_TARGET_POSITION[1],
+                BOWL_WALL_CENTER_Z,
+            ]
+        ),
+        spawn=sim_utils.CuboidCfg(
+            size=(BOWL_WALL_THICKNESS, 2.0 * BOWL_INNER_HALF_SIZE, BOWL_WALL_HEIGHT),
+            collision_props=CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
         ),
     )
 
@@ -267,6 +341,17 @@ class RewardsCfg:
             "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
     )
+    object_in_bowl = RewTerm(
+        func=mdp.compute_object_in_bowl_success_reward,
+        weight=100.0,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": BOWL_SUCCESS_RADIUS,
+            "min_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "max_height": BOWL_SUCCESS_MAX_HEIGHT,
+            "max_speed": BOWL_SUCCESS_MAX_SPEED,
+        },
+    )
     action_rate_penalty = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
     joint_velocity_penalty = RewTerm(
         func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")}
@@ -282,6 +367,16 @@ class TerminationsCfg:
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum,
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")},
+    )
+    object_in_bowl = DoneTerm(
+        func=mdp.terminate_on_object_in_bowl_success,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": BOWL_SUCCESS_RADIUS,
+            "min_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "max_height": BOWL_SUCCESS_MAX_HEIGHT,
+            "max_speed": BOWL_SUCCESS_MAX_SPEED,
+        },
     )
 
 
