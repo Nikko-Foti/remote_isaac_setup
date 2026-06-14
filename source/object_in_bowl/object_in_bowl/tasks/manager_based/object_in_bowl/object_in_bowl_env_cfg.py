@@ -46,9 +46,11 @@ BOWL_BASE_THICKNESS = 0.012
 BOWL_OUTER_SIZE = 2.0 * (BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS)
 BOWL_WALL_CENTER_Z = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT / 2.0
 BOWL_SUCCESS_RADIUS = 0.11
-BOWL_SUCCESS_MIN_HEIGHT = 0.04
-BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT
+BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
+BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
 BOWL_SUCCESS_MAX_SPEED = 0.30
+BOWL_SUCCESS_MAX_ANGULAR_SPEED = 1.0
+BOWL_SUCCESS_MIN_GRIPPER_OPEN = 0.03
 
 
 ##
@@ -289,10 +291,10 @@ class EventCfg:
     )
 
 
-# Defines the lift-only diagnostic rewards.
+# Defines the lift, carry, and bowl-placement rewards.
 @configclass
 class RewardsCfg:
-    """Reward terms for proving the cube can be lifted before training placement."""
+    """Reward terms for lifting the cube and placing it in the bowl."""
 
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
@@ -343,13 +345,16 @@ class RewardsCfg:
     )
     object_in_bowl = RewTerm(
         func=mdp.compute_object_in_bowl_success_reward,
-        weight=100.0,
+        weight=1500.0,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": BOWL_SUCCESS_RADIUS,
             "min_height": BOWL_SUCCESS_MIN_HEIGHT,
             "max_height": BOWL_SUCCESS_MAX_HEIGHT,
             "max_speed": BOWL_SUCCESS_MAX_SPEED,
+            "max_angular_speed": BOWL_SUCCESS_MAX_ANGULAR_SPEED,
+            "min_gripper_open": BOWL_SUCCESS_MIN_GRIPPER_OPEN,
+            "robot_cfg": SceneEntityCfg("robot", joint_names=["panda_finger.*"]),
         },
     )
     action_rate_penalty = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -376,6 +381,9 @@ class TerminationsCfg:
             "min_height": BOWL_SUCCESS_MIN_HEIGHT,
             "max_height": BOWL_SUCCESS_MAX_HEIGHT,
             "max_speed": BOWL_SUCCESS_MAX_SPEED,
+            "max_angular_speed": BOWL_SUCCESS_MAX_ANGULAR_SPEED,
+            "min_gripper_open": BOWL_SUCCESS_MIN_GRIPPER_OPEN,
+            "robot_cfg": SceneEntityCfg("robot", joint_names=["panda_finger.*"]),
         },
     )
 
@@ -383,7 +391,7 @@ class TerminationsCfg:
 # Ramps penalties like the official lift task does.
 @configclass
 class CurriculumCfg:
-    """Curriculum terms for the lift diagnostic MDP."""
+    """Curriculum terms for the placement MDP."""
 
     action_rate_penalty = CurrTerm(
         func=mdp.modify_reward_weight,
