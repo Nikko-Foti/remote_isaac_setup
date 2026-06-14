@@ -30,9 +30,6 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
 PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
-OBJECT_INITIAL_HEIGHT = 0.055
-OBJECT_TINY_LIFT_HEIGHT = 0.060
-OBJECT_SMALL_LIFT_HEIGHT = 0.070
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
 
@@ -194,35 +191,15 @@ class EventCfg:
     )
 
 
-# Defines the first simple reward terms for the placement task.
+# Defines the lift-only diagnostic rewards.
 @configclass
 class RewardsCfg:
-    """Reward terms for the first coordinate-based placement task."""
+    """Reward terms for proving the cube can be lifted before training placement."""
 
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
-        weight=0.5,
-        params={"std": 0.25, "minimal_height": OBJECT_TINY_LIFT_HEIGHT},
-    )
-    grasping_object = RewTerm(
-        func=mdp.compute_grasping_object_reward,
-        weight=0.75,
-        params={"std": 0.10, "minimal_height": OBJECT_TINY_LIFT_HEIGHT},
-    )
-    object_height_progress = RewTerm(
-        func=mdp.compute_object_height_progress_reward,
-        weight=4.0,
-        params={"initial_height": OBJECT_INITIAL_HEIGHT, "target_height": OBJECT_SMALL_LIFT_HEIGHT},
-    )
-    object_tiny_lift = RewTerm(
-        func=mdp.compute_object_lifted_reward,
-        weight=2.0,
-        params={"minimal_height": OBJECT_TINY_LIFT_HEIGHT},
-    )
-    object_small_lift = RewTerm(
-        func=mdp.compute_object_lifted_reward,
-        weight=6.0,
-        params={"minimal_height": OBJECT_SMALL_LIFT_HEIGHT},
+        weight=1.0,
+        params={"std": 0.10},
     )
     object_lifted = RewTerm(
         func=mdp.compute_object_lifted_reward,

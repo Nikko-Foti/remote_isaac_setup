@@ -43,19 +43,17 @@ def check_object_above_target(
     return torch.logical_and(xy_distance < radius, object_position[:, 2] > minimal_height)
 
 
-# Rewards the hand for getting close to the cube before lifting it.
+# Rewards the hand for getting close to the cube.
 def compute_reaching_object_reward(
     env: ManagerBasedRLEnv,
     std: float,
-    minimal_height: float,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Reward the hand for getting near the object before the object is lifted."""
+    """Reward the hand for getting near the object."""
     ee_position = get_ee_position(env)
     object_position = get_object_position(env, object_cfg)
     distance = torch.linalg.norm(ee_position - object_position, dim=1)
-    not_lifted = torch.logical_not(check_object_lifted(env, minimal_height, object_cfg))
-    return (1.0 - torch.tanh(distance / std)) * not_lifted.float()
+    return 1.0 - torch.tanh(distance / std)
 
 
 # Rewards closing the gripper only when the hand is already near the cube.
