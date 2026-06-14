@@ -34,6 +34,9 @@ OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
 OBJECT_OFFICIAL_LIFTED_HEIGHT = 0.04
 PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
+PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
+PLACEMENT_COMMAND_Y_RANGE = (0.22, 0.38)
+PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
 
@@ -128,10 +131,10 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 ##
 
 
-# Defines the sampled lift target, matching the official Franka lift task.
+# Defines the sampled carry target above the visual bowl area.
 @configclass
 class CommandsCfg:
-    """Command terms for the lift diagnostic MDP."""
+    """Command terms that ask the policy to carry the cube above the bowl area."""
 
     object_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot",
@@ -139,9 +142,9 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.4, 0.6),
-            pos_y=(-0.25, 0.25),
-            pos_z=(0.25, 0.5),
+            pos_x=PLACEMENT_COMMAND_X_RANGE,
+            pos_y=PLACEMENT_COMMAND_Y_RANGE,
+            pos_z=PLACEMENT_COMMAND_Z_RANGE,
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(0.0, 0.0),
