@@ -58,6 +58,37 @@ def compute_reaching_object_reward(
     return (1.0 - torch.tanh(distance / std)) * not_lifted.float()
 
 
+# Rewards closing the gripper only when the hand is already near the cube.
+def compute_grasping_object_reward(
+    env: ManagerBasedRLEnv,
+    std: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward near-object gripper closing before the object has been lifted."""
+    ee_position = get_ee_position(env)
+    object_position = get_object_position(env, object_cfg)
+    distance = torch.linalg.norm(ee_position - object_position, dim=1)
+    near_object = 1.0 - torch.tanh(distance / std)
+    gripper_action = env.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
+    closing_gripper = torch.clamp(-gripper_action, min=0.0, max=1.0)
+    not_lifted = torch.logical_not(check_object_lifted(env, minimal_height, object_cfg))
+    return near_object * closing_gripper * not_lifted.float()
+
+
+# Rewards smooth progress as the cube rises from the table.
+def compute_object_height_progress_reward(
+    env: ManagerBasedRLEnv,
+    initial_height: float,
+    target_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward object height as a bounded 0-to-1 lift progress signal."""
+    object_position = get_object_position(env, object_cfg)
+    lift_range = target_height - initial_height
+    return torch.clamp((object_position[:, 2] - initial_height) / lift_range, min=0.0, max=1.0)
+
+
 # Rewards the cube for clearing the table.
 def compute_object_lifted_reward(
     env: ManagerBasedRLEnv,

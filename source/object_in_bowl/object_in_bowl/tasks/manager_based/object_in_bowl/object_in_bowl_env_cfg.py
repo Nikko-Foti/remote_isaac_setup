@@ -30,7 +30,10 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
 PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
-OBJECT_LIFTED_HEIGHT = 0.12
+OBJECT_INITIAL_HEIGHT = 0.055
+OBJECT_TINY_LIFT_HEIGHT = 0.060
+OBJECT_SMALL_LIFT_HEIGHT = 0.070
+OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
 
 
@@ -198,17 +201,37 @@ class RewardsCfg:
 
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
-        weight=0.05,
-        params={"std": 0.15, "minimal_height": OBJECT_LIFTED_HEIGHT},
+        weight=0.5,
+        params={"std": 0.25, "minimal_height": OBJECT_TINY_LIFT_HEIGHT},
+    )
+    grasping_object = RewTerm(
+        func=mdp.compute_grasping_object_reward,
+        weight=0.75,
+        params={"std": 0.10, "minimal_height": OBJECT_TINY_LIFT_HEIGHT},
+    )
+    object_height_progress = RewTerm(
+        func=mdp.compute_object_height_progress_reward,
+        weight=4.0,
+        params={"initial_height": OBJECT_INITIAL_HEIGHT, "target_height": OBJECT_SMALL_LIFT_HEIGHT},
+    )
+    object_tiny_lift = RewTerm(
+        func=mdp.compute_object_lifted_reward,
+        weight=2.0,
+        params={"minimal_height": OBJECT_TINY_LIFT_HEIGHT},
+    )
+    object_small_lift = RewTerm(
+        func=mdp.compute_object_lifted_reward,
+        weight=6.0,
+        params={"minimal_height": OBJECT_SMALL_LIFT_HEIGHT},
     )
     object_lifted = RewTerm(
         func=mdp.compute_object_lifted_reward,
-        weight=0.02,
+        weight=15.0,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_to_target_xy = RewTerm(
         func=mdp.compute_object_to_target_xy_reward,
-        weight=0.08,
+        weight=0.0,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "std": 0.20,
@@ -218,7 +241,7 @@ class RewardsCfg:
     )
     object_above_target = RewTerm(
         func=mdp.compute_object_above_target_reward,
-        weight=50.0,
+        weight=0.0,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": PLACEMENT_TARGET_RADIUS,
@@ -278,7 +301,7 @@ class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
         self.decimation = 2
         self.episode_length_s = 5.0
         # viewer settings
-        self.viewer.eye = (2.2, 0.0, 1.4)
+        self.viewer.eye = (6.0, -6.0, 4.0)
         self.viewer.lookat = (0.45, 0.0, 0.25)
         # simulation settings
         self.sim.dt = 0.01
