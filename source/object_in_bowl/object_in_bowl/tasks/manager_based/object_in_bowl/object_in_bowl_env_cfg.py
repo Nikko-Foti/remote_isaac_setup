@@ -296,8 +296,8 @@ class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
         self.decimation = 2
         self.episode_length_s = 5.0
         # viewer settings
-        self.viewer.eye = (6.0, -6.0, 4.0)
-        self.viewer.lookat = (0.45, 0.0, 0.25)
+        self.viewer.eye = (12.0, -12.0, 8.0)
+        self.viewer.lookat = (0.0, 0.0, 0.1)
         # simulation settings
         self.sim.dt = 0.01
         self.sim.render_interval = self.decimation
