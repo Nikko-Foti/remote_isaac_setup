@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from isaaclab.assets import RigidObject
+from isaaclab.assets import Articulation, RigidObject
 from isaaclab.managers import SceneEntityCfg
+from isaaclab.utils.math import subtract_frame_transforms
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -29,6 +30,20 @@ def get_object_position(env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg = Sce
     """Object position in each environment's local frame."""
     object_asset: RigidObject = env.scene[object_cfg.name]
     return object_asset.data.root_pos_w[:, :3] - env.scene.env_origins
+
+
+# Gets the cube position relative to the robot base frame.
+def get_object_position_in_robot_root_frame(
+    env: ManagerBasedRLEnv,
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Object position in the robot root frame, matching the official lift task."""
+    robot: Articulation = env.scene[robot_cfg.name]
+    object_asset: RigidObject = env.scene[object_cfg.name]
+    object_pos_w = object_asset.data.root_pos_w[:, :3]
+    object_pos_b, _ = subtract_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, object_pos_w)
+    return object_pos_b
 
 
 # Gives the policy the fixed placement target for each environment.

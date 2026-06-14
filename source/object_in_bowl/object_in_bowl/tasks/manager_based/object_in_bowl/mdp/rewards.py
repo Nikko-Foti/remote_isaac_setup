@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 
 import torch
 
+from isaaclab.assets import Articulation, RigidObject
 from isaaclab.managers import SceneEntityCfg
+from isaaclab.utils.math import combine_frame_transforms
 
 from .observations import get_ee_position, get_object_position, get_placement_target_position
 
@@ -110,6 +112,26 @@ def compute_object_to_target_reward(
     target = get_placement_target_position(env, target_position)
     distance = torch.linalg.norm(object_position - target, dim=1)
     is_high_enough = check_object_lifted(env, minimal_height, object_cfg)
+    return (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
+
+
+# Rewards the cube for moving toward the sampled lift command.
+def compute_object_goal_distance_reward(
+    env: ManagerBasedRLEnv,
+    std: float,
+    minimal_height: float,
+    command_name: str,
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward object distance to the command target, matching the official lift task."""
+    robot: Articulation = env.scene[robot_cfg.name]
+    object_asset: RigidObject = env.scene[object_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    desired_pos_b = command[:, :3]
+    desired_pos_w, _ = combine_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, desired_pos_b)
+    distance = torch.linalg.norm(desired_pos_w - object_asset.data.root_pos_w[:, :3], dim=1)
+    is_high_enough = object_asset.data.root_pos_w[:, 2] > minimal_height
     return (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
 
 

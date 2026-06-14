@@ -6,6 +6,7 @@
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
+from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -29,10 +30,9 @@ from isaaclab.markers.config import FRAME_MARKER_CFG  # isort:skip
 from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
-OBJECT_START_POSITION = (0.50, -0.18, 0.055)
-LIFT_TARGET_POSITION = (0.50, -0.18, 0.25)
+OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
-OBJECT_TINY_LIFTED_HEIGHT = 0.070
+OBJECT_OFFICIAL_LIFTED_HEIGHT = 0.04
 PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
@@ -128,7 +128,28 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 ##
 
 
-# Defines what commands the policy can send to the robot.
+# Defines the sampled lift target, matching the official Franka lift task.
+@configclass
+class CommandsCfg:
+    """Command terms for the lift diagnostic MDP."""
+
+    object_pose = mdp.UniformPoseCommandCfg(
+        asset_name="robot",
+        body_name="panda_hand",
+        resampling_time_range=(5.0, 5.0),
+        debug_vis=True,
+        ranges=mdp.UniformPoseCommandCfg.Ranges(
+            pos_x=(0.4, 0.6),
+            pos_y=(-0.25, 0.25),
+            pos_z=(0.25, 0.5),
+            roll=(0.0, 0.0),
+            pitch=(0.0, 0.0),
+            yaw=(0.0, 0.0),
+        ),
+    )
+
+
+# Defines what actions the policy can send to the robot.
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
@@ -160,12 +181,8 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        ee_position = ObsTerm(func=mdp.get_ee_position)
-        object_position = ObsTerm(func=mdp.get_object_position, params={"object_cfg": SceneEntityCfg("object")})
-        lift_target_position = ObsTerm(
-            func=mdp.get_placement_target_position,
-            params={"target_position": LIFT_TARGET_POSITION},
-        )
+        object_position = ObsTerm(func=mdp.get_object_position_in_robot_root_frame)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
 
         # Tells Isaac Lab to combine these observations into one policy input vector.
@@ -188,7 +205,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (0.0, 0.0), "y": (0.0, 0.0), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
@@ -205,32 +222,27 @@ class RewardsCfg:
         weight=1.0,
         params={"std": 0.10},
     )
-    object_tiny_lifted = RewTerm(
+    lifting_object = RewTerm(
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
-        params={"minimal_height": OBJECT_TINY_LIFTED_HEIGHT},
+        params={"minimal_height": OBJECT_OFFICIAL_LIFTED_HEIGHT},
     )
-    object_lifted = RewTerm(
-        func=mdp.compute_object_lifted_reward,
-        weight=15.0,
-        params={"minimal_height": OBJECT_LIFTED_HEIGHT},
-    )
-    object_to_lift_target = RewTerm(
-        func=mdp.compute_object_to_target_reward,
+    object_goal_tracking = RewTerm(
+        func=mdp.compute_object_goal_distance_reward,
         weight=16.0,
         params={
-            "target_position": LIFT_TARGET_POSITION,
             "std": 0.30,
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+            "command_name": "object_pose",
         },
     )
-    object_to_lift_target_fine = RewTerm(
-        func=mdp.compute_object_to_target_reward,
+    object_goal_tracking_fine_grained = RewTerm(
+        func=mdp.compute_object_goal_distance_reward,
         weight=5.0,
         params={
-            "target_position": LIFT_TARGET_POSITION,
             "std": 0.05,
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+            "command_name": "object_pose",
         },
     )
     object_to_target_xy = RewTerm(
@@ -270,6 +282,21 @@ class TerminationsCfg:
     )
 
 
+# Ramps penalties like the official lift task does.
+@configclass
+class CurriculumCfg:
+    """Curriculum terms for the lift diagnostic MDP."""
+
+    action_rate_penalty = CurrTerm(
+        func=mdp.modify_reward_weight,
+        params={"term_name": "action_rate_penalty", "weight": -1e-1, "num_steps": 10000},
+    )
+    joint_velocity_penalty = CurrTerm(
+        func=mdp.modify_reward_weight,
+        params={"term_name": "joint_velocity_penalty", "weight": -1e-1, "num_steps": 10000},
+    )
+
+
 ##
 # Environment configuration
 ##
@@ -279,14 +306,16 @@ class TerminationsCfg:
 @configclass
 class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
-    scene: ObjectInBowlSceneCfg = ObjectInBowlSceneCfg(num_envs=4096, env_spacing=4.0)
+    scene: ObjectInBowlSceneCfg = ObjectInBowlSceneCfg(num_envs=4096, env_spacing=2.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
+    commands: CommandsCfg = CommandsCfg()
     events: EventCfg = EventCfg()
     # MDP settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
+    curriculum: CurriculumCfg = CurriculumCfg()
 
     # Post initialization
     # Fills in timing, camera, and simulator settings after the config is created.
