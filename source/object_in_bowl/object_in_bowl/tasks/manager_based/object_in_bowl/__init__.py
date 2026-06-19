@@ -14,7 +14,7 @@ from . import agents
 
 gym.register(
     id="Isaac-Object-In-Bowl-Franka-v0",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    entry_point=f"{__name__}.object_in_bowl_env:ObjectInBowlEnv",
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": f"{__name__}.object_in_bowl_env_cfg:ObjectInBowlEnvCfg",
