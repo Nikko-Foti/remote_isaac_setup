@@ -151,6 +151,10 @@ def compute_object_goal_distance_reward(
     std: float,
     minimal_height: float,
     command_name: str,
+    gate_target_position: tuple[float, float, float] | None = None,
+    gate_radius: float = 0.0,
+    gate_minimal_height: float = 0.0,
+    gate_reward_scale: float = 1.0,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
@@ -162,7 +166,11 @@ def compute_object_goal_distance_reward(
     desired_pos_w, _ = combine_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, desired_pos_b)
     distance = torch.linalg.norm(desired_pos_w - object_asset.data.root_pos_w[:, :3], dim=1)
     is_high_enough = object_asset.data.root_pos_w[:, 2] > minimal_height
-    return (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
+    reward = (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
+    if gate_target_position is None:
+        return reward
+    is_over_gate_target = check_object_above_target(env, gate_target_position, gate_radius, gate_minimal_height, object_cfg)
+    return torch.where(is_over_gate_target, reward * gate_reward_scale, reward)
 
 
 # Rewards the lifted cube for moving toward the target in XY.
@@ -193,6 +201,26 @@ def compute_object_above_target_reward(
 ) -> torch.Tensor:
     """Reward the current milestone: lifted object reaches the target XY area."""
     return check_object_above_target(env, target_position, radius, minimal_height, object_cfg).float()
+
+
+# Rewards the cube for lowering toward bowl height after it is over the bowl.
+def compute_object_lowering_into_bowl_reward(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    target_height: float,
+    height_std: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward the bridge from high carry to low placement inside the bowl."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    height_distance = torch.abs(object_position[:, 2] - target_height)
+    is_over_target = xy_distance < radius
+    is_lifted = check_object_lifted(env, minimal_height, object_cfg)
+    return (1.0 - torch.tanh(height_distance / height_std)) * is_over_target.float() * is_lifted.float()
 
 
 # Rewards the cube for ending up inside the bowl.
