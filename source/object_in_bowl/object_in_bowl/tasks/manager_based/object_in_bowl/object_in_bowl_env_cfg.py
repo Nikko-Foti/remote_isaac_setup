@@ -48,6 +48,7 @@ BOWL_WALL_CENTER_Z = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT / 2.0
 BOWL_SUCCESS_RADIUS = 0.11
 BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
 BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
+BOWL_LOWERING_TARGET_HEIGHT = (BOWL_SUCCESS_MIN_HEIGHT + BOWL_SUCCESS_MAX_HEIGHT) / 2.0
 BOWL_SUCCESS_MAX_SPEED = 0.30
 BOWL_SUCCESS_MAX_ANGULAR_SPEED = 1.0
 BOWL_SUCCESS_MIN_GRIPPER_OPEN = 0.03
@@ -313,6 +314,10 @@ class RewardsCfg:
             "std": 0.30,
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
             "command_name": "object_pose",
+            "gate_target_position": PLACEMENT_TARGET_POSITION,
+            "gate_radius": PLACEMENT_TARGET_RADIUS,
+            "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "gate_reward_scale": 0.5,
         },
     )
     object_goal_tracking_fine_grained = RewTerm(
@@ -322,6 +327,10 @@ class RewardsCfg:
             "std": 0.05,
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
             "command_name": "object_pose",
+            "gate_target_position": PLACEMENT_TARGET_POSITION,
+            "gate_radius": PLACEMENT_TARGET_RADIUS,
+            "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "gate_reward_scale": 0.0,
         },
     )
     object_to_target_xy = RewTerm(
@@ -341,6 +350,17 @@ class RewardsCfg:
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": PLACEMENT_TARGET_RADIUS,
             "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
+    object_lowering_into_bowl = RewTerm(
+        func=mdp.compute_object_lowering_into_bowl_reward,
+        weight=10.0,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "target_height": BOWL_LOWERING_TARGET_HEIGHT,
+            "height_std": 0.08,
+            "minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
         },
     )
     object_in_bowl = RewTerm(
@@ -438,5 +458,5 @@ class ObjectInBowlEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.render_interval = self.decimation
         self.sim.physx.bounce_threshold_velocity = 0.01
         self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
+        self.sim.physx.gpu_total_aggregate_pairs_capacity = 32 * 1024
         self.sim.physx.friction_correlation_distance = 0.00625
