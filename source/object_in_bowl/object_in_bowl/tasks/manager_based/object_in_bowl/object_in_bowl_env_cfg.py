@@ -46,6 +46,7 @@ BOWL_BASE_THICKNESS = 0.012
 BOWL_OUTER_SIZE = 2.0 * (BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS)
 BOWL_WALL_CENTER_Z = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT / 2.0
 BOWL_SUCCESS_RADIUS = 0.11
+BOWL_LOWERING_RADIUS = BOWL_SUCCESS_RADIUS
 BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
 BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
 BOWL_LOWERING_TARGET_HEIGHT = (BOWL_SUCCESS_MIN_HEIGHT + BOWL_SUCCESS_MAX_HEIGHT) / 2.0
@@ -315,7 +316,7 @@ class RewardsCfg:
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
             "command_name": "object_pose",
             "gate_target_position": PLACEMENT_TARGET_POSITION,
-            "gate_radius": PLACEMENT_TARGET_RADIUS,
+            "gate_radius": BOWL_LOWERING_RADIUS,
             "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
             "gate_reward_scale": 0.5,
         },
@@ -328,7 +329,7 @@ class RewardsCfg:
             "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
             "command_name": "object_pose",
             "gate_target_position": PLACEMENT_TARGET_POSITION,
-            "gate_radius": PLACEMENT_TARGET_RADIUS,
+            "gate_radius": BOWL_LOWERING_RADIUS,
             "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
             "gate_reward_scale": 0.0,
         },
@@ -357,7 +358,7 @@ class RewardsCfg:
         weight=10.0,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
-            "radius": PLACEMENT_TARGET_RADIUS,
+            "radius": BOWL_LOWERING_RADIUS,
             "target_height": BOWL_LOWERING_TARGET_HEIGHT,
             "height_std": 0.08,
             "minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
