@@ -32,14 +32,15 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
 OBJECT_OFFICIAL_LIFTED_HEIGHT = 0.04
-PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
+PLACEMENT_TARGET_POSITION = (0.70, 0.20, 0.061)
 PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
-PLACEMENT_COMMAND_Y_RANGE = (0.22, 0.38)
+PLACEMENT_COMMAND_Y_RANGE = (0.12, 0.28)
 PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
 BOWL_ASSET_POSITION = (PLACEMENT_TARGET_POSITION[0], PLACEMENT_TARGET_POSITION[1], 0.055)
+BOWL_ASSET_ROTATION = (0.7071068, -0.7071068, 0.0, 0.0)
 BOWL_SUCCESS_RADIUS = 0.11
 BOWL_COLLISION_INNER_HALF_SIZE = BOWL_SUCCESS_RADIUS
 BOWL_COLLISION_WALL_THICKNESS = 0.02
@@ -126,7 +127,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
     # fixed YCB bowl at the placement corner
     bowl = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Bowl",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=list(BOWL_ASSET_POSITION), rot=[1.0, 0.0, 0.0, 0.0]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=list(BOWL_ASSET_POSITION), rot=list(BOWL_ASSET_ROTATION)),
         spawn=UsdFileCfg(usd_path=BOWL_USD_PATH),
     )
 
@@ -226,7 +227,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name="panda_hand",
         resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=PLACEMENT_COMMAND_X_RANGE,
             pos_y=PLACEMENT_COMMAND_Y_RANGE,
