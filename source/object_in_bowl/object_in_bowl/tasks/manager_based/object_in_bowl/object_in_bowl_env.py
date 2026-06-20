@@ -13,8 +13,10 @@ from isaaclab.assets import Articulation, RigidObject
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.managers import SceneEntityCfg
 
-from .mdp.observations import get_object_position, get_placement_target_position
+from .mdp.observations import get_ee_position, get_object_position, get_placement_target_position
 from .object_in_bowl_env_cfg import (
+    BOWL_LOWERING_RADIUS,
+    BOWL_LOWERING_TARGET_HEIGHT,
     BOWL_SUCCESS_MAX_ANGULAR_SPEED,
     BOWL_SUCCESS_MAX_HEIGHT,
     BOWL_SUCCESS_MAX_SPEED,
@@ -48,6 +50,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         robot: Articulation = self.scene[robot_cfg.name]
         object_asset: RigidObject = self.scene["object"]
         object_position = get_object_position(self)[env_ids]
+        ee_position = get_ee_position(self)[env_ids]
         target = get_placement_target_position(self, PLACEMENT_TARGET_POSITION)[env_ids]
         xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
         height = object_position[:, 2]
@@ -61,10 +64,13 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         is_not_spinning = object_angular_speed < BOWL_SUCCESS_MAX_ANGULAR_SPEED
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
         is_success = is_inside_radius & is_inside_height & is_slow & is_not_spinning & is_gripper_open
-        is_over_bridge_area = xy_distance < PLACEMENT_TARGET_RADIUS
+        is_over_tight_placement_area = xy_distance < PLACEMENT_TARGET_RADIUS
+        is_over_lowering_area = xy_distance < BOWL_LOWERING_RADIUS
 
-        height_target = (BOWL_SUCCESS_MIN_HEIGHT + BOWL_SUCCESS_MAX_HEIGHT) / 2.0
-        height_error = torch.abs(height - height_target)
+        signed_height_error = height - BOWL_LOWERING_TARGET_HEIGHT
+        height_error = torch.abs(signed_height_error)
+        gripper_opening = finger_joint_pos.sum(dim=1)
+        min_finger_joint_pos = torch.min(finger_joint_pos, dim=1).values
 
         return {
             "Episode_Bowl/inside_radius_rate": is_inside_radius.float().mean(),
@@ -73,7 +79,15 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Bowl/slow_angular_rate": is_not_spinning.float().mean(),
             "Episode_Bowl/gripper_open_rate": is_gripper_open.float().mean(),
             "Episode_Bowl/success_rate": is_success.float().mean(),
-            "Episode_Bowl/over_bridge_area_rate": is_over_bridge_area.float().mean(),
+            "Episode_Bowl/over_bridge_area_rate": is_over_tight_placement_area.float().mean(),
+            "Episode_Bowl/tight_placement_radius_rate": is_over_tight_placement_area.float().mean(),
+            "Episode_Bowl/lowering_radius_rate": is_over_lowering_area.float().mean(),
             "Episode_Bowl/mean_xy_distance": xy_distance.mean(),
+            "Episode_Bowl/mean_object_z": height.mean(),
+            "Episode_Bowl/mean_ee_z": ee_position[:, 2].mean(),
+            "Episode_Bowl/mean_signed_height_error": signed_height_error.mean(),
             "Episode_Bowl/mean_height_error": height_error.mean(),
+            "Episode_Bowl/mean_abs_height_error": height_error.mean(),
+            "Episode_Bowl/mean_gripper_opening": gripper_opening.mean(),
+            "Episode_Bowl/mean_min_finger_joint_pos": min_finger_joint_pos.mean(),
         }
