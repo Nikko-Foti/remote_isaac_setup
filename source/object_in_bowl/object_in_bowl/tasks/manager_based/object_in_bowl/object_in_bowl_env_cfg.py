@@ -6,7 +6,6 @@
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
-from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -33,19 +32,25 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
 OBJECT_OFFICIAL_LIFTED_HEIGHT = 0.04
-PLACEMENT_TARGET_POSITION = (0.70, 0.30, 0.061)
+PLACEMENT_TARGET_POSITION = (0.70, 0.20, 0.061)
 PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
-PLACEMENT_COMMAND_Y_RANGE = (0.22, 0.38)
+PLACEMENT_COMMAND_Y_RANGE = (0.12, 0.28)
 PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
 OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
-BOWL_INNER_HALF_SIZE = 0.13
-BOWL_WALL_THICKNESS = 0.025
-BOWL_WALL_HEIGHT = 0.08
-BOWL_BASE_THICKNESS = 0.012
-BOWL_OUTER_SIZE = 2.0 * (BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS)
-BOWL_WALL_CENTER_Z = PLACEMENT_TARGET_POSITION[2] + BOWL_WALL_HEIGHT / 2.0
+BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
+BOWL_ASSET_POSITION = (PLACEMENT_TARGET_POSITION[0], PLACEMENT_TARGET_POSITION[1], 0.025)
+BOWL_ASSET_ROTATION = (0.7071068, -0.7071068, 0.0, 0.0)
 BOWL_SUCCESS_RADIUS = 0.11
+BOWL_COLLISION_INNER_HALF_SIZE = BOWL_SUCCESS_RADIUS
+BOWL_COLLISION_WALL_THICKNESS = 0.02
+BOWL_COLLISION_WALL_HEIGHT = 0.08
+BOWL_COLLISION_BASE_THICKNESS = 0.012
+BOWL_COLLISION_OUTER_SIZE = 2.0 * (BOWL_COLLISION_INNER_HALF_SIZE + BOWL_COLLISION_WALL_THICKNESS)
+BOWL_COLLISION_OBJECT_HALF_HEIGHT = 0.024
+BOWL_COLLISION_FLOOR_TOP_Z = PLACEMENT_TARGET_POSITION[2] - BOWL_COLLISION_OBJECT_HALF_HEIGHT
+BOWL_COLLISION_BASE_CENTER_Z = BOWL_COLLISION_FLOOR_TOP_Z - BOWL_COLLISION_BASE_THICKNESS / 2.0
+BOWL_COLLISION_WALL_CENTER_Z = BOWL_COLLISION_FLOOR_TOP_Z + BOWL_COLLISION_WALL_HEIGHT / 2.0
 BOWL_LOWERING_RADIUS = BOWL_SUCCESS_RADIUS
 BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
 BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
@@ -122,78 +127,87 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
     )
 
-    # physical tray-style bowl at the placement corner
-    bowl_base = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlBase",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=list(PLACEMENT_TARGET_POSITION)),
+    # fixed YCB bowl at the placement corner
+    bowl = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Bowl",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=list(BOWL_ASSET_POSITION), rot=list(BOWL_ASSET_ROTATION)),
+        spawn=UsdFileCfg(usd_path=BOWL_USD_PATH),
+    )
+
+    # invisible simple collision tray for the visual bowl
+    bowl_collision_base = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlCollisionBase",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[PLACEMENT_TARGET_POSITION[0], PLACEMENT_TARGET_POSITION[1], BOWL_COLLISION_BASE_CENTER_Z]
+        ),
         spawn=sim_utils.CuboidCfg(
-            size=(BOWL_OUTER_SIZE, BOWL_OUTER_SIZE, BOWL_BASE_THICKNESS),
+            size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_BASE_THICKNESS),
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.45),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
-    bowl_wall_front = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlWallFront",
+    bowl_collision_front = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlCollisionFront",
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=[
                 PLACEMENT_TARGET_POSITION[0],
-                PLACEMENT_TARGET_POSITION[1] + BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS / 2.0,
-                BOWL_WALL_CENTER_Z,
+                PLACEMENT_TARGET_POSITION[1] + BOWL_COLLISION_INNER_HALF_SIZE + BOWL_COLLISION_WALL_THICKNESS / 2.0,
+                BOWL_COLLISION_WALL_CENTER_Z,
             ]
         ),
         spawn=sim_utils.CuboidCfg(
-            size=(BOWL_OUTER_SIZE, BOWL_WALL_THICKNESS, BOWL_WALL_HEIGHT),
+            size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_WALL_THICKNESS, BOWL_COLLISION_WALL_HEIGHT),
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
-    bowl_wall_back = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlWallBack",
+    bowl_collision_back = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlCollisionBack",
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=[
                 PLACEMENT_TARGET_POSITION[0],
-                PLACEMENT_TARGET_POSITION[1] - BOWL_INNER_HALF_SIZE - BOWL_WALL_THICKNESS / 2.0,
-                BOWL_WALL_CENTER_Z,
+                PLACEMENT_TARGET_POSITION[1] - BOWL_COLLISION_INNER_HALF_SIZE - BOWL_COLLISION_WALL_THICKNESS / 2.0,
+                BOWL_COLLISION_WALL_CENTER_Z,
             ]
         ),
         spawn=sim_utils.CuboidCfg(
-            size=(BOWL_OUTER_SIZE, BOWL_WALL_THICKNESS, BOWL_WALL_HEIGHT),
+            size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_WALL_THICKNESS, BOWL_COLLISION_WALL_HEIGHT),
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
-    bowl_wall_left = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlWallLeft",
+    bowl_collision_left = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlCollisionLeft",
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=[
-                PLACEMENT_TARGET_POSITION[0] - BOWL_INNER_HALF_SIZE - BOWL_WALL_THICKNESS / 2.0,
+                PLACEMENT_TARGET_POSITION[0] - BOWL_COLLISION_INNER_HALF_SIZE - BOWL_COLLISION_WALL_THICKNESS / 2.0,
                 PLACEMENT_TARGET_POSITION[1],
-                BOWL_WALL_CENTER_Z,
+                BOWL_COLLISION_WALL_CENTER_Z,
             ]
         ),
         spawn=sim_utils.CuboidCfg(
-            size=(BOWL_WALL_THICKNESS, 2.0 * BOWL_INNER_HALF_SIZE, BOWL_WALL_HEIGHT),
+            size=(BOWL_COLLISION_WALL_THICKNESS, 2.0 * BOWL_COLLISION_INNER_HALF_SIZE, BOWL_COLLISION_WALL_HEIGHT),
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
-    bowl_wall_right = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/BowlWallRight",
+    bowl_collision_right = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/BowlCollisionRight",
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=[
-                PLACEMENT_TARGET_POSITION[0] + BOWL_INNER_HALF_SIZE + BOWL_WALL_THICKNESS / 2.0,
+                PLACEMENT_TARGET_POSITION[0] + BOWL_COLLISION_INNER_HALF_SIZE + BOWL_COLLISION_WALL_THICKNESS / 2.0,
                 PLACEMENT_TARGET_POSITION[1],
-                BOWL_WALL_CENTER_Z,
+                BOWL_COLLISION_WALL_CENTER_Z,
             ]
         ),
         spawn=sim_utils.CuboidCfg(
-            size=(BOWL_WALL_THICKNESS, 2.0 * BOWL_INNER_HALF_SIZE, BOWL_WALL_HEIGHT),
+            size=(BOWL_COLLISION_WALL_THICKNESS, 2.0 * BOWL_COLLISION_INNER_HALF_SIZE, BOWL_COLLISION_WALL_HEIGHT),
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.65),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
@@ -218,7 +232,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name="panda_hand",
         resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=PLACEMENT_COMMAND_X_RANGE,
             pos_y=PLACEMENT_COMMAND_Y_RANGE,
@@ -409,19 +423,12 @@ class TerminationsCfg:
     )
 
 
-# Ramps penalties like the official lift task does.
+# Keeps movement penalties fixed while the placement skill is still being learned.
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the placement MDP."""
 
-    action_rate_penalty = CurrTerm(
-        func=mdp.modify_reward_weight,
-        params={"term_name": "action_rate_penalty", "weight": -1e-1, "num_steps": 10000},
-    )
-    joint_velocity_penalty = CurrTerm(
-        func=mdp.modify_reward_weight,
-        params={"term_name": "joint_velocity_penalty", "weight": -1e-1, "num_steps": 10000},
-    )
+    pass
 
 
 ##
