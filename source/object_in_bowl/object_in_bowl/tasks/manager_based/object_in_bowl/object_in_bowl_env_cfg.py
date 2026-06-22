@@ -30,7 +30,7 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
-# Dense carry rewards only turn on after the cube is clearly lifted above its start height.
+# Height threshold for the binary lift reward.
 OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
@@ -228,10 +228,10 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 ##
 
 
-# Defines the sampled carry target above the visual bowl area.
+# Keeps the existing sampled bowl-area command in the environment.
 @configclass
 class CommandsCfg:
-    """Command terms that ask the policy to carry the cube above the bowl area."""
+    """Command terms used by observations and later placement experiments."""
 
     object_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot",
@@ -312,11 +312,12 @@ class EventCfg:
     )
 
 
-# Defines the lift, carry, and bowl-placement rewards.
+# Defines the lift-only baseline rewards.
 @configclass
 class RewardsCfg:
-    """Reward terms for lifting the cube and placing it in the bowl."""
+    """Reward terms for proving the robot can reach and lift the cube."""
 
+    # Logs diagnostics without changing the reward value.
     episode_diagnostics = RewTerm(
         func=mdp.update_episode_diagnostics,
         weight=1.0,
@@ -326,92 +327,10 @@ class RewardsCfg:
         weight=1.0,
         params={"std": 0.10},
     )
-    object_lift_progress = RewTerm(
-        func=mdp.compute_object_height_progress_reward,
-        weight=5.0,
-        params={
-            "initial_height": OBJECT_START_POSITION[2],
-            "target_height": OBJECT_LIFTED_HEIGHT,
-        },
-    )
     lifting_object = RewTerm(
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
-    )
-    object_goal_tracking = RewTerm(
-        func=mdp.compute_object_goal_distance_reward,
-        weight=16.0,
-        params={
-            "std": 0.30,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
-            "command_name": "object_pose",
-            "gate_target_position": PLACEMENT_TARGET_POSITION,
-            "gate_radius": BOWL_LOWERING_RADIUS,
-            "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
-            "gate_reward_scale": 0.5,
-        },
-    )
-    object_goal_tracking_fine_grained = RewTerm(
-        func=mdp.compute_object_goal_distance_reward,
-        weight=5.0,
-        params={
-            "std": 0.05,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
-            "command_name": "object_pose",
-            "gate_target_position": PLACEMENT_TARGET_POSITION,
-            "gate_radius": BOWL_LOWERING_RADIUS,
-            "gate_minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
-            "gate_reward_scale": 0.0,
-        },
-    )
-    object_to_target_xy = RewTerm(
-        func=mdp.compute_object_to_target_xy_reward,
-        weight=0.0,
-        params={
-            "target_position": PLACEMENT_TARGET_POSITION,
-            "std": 0.20,
-            "radius": PLACEMENT_TARGET_RADIUS,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
-        },
-    )
-    object_above_target = RewTerm(
-        func=mdp.compute_object_above_target_reward,
-        weight=0.0,
-        params={
-            "target_position": PLACEMENT_TARGET_POSITION,
-            "radius": PLACEMENT_TARGET_RADIUS,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
-        },
-    )
-    object_lowering_into_bowl = RewTerm(
-        func=mdp.compute_object_lowering_into_bowl_reward,
-        weight=10.0,
-        params={
-            "target_position": PLACEMENT_TARGET_POSITION,
-            "radius": BOWL_LOWERING_RADIUS,
-            "target_height": BOWL_LOWERING_TARGET_HEIGHT,
-            "height_std": 0.08,
-            "minimal_height": BOWL_LOWERING_REWARD_MIN_HEIGHT,
-        },
-    )
-    object_in_bowl = RewTerm(
-        func=mdp.compute_object_in_bowl_success_reward,
-        weight=1500.0,
-        params={
-            "target_position": PLACEMENT_TARGET_POSITION,
-            "radius": BOWL_SUCCESS_RADIUS,
-            "min_height": BOWL_SUCCESS_MIN_HEIGHT,
-            "max_height": BOWL_SUCCESS_MAX_HEIGHT,
-            "max_speed": BOWL_SUCCESS_MAX_SPEED,
-            "max_angular_speed": BOWL_SUCCESS_MAX_ANGULAR_SPEED,
-            "min_gripper_open": BOWL_SUCCESS_MIN_GRIPPER_OPEN,
-            "robot_cfg": SceneEntityCfg("robot", joint_names=["panda_finger.*"]),
-        },
-    )
-    action_rate_penalty = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
-    joint_velocity_penalty = RewTerm(
-        func=mdp.joint_vel_l2, weight=-1e-4, params={"asset_cfg": SceneEntityCfg("robot")}
     )
 
 
@@ -440,10 +359,10 @@ class TerminationsCfg:
     )
 
 
-# Keeps movement penalties fixed while the placement skill is still being learned.
+# Placeholder for future curriculum settings.
 @configclass
 class CurriculumCfg:
-    """Curriculum terms for the placement MDP."""
+    """Curriculum terms for the MDP."""
 
     pass
 
