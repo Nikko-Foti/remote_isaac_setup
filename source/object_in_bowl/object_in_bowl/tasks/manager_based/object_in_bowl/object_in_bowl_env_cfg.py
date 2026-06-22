@@ -322,6 +322,14 @@ class RewardsCfg:
         weight=1.0,
         params={"std": 0.10},
     )
+    object_lift_progress = RewTerm(
+        func=mdp.compute_object_height_progress_reward,
+        weight=5.0,
+        params={
+            "initial_height": OBJECT_START_POSITION[2],
+            "target_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
     lifting_object = RewTerm(
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
