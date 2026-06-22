@@ -30,13 +30,12 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 
 
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
-OBJECT_TARGET_REWARD_MIN_HEIGHT = 0.04
-OBJECT_OFFICIAL_LIFTED_HEIGHT = 0.04
+# Dense carry rewards only turn on after the cube is clearly lifted above its start height.
+OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
 PLACEMENT_COMMAND_Y_RANGE = (0.12, 0.28)
 PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
-OBJECT_LIFTED_HEIGHT = 0.105
 PLACEMENT_TARGET_RADIUS = 0.08
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
 BOWL_ASSET_POSITION = (PLACEMENT_TARGET_XY[0], PLACEMENT_TARGET_XY[1], 0.025)
@@ -57,6 +56,7 @@ PLACEMENT_TARGET_POSITION = (
 BOWL_COLLISION_BASE_CENTER_Z = BOWL_COLLISION_FLOOR_TOP_Z - BOWL_COLLISION_BASE_THICKNESS / 2.0
 BOWL_COLLISION_WALL_CENTER_Z = BOWL_COLLISION_FLOOR_TOP_Z + BOWL_COLLISION_WALL_HEIGHT / 2.0
 BOWL_LOWERING_RADIUS = BOWL_SUCCESS_RADIUS
+BOWL_LOWERING_REWARD_MIN_HEIGHT = OBJECT_START_POSITION[2] + 0.035
 BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
 BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
 BOWL_LOWERING_TARGET_HEIGHT = (BOWL_SUCCESS_MIN_HEIGHT + BOWL_SUCCESS_MAX_HEIGHT) / 2.0
@@ -325,14 +325,14 @@ class RewardsCfg:
     lifting_object = RewTerm(
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
-        params={"minimal_height": OBJECT_OFFICIAL_LIFTED_HEIGHT},
+        params={"minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_goal_tracking = RewTerm(
         func=mdp.compute_object_goal_distance_reward,
         weight=16.0,
         params={
             "std": 0.30,
-            "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
             "command_name": "object_pose",
             "gate_target_position": PLACEMENT_TARGET_POSITION,
             "gate_radius": BOWL_LOWERING_RADIUS,
@@ -345,7 +345,7 @@ class RewardsCfg:
         weight=5.0,
         params={
             "std": 0.05,
-            "minimal_height": OBJECT_TARGET_REWARD_MIN_HEIGHT,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
             "command_name": "object_pose",
             "gate_target_position": PLACEMENT_TARGET_POSITION,
             "gate_radius": BOWL_LOWERING_RADIUS,
@@ -380,7 +380,7 @@ class RewardsCfg:
             "radius": BOWL_LOWERING_RADIUS,
             "target_height": BOWL_LOWERING_TARGET_HEIGHT,
             "height_std": 0.08,
-            "minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "minimal_height": BOWL_LOWERING_REWARD_MIN_HEIGHT,
         },
     )
     object_in_bowl = RewTerm(
