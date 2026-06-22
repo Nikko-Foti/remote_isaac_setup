@@ -19,6 +19,14 @@ if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
 
 
+# Updates per-episode diagnostic buffers without changing the reward.
+def update_episode_diagnostics(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Update diagnostic buffers and return zero reward."""
+    if hasattr(env, "update_episode_diagnostics"):
+        env.update_episode_diagnostics()
+    return torch.zeros(env.num_envs, device=env.device)
+
+
 # Checks if the cube has been lifted off the table.
 def check_object_lifted(
     env: ManagerBasedRLEnv,

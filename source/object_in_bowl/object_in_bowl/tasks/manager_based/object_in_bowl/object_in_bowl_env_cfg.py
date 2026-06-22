@@ -317,6 +317,10 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for lifting the cube and placing it in the bowl."""
 
+    episode_diagnostics = RewTerm(
+        func=mdp.update_episode_diagnostics,
+        weight=1.0,
+    )
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
         weight=1.0,
