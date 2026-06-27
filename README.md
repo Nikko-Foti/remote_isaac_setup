@@ -1,16 +1,17 @@
-# Template for Isaac Lab Projects
+# Isaac Lab Task Workspace
 
 ## Overview
 
-This project/repository serves as a template for building projects or extensions based on Isaac Lab.
-It allows you to develop in an isolated environment, outside of the core Isaac Lab repository.
+This repository is a small Isaac Lab workspace for custom tasks and shared debugging tools.
+It keeps task code outside of the core Isaac Lab repository while leaving room for more tasks later.
 
-**Key Features:**
+**Layout:**
 
-- `Isolation` Work outside the core Isaac Lab repository, ensuring that your development efforts remain self-contained.
-- `Flexibility` This template is set up to allow your code to be run as an extension in Omniverse.
+- `custom_tasks/object_in_bowl` contains the current custom Isaac Lab task package.
+- `scripts` contains repo-level training, play, and smoke-test helpers.
+- `tools` contains shared debugging utilities, including the browser debug viewer.
 
-**Keywords:** extension, template, isaaclab
+**Keywords:** extension, workspace, isaaclab, reinforcement-learning
 
 ## Installation
 
@@ -23,7 +24,8 @@ It allows you to develop in an isolated environment, outside of the core Isaac L
 
     ```bash
     # use 'PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-    python -m pip install -e source/object_in_bowl
+    python -m pip install -e custom_tasks/object_in_bowl/source/object_in_bowl
+    ```
 
 - Verify that the extension is correctly installed by:
 
@@ -67,6 +69,13 @@ It allows you to develop in an isolated environment, outside of the core Isaac L
         python scripts/random_agent.py --task=Isaac-Object-In-Bowl-Franka-v0 --num_envs=1 --headless --max_steps=25
         ```
 
+    - Inspecting the task with the debug viewer:
+
+        ```bash
+        # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
+        python tools/debug_viewer.py --task=Isaac-Object-In-Bowl-Franka-v0 --headless --serve --host=0.0.0.0 --port=8080
+        ```
+
 ### Set up IDE (Optional)
 
 To setup the IDE, please follow these instructions:
@@ -80,14 +89,15 @@ This helps in indexing all the python modules for intelligent suggestions while 
 
 ### Setup as Omniverse Extension (Optional)
 
-We provide an example UI extension that will load upon enabling your extension defined in `source/object_in_bowl/object_in_bowl/ui_extension_example.py`.
+We provide an example UI extension that will load upon enabling your extension defined in
+`custom_tasks/object_in_bowl/source/object_in_bowl/object_in_bowl/ui_extension_example.py`.
 
 To enable your extension, follow these steps:
 
 1. **Add the search path of this project/repository** to the extension manager:
     - Navigate to the extension manager using `Window` -> `Extensions`.
     - Click on the **Hamburger Icon**, then go to `Settings`.
-    - In the `Extension Search Paths`, enter the absolute path to the `source` directory of this project/repository.
+    - In the `Extension Search Paths`, enter the absolute path to `custom_tasks/object_in_bowl/source`.
     - If not already present, in the `Extension Search Paths`, enter the path that leads to Isaac Lab's extension directory directory (`IsaacLab/source`)
     - Click on the **Hamburger Icon**, then click `Refresh`.
 
@@ -120,7 +130,7 @@ In this case, add the path to your extension in `.vscode/settings.json` under th
 ```json
 {
     "python.analysis.extraPaths": [
-        "<path-to-ext-repo>/source/object_in_bowl"
+        "<path-to-ext-repo>/custom_tasks/object_in_bowl/source/object_in_bowl"
     ]
 }
 ```

@@ -110,9 +110,17 @@ def overwrite_python_analysis_extra_paths(isaaclab_settings: str) -> str:
             "\n\tWe are working on a fix for this issue with the Isaac Sim team."
         )
 
-    # add the path names that are in the Isaac Lab extensions directory
-    isaaclab_extensions = os.listdir(os.path.join(PROJECT_DIR, "source"))
-    path_names.extend(['"${workspaceFolder}/source/' + ext + '"' for ext in isaaclab_extensions])
+    # add project extension paths. Support both generated Isaac Lab layouts
+    # (`source/<extension>`) and this workspace layout
+    # (`custom_tasks/<task>/source/<extension>`).
+    extension_roots = [PROJECT_DIR / "source", *(PROJECT_DIR / "custom_tasks").glob("*/source")]
+    for extension_root in extension_roots:
+        if not extension_root.is_dir():
+            continue
+        for extension_path in extension_root.iterdir():
+            if extension_path.is_dir():
+                rel_path = extension_path.relative_to(PROJECT_DIR).as_posix()
+                path_names.append(f'"${{workspaceFolder}}/{rel_path}"')
 
     # combine them into a single string
     path_names = ",\n\t\t".expandtabs(4).join(path_names)
