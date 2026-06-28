@@ -51,6 +51,8 @@ def build_mock_diagnostics(
 ) -> dict[str, Any]:
     """Build fake object-in-bowl diagnostics for browser-only screenshots."""
     object_target_distance = distance(cube, target)
+    mock_lift_progress = max(0.0, min(1.0, (cube[2] - 0.055) / 0.05))
+    mock_lift_gate_active = viewer_mode == "policy"
     return {
         "adapterName": ADAPTER_NAME,
         "displayName": DISPLAY_NAME,
@@ -127,14 +129,14 @@ def build_mock_diagnostics(
                 "source": "object_in_bowl_adapter",
             },
             {
-                "name": "height_progress",
-                "label": "Would height-progress reward fire?",
+                "name": "object_lift_progress",
+                "label": "Would gated lift-progress reward fire?",
                 "probeKind": "inactive_candidate",
                 "statusLabel": "candidate",
                 "isActiveReward": False,
-                "currentValue": max(0.0, min(1.0, (cube[2] - 0.055) / 0.05)),
-                "wouldFire": cube[2] > 0.055,
-                "detail": "smooth 0-to-1 progress from table height to lift threshold",
+                "currentValue": mock_lift_progress if mock_lift_gate_active else 0.0,
+                "wouldFire": mock_lift_gate_active and cube[2] > 0.055,
+                "detail": "lift progress gated by near cube + closing gripper",
                 "source": "object_in_bowl_adapter",
             },
         ],
@@ -403,6 +405,7 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
             BOWL_SUCCESS_MIN_GRIPPER_OPEN,
             BOWL_SUCCESS_MIN_HEIGHT,
             BOWL_SUCCESS_RADIUS,
+            LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
             OBJECT_LIFTED_HEIGHT,
             OBJECT_START_POSITION,
             PLACEMENT_TARGET_POSITION,
@@ -425,12 +428,15 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
             "near cube + closing gripper before lift",
         ),
         (
-            "height_progress",
-            "Would height-progress reward fire?",
-            lambda: mdp.compute_object_height_progress_reward(
-                env, initial_height=OBJECT_START_POSITION[2], target_height=OBJECT_LIFTED_HEIGHT
+            "object_lift_progress",
+            "Would gated lift-progress reward fire?",
+            lambda: mdp.compute_gated_object_height_progress_reward(
+                env,
+                initial_height=OBJECT_START_POSITION[2],
+                target_height=OBJECT_LIFTED_HEIGHT,
+                near_distance=LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
             ),
-            "smooth 0-to-1 progress from table height to lift threshold",
+            "lift progress gated by near cube + closing gripper",
         ),
         (
             "object_to_bowl",
