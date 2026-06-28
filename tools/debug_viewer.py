@@ -154,6 +154,32 @@ HTML_PAGE = r"""<!doctype html>
       color: var(--muted);
       font-size: 12px;
     }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .summary-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      background: var(--panel-2);
+    }
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .summary-value {
+      margin-top: 3px;
+      font-size: 18px;
+      font-weight: 680;
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-source {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+    }
     .stage-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -181,6 +207,13 @@ HTML_PAGE = r"""<!doctype html>
       color: var(--muted);
       font-size: 12px;
     }
+    .stage-margin {
+      margin-top: 6px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stage-margin.good { color: var(--good); }
+    .stage-margin.bad { color: var(--bad); }
     .timeline {
       width: 100%;
       height: 130px;
@@ -247,6 +280,16 @@ HTML_PAGE = r"""<!doctype html>
     }
     .active { color: var(--good); }
     .inactive { color: var(--muted); }
+    .health.good { color: var(--good); }
+    .health.warn { color: var(--warn); }
+    .health.bad { color: var(--bad); }
+    .subhead {
+      margin: 12px 0 6px;
+      font-size: 12px;
+      font-weight: 650;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
     .error {
       color: #ffd7d7;
       background: rgba(239, 106, 106, 0.13);
@@ -293,12 +336,15 @@ HTML_PAGE = r"""<!doctype html>
     <aside>
       <div class="panel" id="modePanel"></div>
       <div class="panel" id="statusPanel"></div>
+      <div class="panel" id="configPanel"></div>
       <div class="panel" id="bottleneckPanel"></div>
       <div class="panel" id="timelinePanel"></div>
       <div class="panel" id="metricsPanel"></div>
       <div class="panel" id="rewardPanel"></div>
+      <div class="panel" id="commandPanel"></div>
       <div class="panel" id="probePanel"></div>
       <div class="panel" id="terminationPanel"></div>
+      <div class="panel" id="episodeLogPanel"></div>
       <div class="panel" id="assetPanel"></div>
       <div class="panel" id="overlayPanel"></div>
       <div class="panel" id="ioPanel"></div>
@@ -310,12 +356,15 @@ HTML_PAGE = r"""<!doctype html>
     const heightCanvas = document.getElementById("heightCanvas");
     const modePanel = document.getElementById("modePanel");
     const statusPanel = document.getElementById("statusPanel");
+    const configPanel = document.getElementById("configPanel");
     const bottleneckPanel = document.getElementById("bottleneckPanel");
     const timelinePanel = document.getElementById("timelinePanel");
     const metricsPanel = document.getElementById("metricsPanel");
     const rewardPanel = document.getElementById("rewardPanel");
+    const commandPanel = document.getElementById("commandPanel");
     const probePanel = document.getElementById("probePanel");
     const terminationPanel = document.getElementById("terminationPanel");
+    const episodeLogPanel = document.getElementById("episodeLogPanel");
     const assetPanel = document.getElementById("assetPanel");
     const overlayPanel = document.getElementById("overlayPanel");
     const ioPanel = document.getElementById("ioPanel");
@@ -352,6 +401,36 @@ HTML_PAGE = r"""<!doctype html>
       if (value === true) return `<span class="pill active">yes</span>`;
       if (value === false) return `<span class="pill" style="color: var(--bad)">no</span>`;
       return `<span class="pill inactive">n/a</span>`;
+    }
+
+    function healthPill(status) {
+      const value = status || "unknown";
+      const cls = value === "ok" ? "good" : value === "warn" ? "warn" : value === "bad" ? "bad" : "inactive";
+      return `<span class="pill health ${cls}">${value}</span>`;
+    }
+
+    function summaryCard(label, value, source) {
+      return `<div class="summary-card">
+        <div class="summary-label">${label}</div>
+        <div class="summary-value">${value}</div>
+        ${source ? `<div class="summary-source">${source}</div>` : ""}
+      </div>`;
+    }
+
+    function formatStats(stats) {
+      if (!stats) return "-";
+      const range = stats.min !== undefined && stats.max !== undefined ? `${fmt(stats.min)}..${fmt(stats.max)}` : "-";
+      const mean = stats.mean !== undefined ? `mean ${fmt(stats.mean)}` : "";
+      const flags = [];
+      if (stats.nanCount) flags.push(`nan ${stats.nanCount}`);
+      if (stats.infCount) flags.push(`inf ${stats.infCount}`);
+      if (stats.nearLimitRate !== undefined) flags.push(`limit ${fmt(stats.nearLimitRate, 2)}`);
+      return [range, mean, flags.join(", ")].filter(Boolean).join("<br>");
+    }
+
+    function formatSample(row) {
+      if (row.sample !== undefined) return fmt(row.sample);
+      return row.summary || "-";
     }
 
     function shortLabel(label) {
@@ -688,9 +767,13 @@ HTML_PAGE = r"""<!doctype html>
       const stages = snapshot.bottlenecks?.stages || [];
       bottleneckPanel.innerHTML = `<h2>Bottlenecks</h2><div class="stage-grid">${stages.map(stage => {
         const stateClass = stage.active === true ? "good" : stage.active === false ? "bad" : "unknown";
+        const margin = Number(stage.margin);
+        const marginClass = Number.isFinite(margin) && margin >= 0 ? "good" : "bad";
+        const marginText = Number.isFinite(margin) ? `<div class="stage-margin ${marginClass}">margin ${margin >= 0 ? "+" : ""}${fmt(margin)}${stage.marginUnit || ""}</div>` : "";
         return `<div class="stage ${stateClass}">
           <div class="stage-name"><span>${stage.label}</span>${statePill(stage.active)}</div>
           <div class="stage-detail">${stage.detail || ""}</div>
+          ${marginText}
         </div>`;
       }).join("") || `<div class="muted">No bottleneck signals available.</div>`}</div>
       <h2 style="margin-top:16px">Episode Signals</h2>
@@ -708,20 +791,56 @@ HTML_PAGE = r"""<!doctype html>
       const metrics = snapshot.metrics || {};
       metricsPanel.innerHTML = `<h2>Key Signals</h2><dl class="kv">${Object.entries(metrics).map(([k, v]) => `<dt>${k}</dt><dd>${fmt(v)}</dd>`).join("") || "<dt>none</dt><dd>-</dd>"}</dl>`;
 
-      rewardPanel.innerHTML = `<h2>Rewards</h2>` + table(
+      const cfg = snapshot.taskConfig || {};
+      configPanel.innerHTML = `<h2>Task Config</h2><div class="summary-grid">${
+        [
+          ["Step dt", cfg.stepDt !== undefined ? `${fmt(cfg.stepDt)}s` : "-", "sim.dt * decimation"],
+          ["Sim dt", cfg.simDt !== undefined ? `${fmt(cfg.simDt)}s` : "-", "env.cfg.sim.dt"],
+          ["Decimation", cfg.decimation ?? "-", "env.cfg.decimation"],
+          ["Episode", cfg.episodeLengthS !== undefined ? `${fmt(cfg.episodeLengthS)}s` : "-", "env.cfg.episode_length_s"],
+          ["Num envs", cfg.numEnvs ?? "-", "env.cfg.scene.num_envs"],
+          ["Spacing", cfg.envSpacing !== undefined ? `${fmt(cfg.envSpacing)}m` : "-", "env.cfg.scene.env_spacing"],
+        ].map(([label, value, source]) => summaryCard(label, value, source)).join("")
+      }</div>`;
+
+      const rewardSummary = snapshot.rewardSummary || {};
+      rewardPanel.innerHTML = `<h2>Rewards</h2><div class="summary-grid">${
+        summaryCard("Total pre-dt", fmt(rewardSummary.totalWeightedPreDt), "sum weighted terms")
+        + summaryCard("Actual step", fmt(rewardSummary.totalStepContribution), `pre-dt * step dt ${fmt(rewardSummary.stepDt)}s`)
+        + summaryCard("Firing terms", `${rewardSummary.firingCount ?? 0}/${rewardSummary.termCount ?? 0}`, "non-zero terms")
+      }</div>` + table(
         [
           { label: "Term" },
           { label: "Weighted pre-dt", num: true },
+          { label: "Per step", num: true },
           { label: "Weight", num: true },
           { label: "Firing", num: true },
         ],
         (snapshot.rewards || []).map(r => [
           `<span class="name">${r.name}</span>`,
           fmt(r.weightedPreDtValue),
+          fmt(r.stepContribution),
           fmt(r.weight),
           statePill(Boolean(r.isFiring)),
         ])
       ) + `<div class="mode-help" style="margin-top:8px">Isaac's active reward value is already multiplied by the configured weight. The actual per-step contribution is this value times the environment step time.</div>`;
+
+      commandPanel.innerHTML = `<h2>Commands</h2>` + table(
+        [{ label: "Name" }, { label: "Shape" }, { label: "Current" }, { label: "Config" }],
+        (snapshot.commands || []).map(c => [
+          `<span class="name">${c.name}</span>`,
+          c.shape || "-",
+          `<span class="muted">${formatSample(c)}</span>`,
+          `<span class="muted">${c.paramSummary || ""}</span>`,
+        ])
+      ) + `<div class="subhead">Reset Events</div>` + table(
+        [{ label: "Name" }, { label: "Mode" }, { label: "Config" }],
+        (snapshot.events || []).map(e => [
+          `<span class="name">${e.name}</span>`,
+          e.mode || "-",
+          `<span class="muted">${e.paramSummary || ""}</span>`,
+        ])
+      );
 
       probePanel.innerHTML = `<h2>Reward Probes</h2>` + table(
         [{ label: "Probe" }, { label: "Value", num: true }, { label: "Would fire", num: true }, { label: "Meaning" }],
@@ -760,10 +879,18 @@ HTML_PAGE = r"""<!doctype html>
         ])
       );
 
-      const obsRows = (snapshot.observations || []).map(o => [`${o.group}.${o.name}`, o.shape || "-", o.summary || ""]);
-      const actionRows = (snapshot.actions || []).map(a => [a.name, a.shape || "-", a.summary || ""]);
-      ioPanel.innerHTML = `<h2>Observations</h2>${table([{ label: "Term" }, { label: "Shape" }, { label: "Value" }], obsRows)}
-        <h2 style="margin-top:16px">Actions</h2>${table([{ label: "Term" }, { label: "Shape" }, { label: "Value" }], actionRows)}`;
+      const logGroups = snapshot.extrasLog?.groups || [];
+      episodeLogPanel.innerHTML = `<h2>Episode Logs</h2>${logGroups.length ? logGroups.map(group => (
+        `<div class="subhead">${group.name}</div>` + table(
+          [{ label: "Metric" }, { label: "Value", num: true }],
+          group.rows.map(row => [`<span class="name">${row.name}</span>`, fmt(row.value)])
+        )
+      )).join("") : `<div class="muted">No episode logs have been emitted yet.</div>`}`;
+
+      const obsRows = (snapshot.observations || []).map(o => [`${o.group}.${o.name}`, o.shape || "-", healthPill(o.health?.status), `<span class="muted">${formatStats(o.stats)}</span>`]);
+      const actionRows = (snapshot.actions || []).map(a => [a.name, a.shape || "-", healthPill(a.health?.status), `<span class="muted">${formatStats(a.stats)}</span>`]);
+      ioPanel.innerHTML = `<h2>Observation Health</h2>${table([{ label: "Term" }, { label: "Shape" }, { label: "Health", num: true }, { label: "Stats" }], obsRows)}
+        <h2 style="margin-top:16px">Action Health</h2>${table([{ label: "Term" }, { label: "Shape" }, { label: "Health", num: true }, { label: "Stats" }], actionRows)}`;
 
       const errors = snapshot.diagnosticErrors || [];
       errorPanel.innerHTML = errors.length
@@ -850,6 +977,61 @@ def _shape_summary(value: Any) -> str:
     return "x".join(str(item) for item in shape)
 
 
+def _func_name(value: Any) -> str:
+    """Return a compact function/class name for config summaries."""
+    if value is None:
+        return "-"
+    return getattr(value, "__name__", value.__class__.__name__)
+
+
+def _numeric_stats(value: Any, env_index: int | None = None) -> dict[str, Any] | None:
+    """Summarize numeric tensors/arrays without dumping long vectors."""
+    if not hasattr(value, "detach"):
+        return None
+    import torch
+
+    tensor = value.detach().float().cpu()
+    if tensor.numel() == 0:
+        return {"min": None, "max": None, "mean": None, "nanCount": 0, "infCount": 0}
+    if env_index is not None and tensor.ndim > 0 and tensor.shape[0] > env_index:
+        sample_tensor = tensor[env_index]
+    else:
+        sample_tensor = tensor
+    flat = sample_tensor.flatten()
+    finite = flat[torch.isfinite(flat)]
+    nan_count = int(torch.isnan(flat).sum().item())
+    inf_count = int(torch.isinf(flat).sum().item())
+    near_limit_count = int((flat.abs() >= 0.98).sum().item())
+    stats: dict[str, Any] = {
+        "nanCount": nan_count,
+        "infCount": inf_count,
+        "nearLimitRate": near_limit_count / max(1, int(flat.numel())),
+        "sample": [float(item) for item in flat[:6].tolist()],
+    }
+    if finite.numel() == 0:
+        stats.update({"min": None, "max": None, "mean": None})
+    else:
+        stats.update(
+            {
+                "min": float(finite.min().item()),
+                "max": float(finite.max().item()),
+                "mean": float(finite.mean().item()),
+            }
+        )
+    return stats
+
+
+def _health_from_stats(stats: dict[str, Any] | None, flag_limits: bool = False) -> dict[str, Any]:
+    """Classify compact tensor stats for quick scan in the UI."""
+    if stats is None:
+        return {"status": "unknown", "detail": "no numeric stats"}
+    if stats.get("nanCount") or stats.get("infCount"):
+        return {"status": "bad", "detail": "contains nan/inf"}
+    if flag_limits and (stats.get("nearLimitRate") or 0.0) > 0.8:
+        return {"status": "warn", "detail": "many values near action limits"}
+    return {"status": "ok", "detail": "finite"}
+
+
 def _to_scalar(value: Any, env_index: int) -> float | bool | str | None:
     """Convert manager term values into a scalar when Isaac returns a one-item sequence."""
     json_value = _to_jsonable(value, env_index)
@@ -911,6 +1093,107 @@ def _param_summary(params: dict[str, Any], env_index: int) -> str:
     for key, value in params.items():
         parts.append(f"{key}={_to_jsonable(value, env_index, max_items=3)}")
     return ", ".join(parts[:4])
+
+
+def _collect_task_config(env: Any) -> dict[str, Any]:
+    """Collect generic environment timing and scene config."""
+    cfg = getattr(env, "cfg", None)
+    sim_cfg = getattr(cfg, "sim", None)
+    scene_cfg = getattr(cfg, "scene", None)
+    sim_dt = _number(getattr(sim_cfg, "dt", None))
+    decimation = _number(getattr(cfg, "decimation", None))
+    step_dt = sim_dt * decimation if sim_dt is not None and decimation is not None else None
+    return {
+        "simDt": sim_dt,
+        "decimation": decimation,
+        "stepDt": step_dt,
+        "renderInterval": _to_jsonable(getattr(sim_cfg, "render_interval", None)),
+        "episodeLengthS": _to_jsonable(getattr(cfg, "episode_length_s", None)),
+        "numEnvs": _to_jsonable(getattr(scene_cfg, "num_envs", None)),
+        "envSpacing": _to_jsonable(getattr(scene_cfg, "env_spacing", None)),
+        "source": "env.cfg",
+    }
+
+
+def _collect_commands(env: Any, env_index: int) -> list[dict[str, Any]]:
+    """Collect command-manager values and command config summaries."""
+    manager = getattr(env, "command_manager", None)
+    if manager is None:
+        return []
+    cfgs = _manager_term_cfgs(manager)
+    names = list(getattr(manager, "_term_names", []) or cfgs.keys())
+    rows = []
+    for name in names:
+        value = None
+        try:
+            value = manager.get_command(name)
+        except Exception:
+            pass
+        cfg = cfgs.get(name)
+        params = getattr(cfg, "params", {}) or {}
+        ranges = getattr(cfg, "ranges", None)
+        if ranges is not None:
+            params = dict(params)
+            params["ranges"] = vars(ranges)
+        resampling = getattr(cfg, "resampling_time_range", None)
+        if resampling is not None:
+            params = dict(params)
+            params["resampling"] = resampling
+        stats = _numeric_stats(value, env_index)
+        rows.append(
+            {
+                "name": name,
+                "shape": _shape_summary(value),
+                "summary": str(_to_jsonable(value, env_index, max_items=6)),
+                "stats": stats,
+                "health": _health_from_stats(stats),
+                "params": _to_jsonable(params, env_index),
+                "paramSummary": _param_summary(params, env_index),
+                "source": "command_manager",
+            }
+        )
+    return rows
+
+
+def _collect_event_cfgs(env: Any, env_index: int) -> list[dict[str, Any]]:
+    """Collect reset/event config so sampled starting conditions are visible."""
+    events_cfg = getattr(getattr(env, "cfg", None), "events", None)
+    rows = []
+    for name, cfg in vars(events_cfg).items() if events_cfg is not None else []:
+        if name.startswith("_"):
+            continue
+        params = getattr(cfg, "params", {}) or {}
+        rows.append(
+            {
+                "name": name,
+                "mode": getattr(cfg, "mode", None),
+                "func": _func_name(getattr(cfg, "func", None)),
+                "params": _to_jsonable(params, env_index),
+                "paramSummary": _param_summary(params, env_index),
+                "source": "env.cfg.events",
+            }
+        )
+    return rows
+
+
+def _collect_extras_log(env: Any, env_index: int) -> dict[str, Any]:
+    """Collect latest episode log scalars grouped by prefix."""
+    extras = getattr(env, "extras", {}) or {}
+    log = extras.get("log", {}) if isinstance(extras, dict) else {}
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for key, value in log.items():
+        group, separator, metric = str(key).partition("/")
+        if not separator:
+            group = "log"
+            metric = str(key)
+        grouped.setdefault(group, []).append({"name": metric, "value": _to_scalar(value, env_index)})
+    return {
+        "groups": [
+            {"name": name, "rows": sorted(rows, key=lambda row: row["name"])}
+            for name, rows in sorted(grouped.items())
+        ],
+        "source": "env.extras.log",
+    }
 
 
 def _collect_assets(scene: Any, env_index: int) -> list[dict[str, Any]]:
@@ -1004,7 +1287,7 @@ def _collect_frames(scene: Any, env_index: int) -> list[dict[str, Any]]:
     return frames
 
 
-def _collect_rewards(env: Any, env_index: int) -> list[dict[str, Any]]:
+def _collect_rewards(env: Any, env_index: int, step_dt: float | None = None) -> list[dict[str, Any]]:
     manager = getattr(env, "reward_manager", None)
     if manager is None:
         return []
@@ -1014,17 +1297,38 @@ def _collect_rewards(env: Any, env_index: int) -> list[dict[str, Any]]:
     for name, cfg in cfgs.items():
         weight = _to_jsonable(getattr(cfg, "weight", None), env_index)
         weighted_pre_dt_value = _to_scalar(current.get(name), env_index)
+        weighted_number = _number(weighted_pre_dt_value)
+        weight_number = _number(weight)
+        raw_approx = (
+            weighted_number / weight_number
+            if weighted_number is not None and weight_number not in (None, 0.0)
+            else None
+        )
+        step_contribution = weighted_number * step_dt if weighted_number is not None and step_dt is not None else None
         rows.append(
             {
                 "name": name,
                 "weight": weight,
                 "params": _to_jsonable(getattr(cfg, "params", {}) or {}, env_index),
                 "weightedPreDtValue": weighted_pre_dt_value,
-                "isFiring": abs(_number(weighted_pre_dt_value) or 0.0) > 1.0e-6,
+                "rawApprox": raw_approx,
+                "stepContribution": step_contribution,
+                "isFiring": abs(weighted_number or 0.0) > 1.0e-6,
                 "source": "reward_manager",
             }
         )
     return rows
+
+
+def _collect_reward_summary(rewards: list[dict[str, Any]], step_dt: float | None) -> dict[str, Any]:
+    total_pre_dt = sum(_number(reward.get("weightedPreDtValue")) or 0.0 for reward in rewards)
+    return {
+        "totalWeightedPreDt": total_pre_dt,
+        "totalStepContribution": total_pre_dt * step_dt if step_dt is not None else None,
+        "stepDt": step_dt,
+        "firingCount": sum(1 for reward in rewards if reward.get("isFiring")),
+        "termCount": len(rewards),
+    }
 
 
 def _collect_terminations(env: Any, env_index: int) -> list[dict[str, Any]]:
@@ -1062,12 +1366,16 @@ def _collect_observations(env: Any, env_index: int) -> list[dict[str, Any]]:
         for key, value in current.items():
             group_name, separator, term_name = key.partition("-")
             value_summary = _to_jsonable(value, None, max_items=6)
+            stats = _numeric_stats(value, env_index)
             rows.append(
                 {
                     "group": group_name if separator else "observation",
                     "name": term_name if separator else group_name,
                     "shape": _shape_summary(value),
                     "summary": str(value_summary),
+                    "sample": _to_jsonable(value, env_index, max_items=6),
+                    "stats": stats,
+                    "health": _health_from_stats(stats),
                     "source": "observation_manager",
                 }
             )
@@ -1085,12 +1393,16 @@ def _collect_observations(env: Any, env_index: int) -> list[dict[str, Any]]:
         else:
             terms = [("concatenated", group_value)]
         for name, value in terms:
+            stats = _numeric_stats(value, env_index)
             rows.append(
                 {
                     "group": str(group_name),
                     "name": str(name),
                     "shape": _shape_summary(value),
                     "summary": str(_to_jsonable(value, env_index, max_items=6)),
+                    "sample": _to_jsonable(value, env_index, max_items=6),
+                    "stats": stats,
+                    "health": _health_from_stats(stats),
                     "source": "observation_manager",
                 }
             )
@@ -1109,11 +1421,15 @@ def _collect_actions(env: Any, env_index: int) -> list[dict[str, Any]]:
         except Exception:
             continue
         raw_actions = getattr(term, "raw_actions", None)
+        stats = _numeric_stats(raw_actions, env_index)
         rows.append(
             {
                 "name": name,
                 "shape": _shape_summary(raw_actions),
                 "summary": str(_to_jsonable(raw_actions, env_index, max_items=6)),
+                "sample": _to_jsonable(raw_actions, env_index, max_items=6),
+                "stats": stats,
+                "health": _health_from_stats(stats, flag_limits=True),
                 "source": "action_manager",
             }
         )
@@ -1212,13 +1528,23 @@ def _xy_distance(a: list[float] | None, b: list[float] | None) -> float | None:
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
 
-def _stage(name: str, label: str, active: bool | None, detail: str, value: Any = None) -> dict[str, Any]:
+def _stage(
+    name: str,
+    label: str,
+    active: bool | None,
+    detail: str,
+    value: Any = None,
+    margin: float | None = None,
+    margin_unit: str = "",
+) -> dict[str, Any]:
     return {
         "name": name,
         "label": label,
         "active": active,
         "detail": detail,
         "value": value,
+        "margin": margin,
+        "marginUnit": margin_unit,
     }
 
 
@@ -1339,6 +1665,35 @@ def _collect_bottlenecks(
         and _number(min_gripper_open) is not None
         and min_finger_position > float(min_gripper_open)
     )
+    near_margin = DEFAULT_NEAR_OBJECT_DISTANCE - ee_distance if ee_distance is not None else None
+    lift_margin = (
+        object_z - float(lifted_height)
+        if object_z is not None and _number(lifted_height) is not None
+        else None
+    )
+    over_bowl_margin = (
+        float(bowl_radius) - xy_distance
+        if xy_distance is not None and _number(bowl_radius) is not None
+        else None
+    )
+    height_margin = None
+    if object_z is not None and _number(bowl_min_height) is not None and _number(bowl_max_height) is not None:
+        min_height = float(bowl_min_height)
+        max_height = float(bowl_max_height)
+        height_margin = min(object_z - min_height, max_height - object_z)
+    settled_margin = None
+    if (
+        linear_speed is not None
+        and angular_speed is not None
+        and _number(max_speed) is not None
+        and _number(max_angular_speed) is not None
+    ):
+        settled_margin = min(float(max_speed) - linear_speed, float(max_angular_speed) - angular_speed)
+    release_margin = (
+        min_finger_position - float(min_gripper_open)
+        if min_finger_position is not None and _number(min_gripper_open) is not None
+        else None
+    )
 
     stages = [
         _stage(
@@ -1347,6 +1702,8 @@ def _collect_bottlenecks(
             near_object if ee_distance is not None else None,
             f"ee-object {fmt_python(ee_distance)}m, target < {DEFAULT_NEAR_OBJECT_DISTANCE:.3f}m",
             ee_distance,
+            near_margin,
+            "m",
         ),
         _stage(
             "close_command",
@@ -1371,6 +1728,8 @@ def _collect_bottlenecks(
             lifted if object_z is not None and lifted_height is not None else None,
             f"cube z {fmt_python(object_z)}m, lift threshold {fmt_python(lifted_height)}m",
             object_z,
+            lift_margin,
+            "m",
         ),
         _stage(
             "over_bowl",
@@ -1378,6 +1737,8 @@ def _collect_bottlenecks(
             over_bowl if xy_distance is not None and bowl_radius is not None else None,
             f"xy distance {fmt_python(xy_distance)}m, radius {fmt_python(bowl_radius)}m",
             xy_distance,
+            over_bowl_margin,
+            "m",
         ),
         _stage(
             "inside_bowl_height",
@@ -1389,12 +1750,16 @@ def _collect_bottlenecks(
             ),
             f"cube z {fmt_python(object_z)}m, allowed {fmt_python(bowl_min_height)}-{fmt_python(bowl_max_height)}m",
             object_z,
+            height_margin,
+            "m",
         ),
         _stage(
             "settled",
             "Cube settled",
             settled if linear_speed is not None and angular_speed is not None else None,
             f"speed {fmt_python(linear_speed)}m/s, angular {fmt_python(angular_speed)}rad/s",
+            None,
+            settled_margin,
         ),
         _stage(
             "released",
@@ -1402,6 +1767,8 @@ def _collect_bottlenecks(
             gripper_open_for_release if min_finger_position is not None and min_gripper_open is not None else None,
             f"min finger {fmt_python(min_finger_position)}m, release threshold > {fmt_python(min_gripper_open)}m",
             min_finger_position,
+            release_margin,
+            "m",
         ),
     ]
     success = all(stage["active"] is True for stage in stages[4:8])
@@ -1540,6 +1907,9 @@ def build_snapshot(env: Any, task: str, env_index: int, step_count: int, mode: s
     """Build a normalized snapshot from a manager-based Isaac Lab environment."""
     unwrapped = env.unwrapped if hasattr(env, "unwrapped") else env
     diagnostic_errors: list[dict[str, str]] = []
+    task_config = _collect_task_config(unwrapped)
+    step_dt = _number(task_config.get("stepDt"))
+    rewards = _collect_rewards(unwrapped, env_index, step_dt)
     snapshot = {
         "schemaVersion": 1,
         "task": task,
@@ -1552,8 +1922,13 @@ def build_snapshot(env: Any, task: str, env_index: int, step_count: int, mode: s
             "assets": _collect_assets(unwrapped.scene, env_index) + _collect_static_assets(unwrapped, env_index),
             "frames": _collect_frames(unwrapped.scene, env_index),
         },
-        "rewards": _collect_rewards(unwrapped, env_index),
+        "taskConfig": task_config,
+        "rewards": rewards,
+        "rewardSummary": _collect_reward_summary(rewards, step_dt),
         "terminations": _collect_terminations(unwrapped, env_index),
+        "commands": _collect_commands(unwrapped, env_index),
+        "events": _collect_event_cfgs(unwrapped, env_index),
+        "extrasLog": _collect_extras_log(unwrapped, env_index),
         "observations": _collect_observations(unwrapped, env_index),
         "actions": _collect_actions(unwrapped, env_index),
     }
@@ -1688,6 +2063,12 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
     ee = [cube[0] - 0.05 * math.cos(phase), cube[1] + 0.04 * math.sin(phase), cube[2] + 0.11]
     target = [0.7, 0.2, 0.049]
     mock_gripper_command = -0.72 if viewer_mode == "policy" else 0.0
+    step_dt = 0.02
+    reaching_value = 0.6
+    lifting_value = 0.0
+    reward_total = reaching_value + lifting_value
+    ee_distance = _distance(ee, cube)
+    object_target_distance = _distance(cube, target)
     return {
         "schemaVersion": 1,
         "task": "Mock-Manager-Based-Task-v0",
@@ -1713,22 +2094,43 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
             ],
             "frames": [{"name": "ee_frame:0", "label": "ee_frame", "kind": "frame", "position": ee}],
         },
+        "taskConfig": {
+            "simDt": 0.01,
+            "decimation": 2,
+            "stepDt": step_dt,
+            "renderInterval": 2,
+            "episodeLengthS": 5.0,
+            "numEnvs": 4096,
+            "envSpacing": 2.5,
+            "source": "mock env.cfg",
+        },
         "rewards": [
             {
                 "name": "reaching_object",
                 "weight": 1.0,
-                "weightedPreDtValue": 0.6,
+                "weightedPreDtValue": reaching_value,
+                "rawApprox": reaching_value,
+                "stepContribution": reaching_value * step_dt,
                 "isFiring": True,
                 "params": {"std": 0.1},
             },
             {
                 "name": "lifting_object",
                 "weight": 15.0,
-                "weightedPreDtValue": 0.0,
+                "weightedPreDtValue": lifting_value,
+                "rawApprox": 0.0,
+                "stepContribution": lifting_value * step_dt,
                 "isFiring": False,
                 "params": {"minimal_height": 0.10500000000000001},
             },
         ],
+        "rewardSummary": {
+            "totalWeightedPreDt": reward_total,
+            "totalStepContribution": reward_total * step_dt,
+            "stepDt": step_dt,
+            "firingCount": 1,
+            "termCount": 2,
+        },
         "terminations": [
             {
                 "name": "object_in_bowl",
@@ -1737,10 +2139,84 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 "paramSummary": "target_position=[0.7, 0.2, 0.049], radius=0.11",
             }
         ],
-        "observations": [
-            {"group": "policy", "name": "concatenated", "shape": "1x36", "summary": "[...mock values...]"}
+        "commands": [
+            {
+                "name": "object_pose",
+                "shape": "1x7",
+                "summary": "[0.7, 0.2, 0.31, 0, 0, 0]",
+                "sample": [0.7, 0.2, 0.31, 0, 0, 0],
+                "stats": {"min": 0.0, "max": 0.7, "mean": 0.201, "nanCount": 0, "infCount": 0},
+                "health": {"status": "ok", "detail": "finite"},
+                "params": {
+                    "ranges": {"pos_x": [0.62, 0.78], "pos_y": [0.12, 0.28], "pos_z": [0.25, 0.45]},
+                    "resampling": [5.0, 5.0],
+                },
+                "paramSummary": "ranges={'pos_x': [0.62, 0.78], 'pos_y': [0.12, 0.28], 'pos_z': [0.25, 0.45]}",
+            }
         ],
-        "actions": [{"name": "arm_action", "shape": "1x7", "summary": "[0, 0, 0, 0, 0, 0]"}],
+        "events": [
+            {
+                "name": "reset_object_position",
+                "mode": "reset",
+                "params": {"pose_range": {"x": [-0.08, 0.08], "y": [-0.10, 0.10], "z": [0.0, 0.0]}},
+                "paramSummary": "pose_range={'x': [-0.08, 0.08], 'y': [-0.1, 0.1], 'z': [0.0, 0.0]}",
+            }
+        ],
+        "extrasLog": {
+            "source": "mock env.extras.log",
+            "groups": [
+                {
+                    "name": "Episode_Bowl",
+                    "rows": [
+                        {"name": "mean_xy_distance", "value": object_target_distance},
+                        {"name": "success_rate", "value": 0.04},
+                    ],
+                },
+                {
+                    "name": "Episode_Diagnostics",
+                    "rows": [
+                        {"name": "max_lift_progress", "value": max(0.0, min(1.0, (cube[2] - 0.055) / 0.05))},
+                        {"name": "min_ee_object_distance", "value": 0.045},
+                    ],
+                },
+            ],
+        },
+        "observations": [
+            {
+                "group": "policy",
+                "name": "concatenated",
+                "shape": "1x36",
+                "summary": "[...mock values...]",
+                "sample": [0.0, 0.1, -0.2, 0.3],
+                "stats": {"min": -0.2, "max": 0.3, "mean": 0.05, "nanCount": 0, "infCount": 0},
+                "health": {"status": "ok", "detail": "finite"},
+            }
+        ],
+        "actions": [
+            {
+                "name": "arm_action",
+                "shape": "1x7",
+                "summary": "[0, 0, 0, 0, 0, 0]",
+                "sample": [0, 0, 0, 0, 0, 0],
+                "stats": {"min": 0.0, "max": 0.0, "mean": 0.0, "nanCount": 0, "infCount": 0, "nearLimitRate": 0.0},
+                "health": {"status": "ok", "detail": "finite"},
+            },
+            {
+                "name": "gripper_action",
+                "shape": "1x1",
+                "summary": str([mock_gripper_command]),
+                "sample": [mock_gripper_command],
+                "stats": {
+                    "min": mock_gripper_command,
+                    "max": mock_gripper_command,
+                    "mean": mock_gripper_command,
+                    "nanCount": 0,
+                    "infCount": 0,
+                    "nearLimitRate": 0.0,
+                },
+                "health": {"status": "ok", "detail": "finite"},
+            },
+        ],
         "overlays": [
             {
                 "type": "height_plane",
@@ -1795,7 +2271,7 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
         ],
         "bottlenecks": {
             "stages": [
-                _stage("near_object", "Hand near cube", True, "ee-object 0.045m, target < 0.080m", 0.045),
+                _stage("near_object", "Hand near cube", True, "ee-object 0.045m, target < 0.080m", 0.045, 0.035, "m"),
                 _stage(
                     "close_command",
                     "Close command",
@@ -1809,17 +2285,41 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                     viewer_mode == "policy",
                     "close command and hand-near-cube are both true",
                 ),
-                _stage("object_lifted", "Cube lifted", cube[2] > 0.105, "cube z is above lift threshold", cube[2]),
-                _stage("over_bowl", "Cube over bowl", False, "xy distance still outside bowl radius"),
-                _stage("inside_bowl_height", "Cube at bowl height", False, "cube is not yet at bowl placement height"),
-                _stage("settled", "Cube settled", True, "mock cube speed is low"),
-                _stage("released", "Gripper released", False, "mock gripper is not released"),
+                _stage(
+                    "object_lifted",
+                    "Cube lifted",
+                    cube[2] > 0.105,
+                    "cube z is above lift threshold",
+                    cube[2],
+                    cube[2] - 0.105,
+                    "m",
+                ),
+                _stage(
+                    "over_bowl",
+                    "Cube over bowl",
+                    False,
+                    "xy distance still outside bowl radius",
+                    object_target_distance,
+                    0.11 - (object_target_distance or 0.0),
+                    "m",
+                ),
+                _stage(
+                    "inside_bowl_height",
+                    "Cube at bowl height",
+                    False,
+                    "cube is not yet at bowl placement height",
+                    cube[2],
+                    min(cube[2] - 0.044, 0.109 - cube[2]),
+                    "m",
+                ),
+                _stage("settled", "Cube settled", True, "mock cube speed is low", None, 0.26),
+                _stage("released", "Gripper released", False, "mock gripper is not released", 0.012, -0.018, "m"),
                 _stage("success_gate", "Success gate", False, "over bowl, correct height, settled, and released"),
             ],
             "signals": {
                 "objectZ": cube[2],
-                "eeObjectDistance": _distance(ee, cube),
-                "objectTargetDistance": _distance(cube, target),
+                "eeObjectDistance": ee_distance,
+                "objectTargetDistance": object_target_distance,
                 "gripperCommand": mock_gripper_command,
                 "gripperOpening": 0.025,
                 "objectLinearSpeed": 0.04,
@@ -1851,8 +2351,8 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
         "diagnosticErrors": [],
         "metrics": {
             "objectZ": cube[2],
-            "eeObjectDistance": _distance(ee, cube),
-            "objectTargetDistance": _distance(cube, target),
+            "eeObjectDistance": ee_distance,
+            "objectTargetDistance": object_target_distance,
         },
     }
 
