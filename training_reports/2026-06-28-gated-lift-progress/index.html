@@ -238,6 +238,10 @@
           <h3>Would 1000 more iterations hit 90%?</h3>
           <p>Maybe. The curve was still improving late, so another 500-1000 iterations is worth trying. It is not guaranteed because the last part was noisy.</p>
         </div>
+        <div class="card">
+          <h3>RL reviewer check</h3>
+          <p>Fresh review agreed: continue from <code>model_1499.pt</code> first. Do not change rewards until we see whether lift stalls below about 90%.</p>
+        </div>
       </div>
     </section>
 
@@ -334,6 +338,16 @@
           <tr><td>After that</td><td>If lift reaches about 90%+ and looks clean, add carry-toward-bowl reward.</td><td>Then the next missing skill is transport.</td></tr>
         </tbody>
       </table>
+      <div class="grid two">
+        <div class="card">
+          <h3>Guardrails</h3>
+          <p>After the continuation, check sustained lift rate, lift-after-close rate, max cube height, gate rate, drop rate, and videos. We want clean lifting, not tossing or one lucky batch.</p>
+        </div>
+        <div class="card">
+          <h3>Decision rule</h3>
+          <p>If lift reaches about 90%+ and looks clean, move to carry-toward-bowl. If it stalls or gets noisy, adjust lift reward before adding bowl transport.</p>
+        </div>
+      </div>
       <p class="small">Design source: matched the repo's dark debug-viewer style. No new dependencies.</p>
     </section>
   </main>
