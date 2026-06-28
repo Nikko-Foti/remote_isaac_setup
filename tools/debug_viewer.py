@@ -354,6 +354,16 @@ HTML_PAGE = r"""<!doctype html>
       return `<span class="pill inactive">n/a</span>`;
     }
 
+    function shortLabel(label) {
+      return String(label || "")
+        .replace(/^object_in_bowl /, "bowl ")
+        .replace(/^lifting_object /, "lift ")
+        .replace(/^object_dropping /, "drop ")
+        .replace("minimum_height", "min")
+        .replace("minimal_height", "min")
+        .replace("maximum_height", "max");
+    }
+
     function modeDescription(snapshot) {
       if ((snapshot.viewerMode || "setup") === "policy") {
         return {
@@ -440,9 +450,20 @@ HTML_PAGE = r"""<!doctype html>
       return positions;
     }
 
+    function isHelperAsset(item) {
+      if (item.kind !== "static_asset") return false;
+      return item.name === "ground" || item.name === "dome_light" || String(item.name || "").includes("collision");
+    }
+
+    function shouldDrawMarker(item) {
+      return item.kind !== "overlay" && item.kind !== "height" && !isHelperAsset(item);
+    }
+
     function canvasLabel(item) {
+      if (item.name === "object") return "cube";
+      if (String(item.name || "").startsWith("ee_frame")) return "ee";
       if (item.kind !== "static_asset") return item.label;
-      if (item.name === "bowl" || item.name === "table") return item.label;
+      if (item.name === "bowl" || item.name === "table") return item.name;
       return "";
     }
 
@@ -475,6 +496,32 @@ HTML_PAGE = r"""<!doctype html>
       ctx.fillRect(box.left, box.top, width, height);
       ctx.fillStyle = "#edf0f5";
       ctx.fillText(text, box.left + 4, box.top + 12);
+    }
+
+    function drawLegendBox(ctx, title, rows, x, y) {
+      if (!rows.length) return;
+      ctx.font = "12px system-ui";
+      const width = Math.min(
+        320,
+        Math.max(ctx.measureText(title).width + 26, ...rows.map(row => ctx.measureText(row.label).width + 42)),
+      );
+      const height = 26 + rows.length * 18;
+      ctx.fillStyle = "rgba(17, 19, 24, 0.88)";
+      ctx.strokeStyle = "rgba(52, 58, 70, 0.9)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, width, height, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#a6adba";
+      ctx.fillText(title, x + 10, y + 16);
+      rows.forEach((row, index) => {
+        const rowY = y + 34 + index * 18;
+        ctx.fillStyle = row.color || "#edf0f5";
+        ctx.fillRect(x + 10, rowY - 9, 9, 9);
+        ctx.fillStyle = "#edf0f5";
+        ctx.fillText(row.label, x + 26, rowY);
+      });
     }
 
     function bounds(snapshot) {
@@ -523,7 +570,7 @@ HTML_PAGE = r"""<!doctype html>
       const topLabelBoxes = [];
       for (const overlay of snapshot.overlays || []) {
         if (overlay.type === "target_radius" && overlay.position && overlay.radius !== undefined) {
-          const key = `${overlay.label}:${overlay.position.join(",")}:${overlay.radius}`;
+          const key = `${overlay.position.join(",")}:${overlay.radius}`;
           if (drawnTopOverlays.has(key)) continue;
           drawnTopOverlays.add(key);
           const [cx, cy] = map(overlay.position[0], overlay.position[1]);
@@ -534,13 +581,17 @@ HTML_PAGE = r"""<!doctype html>
           ctx.arc(cx, cy, overlay.radius * scale, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          drawCanvasLabel(ctx, overlay.label || "target", cx, cy, topLabelBoxes);
+          ctx.fillStyle = overlay.color || "#4aa3ff";
+          ctx.beginPath();
+          ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+          ctx.fill();
+          drawCanvasLabel(ctx, shortLabel(overlay.label || "target"), cx, cy, topLabelBoxes);
         }
       }
 
       const positions = allPositions(snapshot);
       for (const item of positions) {
-        if (item.kind === "height") continue;
+        if (!shouldDrawMarker(item)) continue;
         const [x, y] = map(item.p[0], item.p[1]);
         const color = item.kind === "articulation" ? "#45c486" : item.kind === "frame" ? "#f2b84b" : item.kind === "rigid_object" ? "#ef6a6a" : item.kind === "static_asset" ? "#9b8cff" : "#4aa3ff";
         ctx.fillStyle = color;
@@ -567,40 +618,31 @@ HTML_PAGE = r"""<!doctype html>
         ((x - b.minX) / (b.maxX - b.minX)) * width,
         height - ((z - b.minZ) / (b.maxZ - b.minZ)) * height,
       ];
-      const labelYs = [];
-      const labelY = (y) => {
-        let candidate = Math.min(height - 10, Math.max(16, y - 6));
-        for (let attempt = 0; attempt < 20; attempt += 1) {
-          if (!labelYs.some(existing => Math.abs(existing - candidate) < 16)) {
-            labelYs.push(candidate);
-            return candidate;
-          }
-          candidate -= 16;
-          if (candidate < 16) candidate = Math.min(height - 10, y + 16);
-        }
-        labelYs.push(candidate);
-        return candidate;
-      };
 
+      const heightLegend = [];
+      const drawnHeightLines = new Set();
       for (const overlay of snapshot.overlays || []) {
         if (overlay.type === "height_plane" && overlay.z !== undefined) {
+          const key = `${overlay.label}:${overlay.z}`;
+          if (drawnHeightLines.has(key)) continue;
+          drawnHeightLines.add(key);
           const [, y] = map(0, overlay.z);
-          const text = `${overlay.label || "height"} z=${fmt(overlay.z)}`;
-          const textY = labelY(y);
           ctx.strokeStyle = overlay.color || "#f2b84b";
           ctx.lineWidth = 2;
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-          ctx.font = "12px system-ui";
-          ctx.fillStyle = "rgba(17, 19, 24, 0.86)";
-          ctx.fillRect(8, textY - 13, ctx.measureText(text).width + 8, 16);
-          ctx.fillStyle = "#edf0f5";
-          ctx.fillText(text, 12, textY);
+          heightLegend.push({
+            label: `${shortLabel(overlay.label || "height")} z=${fmt(overlay.z)}`,
+            color: overlay.color || "#f2b84b",
+            z: Number(overlay.z),
+          });
         }
       }
+      heightLegend.sort((a, b) => b.z - a.z);
+      drawLegendBox(ctx, "Height thresholds", heightLegend.slice(0, 6), 12, 42);
 
       const heightLabelBoxes = [];
       for (const item of allPositions(snapshot)) {
-        if (item.kind === "overlay" || item.kind === "height") continue;
+        if (!shouldDrawMarker(item)) continue;
         const [x, y] = map(item.p[0], item.p[2]);
         const color = item.kind === "articulation" ? "#45c486" : item.kind === "frame" ? "#f2b84b" : item.kind === "rigid_object" ? "#ef6a6a" : item.kind === "static_asset" ? "#9b8cff" : "#4aa3ff";
         ctx.fillStyle = color;
@@ -1612,6 +1654,27 @@ class DebugRuntime:
         return snapshot
 
 
+class StaticSnapshotRuntime:
+    """Serve a saved snapshot JSON file so browser rendering can be debugged without Isaac."""
+
+    def __init__(self, snapshot: dict[str, Any]):
+        self._snapshot = snapshot
+        self.paused = True
+        self.steps_per_tick = 1
+
+    def step(self, count: int = 1) -> None:
+        return
+
+    def reset(self) -> None:
+        return
+
+    def snapshot(self) -> dict[str, Any]:
+        snapshot = dict(self._snapshot)
+        snapshot["paused"] = self.paused
+        snapshot["timestamp"] = time.time()
+        return snapshot
+
+
 def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup") -> dict[str, Any]:
     """Build a fake snapshot for browser verification without Isaac Lab installed."""
     phase = step_count / 18.0
@@ -1633,7 +1696,14 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
             "assets": [
                 {"name": "robot", "label": "robot", "kind": "articulation", "position": [0.0, 0.0, 0.0]},
                 {"name": "object", "label": "object", "kind": "rigid_object", "position": cube},
-                {"name": "bowl", "label": "bowl", "kind": "rigid_object", "position": [0.7, 0.2, 0.025]},
+                {"name": "table", "label": "table", "kind": "static_asset", "position": [0.35, 0.0, -0.05]},
+                {"name": "ground", "label": "ground", "kind": "static_asset", "position": [-0.5, -0.35, -0.05]},
+                {"name": "bowl", "label": "bowl", "kind": "static_asset", "position": [0.7, 0.2, 0.025]},
+                {"name": "bowl_collision_base", "label": "bowl_collision_base", "kind": "static_asset", "position": [0.7, 0.2, 0.01]},
+                {"name": "bowl_collision_front", "label": "bowl_collision_front", "kind": "static_asset", "position": [0.7, 0.31, 0.07]},
+                {"name": "bowl_collision_back", "label": "bowl_collision_back", "kind": "static_asset", "position": [0.7, 0.09, 0.07]},
+                {"name": "bowl_collision_left", "label": "bowl_collision_left", "kind": "static_asset", "position": [0.59, 0.2, 0.07]},
+                {"name": "bowl_collision_right", "label": "bowl_collision_right", "kind": "static_asset", "position": [0.81, 0.2, 0.07]},
             ],
             "frames": [{"name": "ee_frame:0", "label": "ee_frame", "kind": "frame", "position": ee}],
         },
@@ -1668,11 +1738,35 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
         "overlays": [
             {
                 "type": "height_plane",
+                "label": "object_in_bowl max_height",
+                "z": 0.109,
+                "source": "termination.object_in_bowl.params.max_height",
+                "confidence": "medium",
+                "color": "#ef6a6a",
+            },
+            {
+                "type": "height_plane",
                 "label": "lifting_object minimal_height",
                 "z": 0.10500000000000001,
                 "source": "reward.lifting_object.params.minimal_height",
                 "confidence": "medium",
                 "color": "#f2b84b",
+            },
+            {
+                "type": "height_plane",
+                "label": "object_in_bowl min_height",
+                "z": 0.044,
+                "source": "termination.object_in_bowl.params.min_height",
+                "confidence": "medium",
+                "color": "#ef6a6a",
+            },
+            {
+                "type": "height_plane",
+                "label": "object_dropping minimum_height",
+                "z": -0.05,
+                "source": "termination.object_dropping.params.minimum_height",
+                "confidence": "medium",
+                "color": "#ef6a6a",
             },
             {
                 "type": "target_radius",
@@ -1682,6 +1776,15 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 "source": "termination.object_in_bowl.params",
                 "confidence": "medium",
                 "color": "#45c486",
+            },
+            {
+                "type": "target_radius",
+                "label": "object_in_bowl radius",
+                "position": target,
+                "radius": 0.11,
+                "source": "reward.object_in_bowl_success.params",
+                "confidence": "medium",
+                "color": "#4aa3ff",
             },
         ],
         "bottlenecks": {
@@ -1809,13 +1912,18 @@ def serve(runtime: DebugRuntime, host: str, port: int) -> None:
 
 
 def run_mock(args: argparse.Namespace) -> None:
-    runtime = DebugRuntime(
-        env=None,
-        task="Mock-Manager-Based-Task-v0",
-        action_source="mock",
-        mock=True,
-        viewer_mode=args.viewer_mode,
-    )
+    if args.snapshot_json:
+        snapshot = json.loads(args.snapshot_json.read_text())
+        snapshot.setdefault("viewerMode", args.viewer_mode)
+        runtime = StaticSnapshotRuntime(snapshot)
+    else:
+        runtime = DebugRuntime(
+            env=None,
+            task="Mock-Manager-Based-Task-v0",
+            action_source="mock",
+            mock=True,
+            viewer_mode=args.viewer_mode,
+        )
     if args.dump_json:
         args.dump_json.write_text(json.dumps(runtime.snapshot(), indent=2, cls=SnapshotEncoder))
         print(f"[INFO] Wrote mock snapshot: {args.dump_json}")
@@ -1831,6 +1939,7 @@ def parse_mock_args() -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1", help="HTTP host.")
     parser.add_argument("--port", type=int, default=8080, help="HTTP port.")
     parser.add_argument("--dump-json", type=Path, default=None, help="Write one snapshot JSON file and exit.")
+    parser.add_argument("--snapshot-json", type=Path, default=None, help="Serve a saved snapshot JSON file.")
     return parser.parse_args()
 
 
@@ -1973,7 +2082,7 @@ def run_real() -> None:
 
 
 def main() -> None:
-    if "--mock" in sys.argv:
+    if "--mock" in sys.argv or "--snapshot-json" in sys.argv:
         args = parse_mock_args()
         if not args.serve and args.dump_json is None:
             args.serve = True
