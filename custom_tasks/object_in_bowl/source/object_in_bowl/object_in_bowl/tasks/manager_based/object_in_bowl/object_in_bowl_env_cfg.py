@@ -147,8 +147,8 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
         spawn=sim_utils.CuboidCfg(
             size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_BASE_THICKNESS),
+            visible=False,
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
@@ -163,8 +163,8 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
         spawn=sim_utils.CuboidCfg(
             size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_WALL_THICKNESS, BOWL_COLLISION_WALL_HEIGHT),
+            visible=False,
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
@@ -179,8 +179,8 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
         spawn=sim_utils.CuboidCfg(
             size=(BOWL_COLLISION_OUTER_SIZE, BOWL_COLLISION_WALL_THICKNESS, BOWL_COLLISION_WALL_HEIGHT),
+            visible=False,
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
@@ -195,8 +195,8 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
         spawn=sim_utils.CuboidCfg(
             size=(BOWL_COLLISION_WALL_THICKNESS, 2.0 * BOWL_COLLISION_INNER_HALF_SIZE, BOWL_COLLISION_WALL_HEIGHT),
+            visible=False,
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
@@ -211,8 +211,8 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         ),
         spawn=sim_utils.CuboidCfg(
             size=(BOWL_COLLISION_WALL_THICKNESS, 2.0 * BOWL_COLLISION_INNER_HALF_SIZE, BOWL_COLLISION_WALL_HEIGHT),
+            visible=False,
             collision_props=CollisionPropertiesCfg(),
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.35, 0.9), opacity=0.0),
         ),
     )
 
