@@ -370,13 +370,19 @@ HTML_PAGE = r"""<!doctype html>
     function updateHistory(snapshot) {
       const previous = history.at(-1);
       if (!previous || snapshot.stepCount < previous.step) history = [];
+      if (previous && snapshot.stepCount === previous.step) return;
       const signals = snapshot.bottlenecks?.signals || {};
       history.push({
         step: snapshot.stepCount || 0,
         objectZ: Number(signals.objectZ ?? snapshot.metrics?.objectZ ?? 0),
         eeDistance: Number(signals.eeObjectDistance ?? 0),
         gripperCommand: Number(signals.gripperCommand ?? 0),
-        reward: Number((snapshot.rewards || []).reduce((sum, row) => sum + (Number(row.weightedEstimate) || 0), 0)),
+        reward: Number(
+          (snapshot.rewards || []).reduce(
+            (sum, row) => sum + (Number(row.weightedPreDtValue) || 0),
+            0,
+          ),
+        ),
       });
       if (history.length > 160) history = history.slice(history.length - 160);
     }
@@ -648,7 +654,7 @@ HTML_PAGE = r"""<!doctype html>
           <span style="--legend-color:#45c486">cube z</span>
           <span style="--legend-color:#f2b84b">hand-cube distance</span>
           <span style="--legend-color:#4aa3ff">gripper command</span>
-          <span style="--legend-color:#ef6a6a">reward estimate</span>
+          <span style="--legend-color:#ef6a6a">reward pre-dt</span>
         </div>`;
 
       const metrics = snapshot.metrics || {};
@@ -657,19 +663,17 @@ HTML_PAGE = r"""<!doctype html>
       rewardPanel.innerHTML = `<h2>Rewards</h2>` + table(
         [
           { label: "Term" },
-          { label: "Raw", num: true },
+          { label: "Weighted pre-dt", num: true },
           { label: "Weight", num: true },
-          { label: "Pre-dt est.", num: true },
           { label: "Firing", num: true },
         ],
         (snapshot.rewards || []).map(r => [
           `<span class="name">${r.name}</span>`,
-          fmt(r.currentRewardValue),
+          fmt(r.weightedPreDtValue),
           fmt(r.weight),
-          fmt(r.weightedEstimate),
           statePill(Boolean(r.isFiring)),
         ])
-      ) + `<div class="mode-help" style="margin-top:8px">Pre-dt estimate is raw value times configured weight. Isaac may still scale reward terms by the environment step time.</div>`;
+      ) + `<div class="mode-help" style="margin-top:8px">Isaac's active reward value is already multiplied by the configured weight. The actual per-step contribution is this value times the environment step time.</div>`;
 
       probePanel.innerHTML = `<h2>Reward Probes</h2>` + table(
         [{ label: "Probe" }, { label: "Value", num: true }, { label: "Would fire", num: true }, { label: "Meaning" }],
@@ -819,15 +823,6 @@ def _number(value: Any) -> float | None:
     return None
 
 
-def _weighted_estimate(raw_value: Any, weight: Any) -> float | None:
-    """Estimate a reward contribution from a scalar raw term and its configured weight."""
-    raw_number = _number(raw_value)
-    weight_number = _number(weight)
-    if raw_number is None or weight_number is None:
-        return None
-    return raw_number * weight_number
-
-
 def _position_from_data(data: Any, env_index: int) -> list[float] | None:
     pos = getattr(data, "root_pos_w", None)
     if pos is None:
@@ -970,15 +965,14 @@ def _collect_rewards(env: Any, env_index: int) -> list[dict[str, Any]]:
     rows = []
     for name, cfg in cfgs.items():
         weight = _to_jsonable(getattr(cfg, "weight", None), env_index)
-        current_value = _to_scalar(current.get(name), env_index)
+        weighted_pre_dt_value = _to_scalar(current.get(name), env_index)
         rows.append(
             {
                 "name": name,
                 "weight": weight,
                 "params": _to_jsonable(getattr(cfg, "params", {}) or {}, env_index),
-                "currentRewardValue": current_value,
-                "weightedEstimate": _weighted_estimate(current_value, weight),
-                "isFiring": abs(_number(current_value) or 0.0) > 1.0e-6,
+                "weightedPreDtValue": weighted_pre_dt_value,
+                "isFiring": abs(_number(weighted_pre_dt_value) or 0.0) > 1.0e-6,
                 "source": "reward_manager",
             }
         )
@@ -1647,16 +1641,14 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
             {
                 "name": "reaching_object",
                 "weight": 1.0,
-                "currentRewardValue": 0.6,
-                "weightedEstimate": 0.6,
+                "weightedPreDtValue": 0.6,
                 "isFiring": True,
                 "params": {"std": 0.1},
             },
             {
                 "name": "lifting_object",
                 "weight": 15.0,
-                "currentRewardValue": 0.0,
-                "weightedEstimate": 0.0,
+                "weightedPreDtValue": 0.0,
                 "isFiring": False,
                 "params": {"minimal_height": 0.10500000000000001},
             },

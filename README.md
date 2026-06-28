@@ -95,6 +95,10 @@ It keeps task code outside of the core Isaac Lab repository while leaving room f
             --port=8080
         ```
 
+        You can also pass an exact checkpoint with `--checkpoint <path-to-model.pt>`.
+        If you use `--dump-json`, keep those dumps out of git because they can include
+        local run/checkpoint paths.
+
 ### Set up IDE (Optional)
 
 To setup the IDE, please follow these instructions:
