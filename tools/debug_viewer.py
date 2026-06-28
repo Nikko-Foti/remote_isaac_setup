@@ -21,8 +21,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-
-DEFAULT_NEAR_OBJECT_DISTANCE = 0.08
+from debug_adapters import resolve_task_adapter
 
 
 HTML_PAGE = r"""<!doctype html>
@@ -337,12 +336,11 @@ HTML_PAGE = r"""<!doctype html>
       <div class="panel" id="modePanel"></div>
       <div class="panel" id="statusPanel"></div>
       <div class="panel" id="configPanel"></div>
-      <div class="panel" id="bottleneckPanel"></div>
+      <div class="panel" id="diagnosticsPanel"></div>
       <div class="panel" id="timelinePanel"></div>
       <div class="panel" id="metricsPanel"></div>
       <div class="panel" id="rewardPanel"></div>
       <div class="panel" id="commandPanel"></div>
-      <div class="panel" id="probePanel"></div>
       <div class="panel" id="terminationPanel"></div>
       <div class="panel" id="episodeLogPanel"></div>
       <div class="panel" id="assetPanel"></div>
@@ -357,12 +355,11 @@ HTML_PAGE = r"""<!doctype html>
     const modePanel = document.getElementById("modePanel");
     const statusPanel = document.getElementById("statusPanel");
     const configPanel = document.getElementById("configPanel");
-    const bottleneckPanel = document.getElementById("bottleneckPanel");
+    const diagnosticsPanel = document.getElementById("diagnosticsPanel");
     const timelinePanel = document.getElementById("timelinePanel");
     const metricsPanel = document.getElementById("metricsPanel");
     const rewardPanel = document.getElementById("rewardPanel");
     const commandPanel = document.getElementById("commandPanel");
-    const probePanel = document.getElementById("probePanel");
     const terminationPanel = document.getElementById("terminationPanel");
     const episodeLogPanel = document.getElementById("episodeLogPanel");
     const assetPanel = document.getElementById("assetPanel");
@@ -460,7 +457,7 @@ HTML_PAGE = r"""<!doctype html>
       const previous = history.at(-1);
       if (!previous || snapshot.stepCount < previous.step) history = [];
       if (previous && snapshot.stepCount === previous.step) return;
-      const signals = snapshot.bottlenecks?.signals || {};
+      const signals = snapshot.taskDiagnostics?.signals || snapshot.bottlenecks?.signals || {};
       history.push({
         step: snapshot.stepCount || 0,
         objectZ: Number(signals.objectZ ?? snapshot.metrics?.objectZ ?? 0),
@@ -764,8 +761,15 @@ HTML_PAGE = r"""<!doctype html>
         <dt>Updated</dt><dd>${new Date(snapshot.timestamp * 1000).toLocaleTimeString()}</dd>
       </dl>`;
 
-      const stages = snapshot.bottlenecks?.stages || [];
-      bottleneckPanel.innerHTML = `<h2>Bottlenecks</h2><div class="stage-grid">${stages.map(stage => {
+      const diagnostics = snapshot.taskDiagnostics || {};
+      const stages = diagnostics.stages || snapshot.bottlenecks?.stages || [];
+      const probes = diagnostics.rewardProbes || snapshot.rewardProbes || [];
+      const adapterName = diagnostics.displayName || diagnostics.adapterName || "No adapter active";
+      const adapterDescription = diagnostics.description || "No task-specific diagnostics are available for this task.";
+      diagnosticsPanel.innerHTML = `<h2>Task Diagnostics</h2><div class="mode-card" style="margin-bottom:10px">
+        <div class="mode-title">${adapterName}</div>
+        <div class="mode-help">${adapterDescription}</div>
+      </div><div class="stage-grid">${stages.map(stage => {
         const stateClass = stage.active === true ? "good" : stage.active === false ? "bad" : "unknown";
         const margin = Number(stage.margin);
         const marginClass = Number.isFinite(margin) && margin >= 0 ? "good" : "bad";
@@ -775,9 +779,18 @@ HTML_PAGE = r"""<!doctype html>
           <div class="stage-detail">${stage.detail || ""}</div>
           ${marginText}
         </div>`;
-      }).join("") || `<div class="muted">No bottleneck signals available.</div>`}</div>
+      }).join("") || `<div class="muted">No adapter stages available.</div>`}</div>
       <h2 style="margin-top:16px">Episode Signals</h2>
-      <dl class="kv">${Object.entries(snapshot.bottlenecks?.episodeSignals || {}).map(([k, v]) => `<dt>${k}</dt><dd>${fmt(v)}</dd>`).join("") || "<dt>none</dt><dd>-</dd>"}</dl>`;
+      <dl class="kv">${Object.entries(diagnostics.episodeSignals || snapshot.bottlenecks?.episodeSignals || {}).map(([k, v]) => `<dt>${k}</dt><dd>${fmt(v)}</dd>`).join("") || "<dt>none</dt><dd>-</dd>"}</dl>
+      <h2 style="margin-top:16px">Reward Probes</h2>${table(
+        [{ label: "Probe" }, { label: "Value", num: true }, { label: "Would fire", num: true }, { label: "Meaning" }],
+        probes.map(p => [
+          `<span class="name">${p.label || p.name}</span>`,
+          fmt(p.currentValue),
+          statePill(p.wouldFire),
+          `<span class="muted">${p.detail || ""}</span>`,
+        ])
+      )}`;
 
       timelinePanel.innerHTML = `<h2>Live Timeline</h2>
         <canvas id="timelineCanvas" class="timeline"></canvas>
@@ -839,16 +852,6 @@ HTML_PAGE = r"""<!doctype html>
           `<span class="name">${e.name}</span>`,
           e.mode || "-",
           `<span class="muted">${e.paramSummary || ""}</span>`,
-        ])
-      );
-
-      probePanel.innerHTML = `<h2>Reward Probes</h2>` + table(
-        [{ label: "Probe" }, { label: "Value", num: true }, { label: "Would fire", num: true }, { label: "Meaning" }],
-        (snapshot.rewardProbes || []).map(p => [
-          `<span class="name">${p.label || p.name}</span>`,
-          fmt(p.currentValue),
-          statePill(p.wouldFire),
-          `<span class="muted">${p.detail || ""}</span>`,
         ])
       );
 
@@ -1508,399 +1511,38 @@ def _collect_metrics(snapshot: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _reward_param(snapshot: dict[str, Any], reward_name: str, param_name: str) -> Any:
-    for reward in snapshot.get("rewards", []):
-        if reward.get("name") == reward_name:
-            return (reward.get("params") or {}).get(param_name)
-    return None
-
-
-def _termination_param(snapshot: dict[str, Any], termination_name: str, param_name: str) -> Any:
-    for termination in snapshot.get("terminations", []):
-        if termination.get("name") == termination_name:
-            return (termination.get("params") or {}).get(param_name)
-    return None
-
-
-def _xy_distance(a: list[float] | None, b: list[float] | None) -> float | None:
-    if not a or not b or len(a) < 2 or len(b) < 2:
-        return None
-    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
-
-
-def _stage(
-    name: str,
-    label: str,
-    active: bool | None,
-    detail: str,
-    value: Any = None,
-    margin: float | None = None,
-    margin_unit: str = "",
-) -> dict[str, Any]:
-    return {
-        "name": name,
-        "label": label,
-        "active": active,
-        "detail": detail,
-        "value": value,
-        "margin": margin,
-        "marginUnit": margin_unit,
-    }
-
-
-def _get_tensor_scalar(value: Any, env_index: int) -> float | None:
-    return _number(_to_jsonable(value, env_index))
-
-
 def _record_error(errors: list[dict[str, str]], source: str, exc: Exception) -> None:
     errors.append({"source": source, "error": f"{type(exc).__name__}: {exc}"})
 
 
-def _collect_gripper_signals(env: Any, env_index: int, errors: list[dict[str, str]]) -> dict[str, Any]:
-    signals: dict[str, Any] = {}
-    try:
-        robot = env.scene["robot"]
-        finger_cfg = getattr(env, "_finger_robot_cfg", None)
-        joint_ids = getattr(finger_cfg, "joint_ids", None)
-        if joint_ids is not None:
-            finger_joint_pos = robot.data.joint_pos[env_index, joint_ids]
-            signals["fingerPositions"] = _to_jsonable(finger_joint_pos, None, max_items=4)
-            signals["gripperOpening"] = _get_tensor_scalar(finger_joint_pos.sum(), 0)
-            signals["minFingerPosition"] = _get_tensor_scalar(finger_joint_pos.min(), 0)
-    except Exception as exc:
-        _record_error(errors, "gripper_joint_signals", exc)
-
-    try:
-        raw_actions = env.action_manager.get_term("gripper_action").raw_actions
-        action = _to_jsonable(raw_actions, env_index, max_items=1)
-        if isinstance(action, list) and action:
-            action = action[0]
-        signals["gripperCommand"] = action
-        signals["closeCommandActive"] = (_number(action) or 0.0) < 0.0
-    except Exception as exc:
-        _record_error(errors, "gripper_action_signals", exc)
-    return signals
-
-
-def _collect_object_motion(env: Any, env_index: int, errors: list[dict[str, str]]) -> dict[str, Any]:
-    try:
-        object_asset = env.scene["object"]
-        linear_speed = object_asset.data.root_lin_vel_w[env_index, :3].norm()
-        angular_speed = object_asset.data.root_ang_vel_w[env_index, :3].norm()
-        return {
-            "objectLinearSpeed": _get_tensor_scalar(linear_speed, 0),
-            "objectAngularSpeed": _get_tensor_scalar(angular_speed, 0),
-        }
-    except Exception as exc:
-        _record_error(errors, "object_motion_signals", exc)
-        return {}
-
-
-def _collect_episode_signals(env: Any, env_index: int) -> dict[str, Any]:
-    signal_names = (
-        "_episode_max_lift_progress",
-        "_episode_max_object_z_delta",
-        "_episode_min_ee_object_distance",
-        "_episode_min_gripper_opening",
-        "_episode_close_command_hit",
-        "_episode_close_near_object_hit",
-        "_episode_max_lift_progress_after_close_near_object",
-    )
-    signals = {}
-    for name in signal_names:
-        value = getattr(env, name, None)
-        if value is not None:
-            signals[name.removeprefix("_episode_")] = _to_jsonable(value, env_index)
-    return signals
-
-
-def _collect_bottlenecks(
-    env: Any, snapshot: dict[str, Any], env_index: int, errors: list[dict[str, str]]
+def _collect_task_diagnostics(
+    task: str, env: Any, snapshot: dict[str, Any], env_index: int, errors: list[dict[str, str]]
 ) -> dict[str, Any]:
-    """Collect task-stage signals that explain where an attempt is getting stuck."""
-    metrics = dict(snapshot.get("metrics", {}))
-    object_asset = _find_asset(snapshot, "object")
-    object_position = object_asset.get("position") if object_asset else None
-    target_position = _termination_param(snapshot, "object_in_bowl", "target_position")
-    lifted_height = _reward_param(snapshot, "lifting_object", "minimal_height")
-    bowl_radius = _termination_param(snapshot, "object_in_bowl", "radius")
-    bowl_min_height = _termination_param(snapshot, "object_in_bowl", "min_height")
-    bowl_max_height = _termination_param(snapshot, "object_in_bowl", "max_height")
-    max_speed = _termination_param(snapshot, "object_in_bowl", "max_speed")
-    max_angular_speed = _termination_param(snapshot, "object_in_bowl", "max_angular_speed")
-    min_gripper_open = _termination_param(snapshot, "object_in_bowl", "min_gripper_open")
-
-    gripper = _collect_gripper_signals(env, env_index, errors)
-    motion = _collect_object_motion(env, env_index, errors)
-    metrics.update(gripper)
-    metrics.update(motion)
-
-    ee_distance = _number(metrics.get("eeObjectDistance"))
-    object_z = _number(metrics.get("objectZ"))
-    xy_distance = _xy_distance(object_position, target_position)
-    linear_speed = _number(metrics.get("objectLinearSpeed"))
-    angular_speed = _number(metrics.get("objectAngularSpeed"))
-    min_finger_position = _number(metrics.get("minFingerPosition"))
-    close_command_active = gripper.get("closeCommandActive")
-
-    near_object = ee_distance is not None and ee_distance < DEFAULT_NEAR_OBJECT_DISTANCE
-    lifted = object_z is not None and _number(lifted_height) is not None and object_z > float(lifted_height)
-    over_bowl = xy_distance is not None and _number(bowl_radius) is not None and xy_distance < float(bowl_radius)
-    inside_height = (
-        object_z is not None
-        and _number(bowl_min_height) is not None
-        and _number(bowl_max_height) is not None
-        and float(bowl_min_height) < object_z < float(bowl_max_height)
-    )
-    settled = (
-        linear_speed is not None
-        and angular_speed is not None
-        and _number(max_speed) is not None
-        and _number(max_angular_speed) is not None
-        and linear_speed < float(max_speed)
-        and angular_speed < float(max_angular_speed)
-    )
-    gripper_open_for_release = (
-        min_finger_position is not None
-        and _number(min_gripper_open) is not None
-        and min_finger_position > float(min_gripper_open)
-    )
-    near_margin = DEFAULT_NEAR_OBJECT_DISTANCE - ee_distance if ee_distance is not None else None
-    lift_margin = (
-        object_z - float(lifted_height)
-        if object_z is not None and _number(lifted_height) is not None
-        else None
-    )
-    over_bowl_margin = (
-        float(bowl_radius) - xy_distance
-        if xy_distance is not None and _number(bowl_radius) is not None
-        else None
-    )
-    height_margin = None
-    if object_z is not None and _number(bowl_min_height) is not None and _number(bowl_max_height) is not None:
-        min_height = float(bowl_min_height)
-        max_height = float(bowl_max_height)
-        height_margin = min(object_z - min_height, max_height - object_z)
-    settled_margin = None
-    if (
-        linear_speed is not None
-        and angular_speed is not None
-        and _number(max_speed) is not None
-        and _number(max_angular_speed) is not None
-    ):
-        settled_margin = min(float(max_speed) - linear_speed, float(max_angular_speed) - angular_speed)
-    release_margin = (
-        min_finger_position - float(min_gripper_open)
-        if min_finger_position is not None and _number(min_gripper_open) is not None
-        else None
-    )
-
-    stages = [
-        _stage(
-            "near_object",
-            "Hand near cube",
-            near_object if ee_distance is not None else None,
-            f"ee-object {fmt_python(ee_distance)}m, target < {DEFAULT_NEAR_OBJECT_DISTANCE:.3f}m",
-            ee_distance,
-            near_margin,
-            "m",
-        ),
-        _stage(
-            "close_command",
-            "Close command",
-            bool(close_command_active) if close_command_active is not None else None,
-            f"gripper command {fmt_python(metrics.get('gripperCommand'))}",
-            metrics.get("gripperCommand"),
-        ),
-        _stage(
-            "close_near_object",
-            "Close while near cube",
-            (
-                (bool(close_command_active) and near_object)
-                if close_command_active is not None and ee_distance is not None
-                else None
-            ),
-            "close command and hand-near-cube are both true",
-        ),
-        _stage(
-            "object_lifted",
-            "Cube lifted",
-            lifted if object_z is not None and lifted_height is not None else None,
-            f"cube z {fmt_python(object_z)}m, lift threshold {fmt_python(lifted_height)}m",
-            object_z,
-            lift_margin,
-            "m",
-        ),
-        _stage(
-            "over_bowl",
-            "Cube over bowl",
-            over_bowl if xy_distance is not None and bowl_radius is not None else None,
-            f"xy distance {fmt_python(xy_distance)}m, radius {fmt_python(bowl_radius)}m",
-            xy_distance,
-            over_bowl_margin,
-            "m",
-        ),
-        _stage(
-            "inside_bowl_height",
-            "Cube at bowl height",
-            (
-                inside_height
-                if object_z is not None and bowl_min_height is not None and bowl_max_height is not None
-                else None
-            ),
-            f"cube z {fmt_python(object_z)}m, allowed {fmt_python(bowl_min_height)}-{fmt_python(bowl_max_height)}m",
-            object_z,
-            height_margin,
-            "m",
-        ),
-        _stage(
-            "settled",
-            "Cube settled",
-            settled if linear_speed is not None and angular_speed is not None else None,
-            f"speed {fmt_python(linear_speed)}m/s, angular {fmt_python(angular_speed)}rad/s",
-            None,
-            settled_margin,
-        ),
-        _stage(
-            "released",
-            "Gripper released",
-            gripper_open_for_release if min_finger_position is not None and min_gripper_open is not None else None,
-            f"min finger {fmt_python(min_finger_position)}m, release threshold > {fmt_python(min_gripper_open)}m",
-            min_finger_position,
-            release_margin,
-            "m",
-        ),
-    ]
-    success = all(stage["active"] is True for stage in stages[4:8])
-    stages.append(_stage("success_gate", "Success gate", success, "over bowl, correct height, settled, and released"))
-    return {
-        "stages": stages,
-        "signals": metrics,
-        "episodeSignals": _collect_episode_signals(env, env_index),
-    }
-
-
-def fmt_python(value: Any) -> str:
-    number = _number(value)
-    if number is None:
-        return "-"
-    return f"{number:.3f}"
-
-
-def _probe_row(name: str, label: str, value: Any, detail: str, env_index: int) -> dict[str, Any]:
-    scalar = _to_scalar(value, env_index)
-    return {
-        "name": name,
-        "label": label,
-        "currentValue": scalar,
-        "wouldFire": (_number(scalar) or 0.0) > 1.0e-6,
-        "detail": detail,
-        "source": "viewer_probe",
-    }
-
-
-def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]]) -> list[dict[str, Any]]:
-    """Evaluate explicit inactive reward/check helpers as zero-weight probes."""
+    """Collect optional task-specific diagnostics through an adapter."""
+    adapter = resolve_task_adapter(task)
+    if adapter is None:
+        return {
+            "adapterName": None,
+            "displayName": "No adapter active",
+            "description": "No task-specific diagnostics are available for this task.",
+            "stages": [],
+            "signals": {},
+            "episodeSignals": {},
+            "rewardProbes": [],
+        }
     try:
-        from object_in_bowl.tasks.manager_based.object_in_bowl import mdp
-        from object_in_bowl.tasks.manager_based.object_in_bowl.object_in_bowl_env_cfg import (
-            BOWL_LOWERING_RADIUS,
-            BOWL_LOWERING_REWARD_MIN_HEIGHT,
-            BOWL_LOWERING_TARGET_HEIGHT,
-            BOWL_SUCCESS_MAX_ANGULAR_SPEED,
-            BOWL_SUCCESS_MAX_HEIGHT,
-            BOWL_SUCCESS_MAX_SPEED,
-            BOWL_SUCCESS_MIN_GRIPPER_OPEN,
-            BOWL_SUCCESS_MIN_HEIGHT,
-            BOWL_SUCCESS_RADIUS,
-            OBJECT_LIFTED_HEIGHT,
-            OBJECT_START_POSITION,
-            PLACEMENT_TARGET_POSITION,
-        )
-        from isaaclab.managers import SceneEntityCfg
+        return adapter.collect(env, snapshot, env_index, errors)
     except Exception as exc:
-        _record_error(errors, "reward_probe_imports", exc)
-        return []
-
-    robot_cfg = SceneEntityCfg("robot", joint_names=["panda_finger.*"])
-    try:
-        robot_cfg.resolve(env.scene)
-    except Exception as exc:
-        _record_error(errors, "reward_probe_robot_cfg", exc)
-
-    probes = []
-    probe_specs = (
-        (
-            "grasping_object",
-            "Would grasp reward fire?",
-            lambda: mdp.compute_grasping_object_reward(env, std=0.10, minimal_height=OBJECT_LIFTED_HEIGHT),
-            "near cube + closing gripper before lift",
-        ),
-        (
-            "height_progress",
-            "Would height-progress reward fire?",
-            lambda: mdp.compute_object_height_progress_reward(
-                env, initial_height=OBJECT_START_POSITION[2], target_height=OBJECT_LIFTED_HEIGHT
-            ),
-            "smooth 0-to-1 progress from table height to lift threshold",
-        ),
-        (
-            "object_to_bowl",
-            "Would carry-to-bowl reward fire?",
-            lambda: mdp.compute_object_to_target_reward(
-                env,
-                target_position=PLACEMENT_TARGET_POSITION,
-                std=0.30,
-                minimal_height=BOWL_LOWERING_REWARD_MIN_HEIGHT,
-            ),
-            "cube closer to bowl target after a low lift gate",
-        ),
-        (
-            "lowering_into_bowl",
-            "Would lowering reward fire?",
-            lambda: mdp.compute_object_lowering_into_bowl_reward(
-                env,
-                target_position=PLACEMENT_TARGET_POSITION,
-                radius=BOWL_LOWERING_RADIUS,
-                target_height=BOWL_LOWERING_TARGET_HEIGHT,
-                height_std=0.05,
-                minimal_height=BOWL_LOWERING_REWARD_MIN_HEIGHT,
-            ),
-            "cube over bowl radius and near bowl height",
-        ),
-        (
-            "object_in_bowl_success",
-            "Would bowl success reward fire?",
-            lambda: mdp.compute_object_in_bowl_success_reward(
-                env,
-                target_position=PLACEMENT_TARGET_POSITION,
-                radius=BOWL_SUCCESS_RADIUS,
-                min_height=BOWL_SUCCESS_MIN_HEIGHT,
-                max_height=BOWL_SUCCESS_MAX_HEIGHT,
-                max_speed=BOWL_SUCCESS_MAX_SPEED,
-                max_angular_speed=BOWL_SUCCESS_MAX_ANGULAR_SPEED,
-                min_gripper_open=BOWL_SUCCESS_MIN_GRIPPER_OPEN,
-                robot_cfg=robot_cfg,
-            ),
-            "inside bowl radius, correct height, slow, not spinning, released",
-        ),
-    )
-    for name, label, func, detail in probe_specs:
-        try:
-            probes.append(_probe_row(name, label, func(), detail, env_index))
-        except Exception as exc:
-            _record_error(errors, f"reward_probe.{name}", exc)
-            probes.append(
-                {
-                    "name": name,
-                    "label": label,
-                    "currentValue": None,
-                    "wouldFire": None,
-                    "detail": f"{detail}; probe unavailable: {exc}",
-                    "source": "viewer_probe",
-                }
-            )
-    return probes
+        _record_error(errors, f"{getattr(adapter, 'ADAPTER_NAME', 'task_adapter')}.collect", exc)
+        return {
+            "adapterName": getattr(adapter, "ADAPTER_NAME", None),
+            "displayName": getattr(adapter, "DISPLAY_NAME", "Task adapter failed"),
+            "description": f"Adapter failed: {type(exc).__name__}: {exc}",
+            "stages": [],
+            "signals": {},
+            "episodeSignals": {},
+            "rewardProbes": [],
+        }
 
 
 def build_snapshot(env: Any, task: str, env_index: int, step_count: int, mode: str, paused: bool) -> dict[str, Any]:
@@ -1934,8 +1576,7 @@ def build_snapshot(env: Any, task: str, env_index: int, step_count: int, mode: s
     }
     snapshot["overlays"] = _collect_overlays(snapshot)
     snapshot["metrics"] = _collect_metrics(snapshot)
-    snapshot["bottlenecks"] = _collect_bottlenecks(unwrapped, snapshot, env_index, diagnostic_errors)
-    snapshot["rewardProbes"] = _collect_reward_probes(unwrapped, env_index, diagnostic_errors)
+    snapshot["taskDiagnostics"] = _collect_task_diagnostics(task, unwrapped, snapshot, env_index, diagnostic_errors)
     snapshot["diagnosticErrors"] = diagnostic_errors
     return snapshot
 
@@ -2069,9 +1710,24 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
     reward_total = reaching_value + lifting_value
     ee_distance = _distance(ee, cube)
     object_target_distance = _distance(cube, target)
+    mock_task = "Mock-Object-In-Bowl-Task-v0"
+    mock_adapter = resolve_task_adapter(mock_task)
+    task_diagnostics = (
+        mock_adapter.build_mock_diagnostics(cube, ee, target, mock_gripper_command, viewer_mode)
+        if mock_adapter is not None and hasattr(mock_adapter, "build_mock_diagnostics")
+        else {
+            "adapterName": None,
+            "displayName": "No adapter active",
+            "description": "No task-specific diagnostics are available for this task.",
+            "stages": [],
+            "signals": {},
+            "episodeSignals": {},
+            "rewardProbes": [],
+        }
+    )
     return {
         "schemaVersion": 1,
-        "task": "Mock-Manager-Based-Task-v0",
+        "task": mock_task,
         "mode": "mock",
         "viewerMode": viewer_mode,
         "checkpointPath": "/mock/logs/model_499.pt" if viewer_mode == "policy" else None,
@@ -2269,85 +1925,7 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 "color": "#4aa3ff",
             },
         ],
-        "bottlenecks": {
-            "stages": [
-                _stage("near_object", "Hand near cube", True, "ee-object 0.045m, target < 0.080m", 0.045, 0.035, "m"),
-                _stage(
-                    "close_command",
-                    "Close command",
-                    viewer_mode == "policy",
-                    f"gripper command {mock_gripper_command:.3f}",
-                    mock_gripper_command,
-                ),
-                _stage(
-                    "close_near_object",
-                    "Close while near cube",
-                    viewer_mode == "policy",
-                    "close command and hand-near-cube are both true",
-                ),
-                _stage(
-                    "object_lifted",
-                    "Cube lifted",
-                    cube[2] > 0.105,
-                    "cube z is above lift threshold",
-                    cube[2],
-                    cube[2] - 0.105,
-                    "m",
-                ),
-                _stage(
-                    "over_bowl",
-                    "Cube over bowl",
-                    False,
-                    "xy distance still outside bowl radius",
-                    object_target_distance,
-                    0.11 - (object_target_distance or 0.0),
-                    "m",
-                ),
-                _stage(
-                    "inside_bowl_height",
-                    "Cube at bowl height",
-                    False,
-                    "cube is not yet at bowl placement height",
-                    cube[2],
-                    min(cube[2] - 0.044, 0.109 - cube[2]),
-                    "m",
-                ),
-                _stage("settled", "Cube settled", True, "mock cube speed is low", None, 0.26),
-                _stage("released", "Gripper released", False, "mock gripper is not released", 0.012, -0.018, "m"),
-                _stage("success_gate", "Success gate", False, "over bowl, correct height, settled, and released"),
-            ],
-            "signals": {
-                "objectZ": cube[2],
-                "eeObjectDistance": ee_distance,
-                "objectTargetDistance": object_target_distance,
-                "gripperCommand": mock_gripper_command,
-                "gripperOpening": 0.025,
-                "objectLinearSpeed": 0.04,
-            },
-            "episodeSignals": {
-                "max_lift_progress": max(0.0, min(1.0, (cube[2] - 0.055) / 0.05)),
-                "min_ee_object_distance": 0.045,
-                "close_near_object_hit": 1.0 if viewer_mode == "policy" else 0.0,
-            },
-        },
-        "rewardProbes": [
-            {
-                "name": "grasping_object",
-                "label": "Would grasp reward fire?",
-                "currentValue": 0.5 if viewer_mode == "policy" else 0.0,
-                "wouldFire": viewer_mode == "policy",
-                "detail": "near cube + closing gripper before lift",
-                "source": "viewer_probe",
-            },
-            {
-                "name": "height_progress",
-                "label": "Would height-progress reward fire?",
-                "currentValue": max(0.0, min(1.0, (cube[2] - 0.055) / 0.05)),
-                "wouldFire": cube[2] > 0.055,
-                "detail": "smooth 0-to-1 progress from table height to lift threshold",
-                "source": "viewer_probe",
-            },
-        ],
+        "taskDiagnostics": task_diagnostics,
         "diagnosticErrors": [],
         "metrics": {
             "objectZ": cube[2],
@@ -2425,7 +2003,7 @@ def run_mock(args: argparse.Namespace) -> None:
     else:
         runtime = DebugRuntime(
             env=None,
-            task="Mock-Manager-Based-Task-v0",
+            task="Mock-Object-In-Bowl-Task-v0",
             action_source="mock",
             mock=True,
             viewer_mode=args.viewer_mode,
