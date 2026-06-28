@@ -23,12 +23,11 @@ from .object_in_bowl_env_cfg import (
     BOWL_SUCCESS_MIN_GRIPPER_OPEN,
     BOWL_SUCCESS_MIN_HEIGHT,
     BOWL_SUCCESS_RADIUS,
+    LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
     OBJECT_LIFTED_HEIGHT,
     PLACEMENT_TARGET_POSITION,
     PLACEMENT_TARGET_RADIUS,
 )
-
-DIAGNOSTIC_NEAR_OBJECT_DISTANCE = 0.08
 
 
 class ObjectInBowlEnv(ManagerBasedRLEnv):
@@ -72,7 +71,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         gripper_action = self.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
         closing_gripper = torch.clamp(-gripper_action, min=0.0, max=1.0)
         is_close_command = closing_gripper > 0.0
-        is_near_object = ee_object_distance < DIAGNOSTIC_NEAR_OBJECT_DISTANCE
+        is_near_object = ee_object_distance < LIFT_PROGRESS_NEAR_OBJECT_DISTANCE
 
         self._episode_step_count += 1.0
         self._episode_close_command_count += is_close_command.float()
@@ -150,12 +149,17 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         """Compute episode-extreme diagnostics for environments about to reset."""
         env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
         step_count = torch.clamp(self._episode_step_count[env_ids], min=1.0)
+        max_object_z_delta = self._episode_max_object_z_delta[env_ids]
         lift_threshold_hit = self._episode_max_object_z[env_ids] > OBJECT_LIFTED_HEIGHT
         lift_after_close_near_object_hit = self._episode_max_lift_progress_after_close_near_object[env_ids] >= 1.0
+        lift_progress_gate_rate = (self._episode_close_near_object_count[env_ids] / step_count).mean()
         return {
             "Episode_Diagnostics/max_object_z": self._episode_max_object_z[env_ids].mean(),
-            "Episode_Diagnostics/max_object_z_delta": self._episode_max_object_z_delta[env_ids].mean(),
+            "Episode_Diagnostics/max_object_z_delta": max_object_z_delta.mean(),
             "Episode_Diagnostics/max_lift_progress": self._episode_max_lift_progress[env_ids].mean(),
+            "Episode_Diagnostics/lift_005m_hit_rate": (max_object_z_delta > 0.005).float().mean(),
+            "Episode_Diagnostics/lift_010m_hit_rate": (max_object_z_delta > 0.010).float().mean(),
+            "Episode_Diagnostics/lift_020m_hit_rate": (max_object_z_delta > 0.020).float().mean(),
             "Episode_Diagnostics/lift_threshold_hit_rate": lift_threshold_hit.float().mean(),
             "Episode_Diagnostics/max_lift_progress_after_close_near_object": (
                 self._episode_max_lift_progress_after_close_near_object[env_ids].mean()
@@ -163,6 +167,8 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Diagnostics/lift_after_close_near_object_hit_rate": (
                 lift_after_close_near_object_hit.float().mean()
             ),
+            "Episode_Diagnostics/lift_progress_gate_rate": lift_progress_gate_rate,
+            "Episode_Diagnostics/lift_progress_gate_hit_rate": self._episode_close_near_object_hit[env_ids].mean(),
             "Episode_Diagnostics/min_ee_object_distance": self._episode_min_ee_object_distance[env_ids].mean(),
             "Episode_Diagnostics/min_gripper_opening": self._episode_min_gripper_opening[env_ids].mean(),
             "Episode_Diagnostics/min_finger_joint_pos": self._episode_min_finger_joint_pos[env_ids].mean(),
