@@ -234,6 +234,10 @@
           <h3>Why not chase 100%</h3>
           <p>Getting from 83% to 90-95% is useful. Chasing perfect lift may waste runs or overfit before we test the next skill.</p>
         </div>
+        <div class="card">
+          <h3>Would 1000 more iterations hit 90%?</h3>
+          <p>Maybe. The curve was still improving late, so another 500-1000 iterations is worth trying. It is not guaranteed because the last part was noisy.</p>
+        </div>
       </div>
     </section>
 
@@ -324,8 +328,8 @@
           <tr><th>Choice</th><th>Recommendation</th><th>Why</th></tr>
         </thead>
         <tbody>
-          <tr><td>Next narrow test</td><td>Run a lift-reliability pass aimed at 90-95% lift.</td><td>83% is good, but placement will multiply failures if lift is still flaky.</td></tr>
-          <tr><td>Possible change</td><td>Slightly strengthen lift success or continue from this checkpoint for a short comparison.</td><td>Keep it focused so we know whether reliability improves.</td></tr>
+          <tr><td>Next narrow test</td><td>Run the same lift setup longer, about another 500-1000 iterations.</td><td>The curve still had upward movement, so this is the cleanest first check.</td></tr>
+          <tr><td>Possible change</td><td>If it stalls below 90%, then slightly strengthen lift success.</td><td>Do not change rewards before we learn whether more training is enough.</td></tr>
           <tr><td>Do not change yet</td><td>Do not add bowl transport in the same run.</td><td>Mixing lift tuning with transport makes the result harder to interpret.</td></tr>
           <tr><td>After that</td><td>If lift reaches about 90%+ and looks clean, add carry-toward-bowl reward.</td><td>Then the next missing skill is transport.</td></tr>
         </tbody>
