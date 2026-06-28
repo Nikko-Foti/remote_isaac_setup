@@ -14,10 +14,14 @@ def to_jsonable(value: Any, env_index: int | None = None, max_items: int = 8) ->
         if env_index is not None and getattr(value, "ndim", 0) > 0 and value.shape[0] > env_index:
             value = value[env_index]
         if getattr(value, "numel", lambda: 1)() == 1:
-            return float(value.item())
+            return finite_number(float(value.item()))
         flat = value.flatten()
-        return [float(item) for item in flat[:max_items].tolist()]
-    if isinstance(value, (str, int, float, bool)) or value is None:
+        return [finite_number(float(item)) for item in flat[:max_items].tolist()]
+    if isinstance(value, bool) or value is None:
+        return value
+    if isinstance(value, (int, float)):
+        return finite_number(value)
+    if isinstance(value, str):
         return value
     if isinstance(value, Path):
         return str(value)
@@ -26,6 +30,13 @@ def to_jsonable(value: Any, env_index: int | None = None, max_items: int = 8) ->
     if isinstance(value, (list, tuple)):
         return [to_jsonable(item, env_index, max_items) for item in value[:max_items]]
     return str(value)
+
+
+def finite_number(value: int | float) -> int | float | None:
+    """Return a JSON-safe number, or None for nan/inf."""
+    if isinstance(value, bool):
+        return value
+    return value if math.isfinite(float(value)) else None
 
 
 def to_scalar(value: Any, env_index: int) -> float | bool | str | None:

@@ -118,6 +118,9 @@ def build_mock_diagnostics(
             {
                 "name": "grasping_object",
                 "label": "Would grasp reward fire?",
+                "probeKind": "inactive_candidate",
+                "statusLabel": "candidate",
+                "isActiveReward": False,
                 "currentValue": 0.5 if viewer_mode == "policy" else 0.0,
                 "wouldFire": viewer_mode == "policy",
                 "detail": "near cube + closing gripper before lift",
@@ -126,6 +129,9 @@ def build_mock_diagnostics(
             {
                 "name": "height_progress",
                 "label": "Would height-progress reward fire?",
+                "probeKind": "inactive_candidate",
+                "statusLabel": "candidate",
+                "isActiveReward": False,
                 "currentValue": max(0.0, min(1.0, (cube[2] - 0.055) / 0.05)),
                 "wouldFire": cube[2] > 0.055,
                 "detail": "smooth 0-to-1 progress from table height to lift threshold",
@@ -373,6 +379,9 @@ def _probe_row(name: str, label: str, value: Any, detail: str, env_index: int) -
     return {
         "name": name,
         "label": label,
+        "probeKind": "inactive_candidate",
+        "statusLabel": "candidate",
+        "isActiveReward": False,
         "currentValue": scalar,
         "wouldFire": (number(scalar) or 0.0) > 1.0e-6,
         "detail": detail,
@@ -474,6 +483,9 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
                 {
                     "name": name,
                     "label": label,
+                    "probeKind": "inactive_candidate",
+                    "statusLabel": "candidate",
+                    "isActiveReward": False,
                     "currentValue": None,
                     "wouldFire": None,
                     "detail": f"{detail}; probe unavailable: {exc}",

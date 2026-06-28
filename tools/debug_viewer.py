@@ -782,10 +782,16 @@ HTML_PAGE = r"""<!doctype html>
       }).join("") || `<div class="muted">No adapter stages available.</div>`}</div>
       <h2 style="margin-top:16px">Episode Signals</h2>
       <dl class="kv">${Object.entries(diagnostics.episodeSignals || snapshot.bottlenecks?.episodeSignals || {}).map(([k, v]) => `<dt>${k}</dt><dd>${fmt(v)}</dd>`).join("") || "<dt>none</dt><dd>-</dd>"}</dl>
-      <h2 style="margin-top:16px">Reward Probes</h2>${table(
-        [{ label: "Probe" }, { label: "Value", num: true }, { label: "Would fire", num: true }, { label: "Meaning" }],
+      <h2 style="margin-top:16px">Candidate Reward Probes</h2>
+      <div class="mode-help" style="margin:-4px 0 8px">Inactive diagnostics only. These are not active rewards unless they also appear in the Rewards table.</div>${table(
+        [
+          { label: "Candidate probe" },
+          { label: "Current value", num: true },
+          { label: "Would fire now", num: true },
+          { label: "Meaning" },
+        ],
         probes.map(p => [
-          `<span class="name">${p.label || p.name}</span>`,
+          `<span class="name">${p.label || p.name}</span><br><span class="muted">${p.statusLabel || "candidate"}</span>`,
           fmt(p.currentValue),
           statePill(p.wouldFire),
           `<span class="muted">${p.detail || ""}</span>`,
@@ -957,10 +963,14 @@ def _to_jsonable(value: Any, env_index: int | None = None, max_items: int = 8) -
         if env_index is not None and getattr(value, "ndim", 0) > 0 and value.shape[0] > env_index:
             value = value[env_index]
         if getattr(value, "numel", lambda: 1)() == 1:
-            return float(value.item())
+            return _finite_number(float(value.item()))
         flat = value.flatten()
-        return [float(item) for item in flat[:max_items].tolist()]
-    if isinstance(value, (str, int, float, bool)) or value is None:
+        return [_finite_number(float(item)) for item in flat[:max_items].tolist()]
+    if isinstance(value, bool) or value is None:
+        return value
+    if isinstance(value, (int, float)):
+        return _finite_number(value)
+    if isinstance(value, str):
         return value
     if isinstance(value, Path):
         return str(value)
@@ -969,6 +979,18 @@ def _to_jsonable(value: Any, env_index: int | None = None, max_items: int = 8) -
     if isinstance(value, (list, tuple)):
         return [_to_jsonable(item, env_index, max_items) for item in value[:max_items]]
     return str(value)
+
+
+def _finite_number(value: int | float) -> int | float | None:
+    """Return a JSON-safe number, or None for nan/inf."""
+    if isinstance(value, bool):
+        return value
+    return value if math.isfinite(float(value)) else None
+
+
+def _snapshot_json(payload: dict[str, Any], *, indent: int | None = None) -> str:
+    """Dump snapshot JSON and fail if a non-finite value escaped sanitizing."""
+    return json.dumps(payload, indent=indent, cls=SnapshotEncoder, allow_nan=False)
 
 
 def _shape_summary(value: Any) -> str:
@@ -1948,7 +1970,7 @@ def make_handler(runtime: DebugRuntime):
             self.wfile.write(content)
 
         def _send_json(self, payload: dict[str, Any]) -> None:
-            self._send(json.dumps(payload, cls=SnapshotEncoder).encode("utf-8"), "application/json")
+            self._send(_snapshot_json(payload).encode("utf-8"), "application/json")
 
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
@@ -2009,7 +2031,7 @@ def run_mock(args: argparse.Namespace) -> None:
             viewer_mode=args.viewer_mode,
         )
     if args.dump_json:
-        args.dump_json.write_text(json.dumps(runtime.snapshot(), indent=2, cls=SnapshotEncoder))
+        args.dump_json.write_text(_snapshot_json(runtime.snapshot(), indent=2))
         print(f"[INFO] Wrote mock snapshot: {args.dump_json}")
         return
     serve(runtime, args.host, args.port)
@@ -2154,12 +2176,12 @@ def run_real() -> None:
     try:
         if args.dump_json:
             args.dump_json.parent.mkdir(parents=True, exist_ok=True)
-            args.dump_json.write_text(json.dumps(runtime.snapshot(), indent=2, cls=SnapshotEncoder))
+            args.dump_json.write_text(_snapshot_json(runtime.snapshot(), indent=2))
             print(f"[INFO] Wrote snapshot: {args.dump_json}")
         elif args.serve:
             serve(runtime, args.host, args.port)
         else:
-            print(json.dumps(runtime.snapshot(), indent=2, cls=SnapshotEncoder))
+            print(_snapshot_json(runtime.snapshot(), indent=2))
     finally:
         runtime_env.close()
         simulation_app.close()
