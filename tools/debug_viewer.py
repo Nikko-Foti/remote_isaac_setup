@@ -525,7 +525,9 @@ HTML_PAGE = r"""<!doctype html>
     }
 
     function bounds(snapshot) {
-      const positions = allPositions(snapshot);
+      const positions = allPositions(snapshot).filter(item =>
+        item.kind === "overlay" || item.kind === "height" || shouldDrawMarker(item)
+      );
       const xs = positions.map(item => item.p[0]);
       const ys = positions.map(item => item.p[1]);
       const zs = positions.map(item => item.p[2]);
@@ -638,7 +640,11 @@ HTML_PAGE = r"""<!doctype html>
         }
       }
       heightLegend.sort((a, b) => b.z - a.z);
-      drawLegendBox(ctx, "Height thresholds", heightLegend.slice(0, 6), 12, 42);
+      const visibleHeightRows = heightLegend.slice(0, 6);
+      if (heightLegend.length > visibleHeightRows.length) {
+        visibleHeightRows.push({ label: `+${heightLegend.length - visibleHeightRows.length} more`, color: "#a6adba" });
+      }
+      drawLegendBox(ctx, "Height thresholds", visibleHeightRows, 12, 42);
 
       const heightLabelBoxes = [];
       for (const item of allPositions(snapshot)) {
@@ -1697,7 +1703,7 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 {"name": "robot", "label": "robot", "kind": "articulation", "position": [0.0, 0.0, 0.0]},
                 {"name": "object", "label": "object", "kind": "rigid_object", "position": cube},
                 {"name": "table", "label": "table", "kind": "static_asset", "position": [0.35, 0.0, -0.05]},
-                {"name": "ground", "label": "ground", "kind": "static_asset", "position": [-0.5, -0.35, -0.05]},
+                {"name": "ground", "label": "ground", "kind": "static_asset", "position": [-0.5, -0.35, -1.05]},
                 {"name": "bowl", "label": "bowl", "kind": "static_asset", "position": [0.7, 0.2, 0.025]},
                 {"name": "bowl_collision_base", "label": "bowl_collision_base", "kind": "static_asset", "position": [0.7, 0.2, 0.01]},
                 {"name": "bowl_collision_front", "label": "bowl_collision_front", "kind": "static_asset", "position": [0.7, 0.31, 0.07]},
@@ -2082,7 +2088,8 @@ def run_real() -> None:
 
 
 def main() -> None:
-    if "--mock" in sys.argv or "--snapshot-json" in sys.argv:
+    has_snapshot_json = any(arg == "--snapshot-json" or arg.startswith("--snapshot-json=") for arg in sys.argv)
+    if "--mock" in sys.argv or has_snapshot_json:
         args = parse_mock_args()
         if not args.serve and args.dump_json is None:
             args.serve = True
