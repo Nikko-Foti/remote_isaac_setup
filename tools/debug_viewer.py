@@ -421,17 +421,54 @@ HTML_PAGE = r"""<!doctype html>
       const positions = [];
       for (const asset of snapshot.scene?.assets || []) {
         const p = pos2(asset);
-        if (p) positions.push({ label: asset.label || asset.name, kind: asset.kind, p });
+        if (p) positions.push({ name: asset.name, label: asset.label || asset.name, kind: asset.kind, p });
       }
       for (const frame of snapshot.scene?.frames || []) {
         const p = pos2(frame);
-        if (p) positions.push({ label: frame.label || frame.name, kind: "frame", p });
+        if (p) positions.push({ name: frame.name, label: frame.label || frame.name, kind: "frame", p });
       }
       for (const overlay of snapshot.overlays || []) {
-        if (overlay.position) positions.push({ label: overlay.label, kind: "overlay", p: overlay.position });
-        if (overlay.z !== undefined) positions.push({ label: overlay.label, kind: "height", p: [0, 0, overlay.z] });
+        if (overlay.position) positions.push({ name: overlay.type, label: overlay.label, kind: "overlay", p: overlay.position });
+        if (overlay.z !== undefined) positions.push({ name: overlay.type, label: overlay.label, kind: "height", p: [0, 0, overlay.z] });
       }
       return positions;
+    }
+
+    function canvasLabel(item) {
+      if (item.kind !== "static_asset") return item.label;
+      if (item.name === "bowl" || item.name === "table") return item.label;
+      return "";
+    }
+
+    function drawCanvasLabel(ctx, text, x, y, labelBoxes) {
+      if (!text) return;
+      ctx.font = "12px system-ui";
+      const width = ctx.measureText(text).width + 8;
+      const height = 16;
+      const candidates = [
+        [x + 9, y - 12],
+        [x + 9, y + 8],
+        [x - width - 9, y - 12],
+        [x - width - 9, y + 8],
+      ];
+      let box = null;
+      for (const [left, top] of candidates) {
+        const candidate = { left, top, right: left + width, bottom: top + height };
+        const overlaps = labelBoxes.some(existing =>
+          candidate.left < existing.right && candidate.right > existing.left
+          && candidate.top < existing.bottom && candidate.bottom > existing.top
+        );
+        if (!overlaps) {
+          box = candidate;
+          break;
+        }
+      }
+      if (!box) return;
+      labelBoxes.push(box);
+      ctx.fillStyle = "rgba(17, 19, 24, 0.82)";
+      ctx.fillRect(box.left, box.top, width, height);
+      ctx.fillStyle = "#edf0f5";
+      ctx.fillText(text, box.left + 4, box.top + 12);
     }
 
     function bounds(snapshot) {
@@ -476,8 +513,13 @@ HTML_PAGE = r"""<!doctype html>
       const oy = (height - (b.maxY - b.minY) * scale) / 2;
       const map = (x, y) => [ox + (x - b.minX) * scale, height - (oy + (y - b.minY) * scale)];
 
+      const drawnTopOverlays = new Set();
+      const topLabelBoxes = [];
       for (const overlay of snapshot.overlays || []) {
         if (overlay.type === "target_radius" && overlay.position && overlay.radius !== undefined) {
+          const key = `${overlay.label}:${overlay.position.join(",")}:${overlay.radius}`;
+          if (drawnTopOverlays.has(key)) continue;
+          drawnTopOverlays.add(key);
           const [cx, cy] = map(overlay.position[0], overlay.position[1]);
           ctx.strokeStyle = overlay.color || "#4aa3ff";
           ctx.fillStyle = "rgba(74, 163, 255, 0.08)";
@@ -486,9 +528,7 @@ HTML_PAGE = r"""<!doctype html>
           ctx.arc(cx, cy, overlay.radius * scale, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          ctx.fillStyle = "#edf0f5";
-          ctx.font = "12px system-ui";
-          ctx.fillText(overlay.label || "target", cx + 8, cy - 8);
+          drawCanvasLabel(ctx, overlay.label || "target", cx, cy, topLabelBoxes);
         }
       }
 
@@ -504,9 +544,7 @@ HTML_PAGE = r"""<!doctype html>
         ctx.arc(x, y, item.kind === "frame" ? 5 : 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = "#edf0f5";
-        ctx.font = "12px system-ui";
-        ctx.fillText(item.label, x + 9, y + 4);
+        drawCanvasLabel(ctx, canvasLabel(item), x, y, topLabelBoxes);
       }
     }
 
@@ -554,6 +592,7 @@ HTML_PAGE = r"""<!doctype html>
         }
       }
 
+      const heightLabelBoxes = [];
       for (const item of allPositions(snapshot)) {
         if (item.kind === "overlay" || item.kind === "height") continue;
         const [x, y] = map(item.p[0], item.p[2]);
@@ -562,9 +601,7 @@ HTML_PAGE = r"""<!doctype html>
         ctx.beginPath();
         ctx.arc(x, y, item.kind === "frame" ? 5 : 7, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#edf0f5";
-        ctx.font = "12px system-ui";
-        ctx.fillText(item.label, x + 9, y + 4);
+        drawCanvasLabel(ctx, canvasLabel(item), x, y, heightLabelBoxes);
       }
     }
 
