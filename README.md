@@ -73,7 +73,26 @@ It keeps task code outside of the core Isaac Lab repository while leaving room f
 
         ```bash
         # use 'FULL_PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-        python tools/debug_viewer.py --task=Isaac-Object-In-Bowl-Franka-v0 --headless --serve --host=0.0.0.0 --port=8080
+        python tools/debug_viewer.py \
+            --task=Isaac-Object-In-Bowl-Franka-v0 \
+            --viewer-mode setup \
+            --headless \
+            --serve \
+            --host=0.0.0.0 \
+            --port=8080
+        ```
+
+        To inspect a trained RSL-RL checkpoint instead of zero/random setup actions:
+
+        ```bash
+        python tools/debug_viewer.py \
+            --task=Isaac-Object-In-Bowl-Franka-v0 \
+            --viewer-mode policy \
+            --run-dir logs/rsl_rl/object_in_bowl_franka/<run-name> \
+            --headless \
+            --serve \
+            --host=0.0.0.0 \
+            --port=8080
         ```
 
 ### Set up IDE (Optional)
