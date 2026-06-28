@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Training Report - Gated Lift Progress Continuation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1217;
+      --panel: #171b22;
+      --panel-2: #202632;
+      --line: #303846;
+      --text: #eef2f7;
+      --muted: #aab4c2;
+      --good: #76d36a;
+      --warn: #f0bd54;
+      --bad: #ff6f7d;
+      --blue: #70b7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.05; }
+    h2 { font-size: 20px; margin-bottom: 14px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+    p { color: var(--muted); }
+    .hero, .section, .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+    }
+    .hero {
+      padding: 26px;
+      display: grid;
+      gap: 22px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+    }
+    .eyebrow {
+      color: var(--warn);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .summary {
+      max-width: 760px;
+      margin-top: 14px;
+      font-size: 16px;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge.good { color: #10210d; background: var(--good); border-color: var(--good); }
+    .badge.warn { color: #281b04; background: var(--warn); border-color: var(--warn); }
+    .badge.bad { color: #2a0509; background: var(--bad); border-color: var(--bad); }
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .grid.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .section {
+      margin-top: 18px;
+      padding: 22px;
+    }
+    .card {
+      padding: 16px;
+      background: var(--panel-2);
+      min-width: 0;
+    }
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .metric-value {
+      margin-top: 6px;
+      font-size: 30px;
+      font-weight: 800;
+    }
+    .metric-note {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow-wrap: anywhere;
+    }
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    tr:last-child td { border-bottom: 0; }
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #10141b;
+      color: #d8e6ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    figure {
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #090b0f;
+    }
+    video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .callout {
+      border-left: 4px solid var(--blue);
+      padding: 12px 14px;
+      background: #121923;
+      border-radius: 6px;
+      color: var(--text);
+    }
+    .small { font-size: 13px; color: var(--muted); }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+      .badges { justify-content: flex-start; }
+      .grid.metrics, .grid.two, .media-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Isaac Lab training report</div>
+        <h1>1000 more iterations improved lift, but did not lock in 90%+</h1>
+        <p class="summary">
+          My read: the continuation helped. It produced a few 90%+ training batches and the final checkpoint
+          evaluated better than the previous report. But the clean eval still landed just under the 90% target,
+          so I would not call this fully stable yet.
+        </p>
+      </div>
+      <div class="badges">
+        <span class="badge good">88.5% clean eval</span>
+        <span class="badge warn">91.8% training spike</span>
+        <span class="badge bad">not stable 90%+</span>
+      </div>
+    </section>
+
+    <section class="grid metrics">
+      <div class="card">
+        <div class="metric-label">Final clean eval</div>
+        <div class="metric-value">88.5%</div>
+        <div class="metric-note">lift threshold hit rate for <code>model_2498.pt</code></div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Best training batch</div>
+        <div class="metric-value">91.8%</div>
+        <div class="metric-note">iteration 2235 during the continuation</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Recent training avg</div>
+        <div class="metric-value">86.1%</div>
+        <div class="metric-note">last 100 logged batches</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Training time</div>
+        <div class="metric-value">1h24m</div>
+        <div class="metric-note">4096 envs, 1000 more iterations</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Version Marker</h2>
+      <table>
+        <tbody>
+          <tr>
+            <td>Repo commit</td>
+            <td><code>2b5508c</code></td>
+            <td>Current local main when this report was created.</td>
+          </tr>
+          <tr>
+            <td>Base checkpoint</td>
+            <td><code>model_1499.pt</code></td>
+            <td>From <code>gated_lift_progress_fresh_1500_20260628_181539</code>.</td>
+          </tr>
+          <tr>
+            <td>Continuation run</td>
+            <td><code>gated_lift_progress_cont_1000_from_1499_20260628_215024</code></td>
+            <td>1000 more iterations from the previous checkpoint.</td>
+          </tr>
+          <tr>
+            <td>Checkpoint to keep using</td>
+            <td><code>model_2498.pt</code></td>
+            <td>Clean eval was better than the saved checkpoint closest to the 91.8% training spike.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Decision</h2>
+      <div class="callout">
+        More training helped, but not enough to prove stable 90%+ lift. I would treat <code>model_2498.pt</code> as the current best lift checkpoint, then make one small reward/config change if we want to push lift reliability higher.
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>What improved</h3>
+          <p>The prior report showed about 83.1% lift. This final checkpoint evaluated around 88.5%, so the extra training did move the task forward.</p>
+        </div>
+        <div class="card">
+          <h3>What did not improve enough</h3>
+          <p>The policy briefly crossed 90% in training, but the clean eval stayed below 90%. That means the spike was not a reliable new baseline.</p>
+        </div>
+        <div class="card">
+          <h3>What looks healthy</h3>
+          <p>Reach and close behavior are basically solved in these logs. Drop termination stayed at 0%, so the main blocker is consistency of the actual lift.</p>
+        </div>
+        <div class="card">
+          <h3>What I would not do yet</h3>
+          <p>I would not add bowl transport in the same run if the immediate goal is clean lift reliability. That would mix two questions at once.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Reward Setup Tested</h2>
+      <table>
+        <thead>
+          <tr><th>Reward</th><th>Weight</th><th>What it pays for</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>reaching_object</code></td><td>1.0</td><td>hand close to cube</td></tr>
+          <tr><td><code>object_lift_progress</code></td><td>5.0</td><td>cube rises from start height toward the lift threshold, only while hand is near cube and gripper is closing</td></tr>
+          <tr><td><code>lifting_object</code></td><td>15.0</td><td>cube clears the lift threshold</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Training Curve</h2>
+      <table>
+        <thead>
+          <tr><th>Iteration</th><th>Lift hit rate</th><th>Max cube rise</th><th>Lift-progress reward</th><th>Gate active rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1518</td><td>82.1%</td><td>0.193m</td><td>3.48</td><td>73.9%</td></tr>
+          <tr><td>1554</td><td>85.2%</td><td>0.205m</td><td>3.56</td><td>75.7%</td></tr>
+          <tr><td>1581</td><td>88.1%</td><td>0.213m</td><td>3.75</td><td>79.2%</td></tr>
+          <tr><td>1806</td><td>88.7%</td><td>0.229m</td><td>3.72</td><td>79.2%</td></tr>
+          <tr><td>2023</td><td>90.1%</td><td>0.255m</td><td>3.73</td><td>79.2%</td></tr>
+          <tr><td>2136</td><td>90.3%</td><td>0.255m</td><td>3.83</td><td>81.2%</td></tr>
+          <tr><td>2235</td><td>91.8%</td><td>0.264m</td><td>3.82</td><td>81.1%</td></tr>
+          <tr><td>2300</td><td>87.8%</td><td>0.243m</td><td>3.66</td><td>78.0%</td></tr>
+          <tr><td>2400</td><td>84.6%</td><td>0.235m</td><td>3.61</td><td>77.1%</td></tr>
+          <tr><td>2498</td><td>86.5%</td><td>0.246m</td><td>3.62</td><td>77.2%</td></tr>
+        </tbody>
+      </table>
+      <p class="small">The first post-resume batch was noisy, so this table starts after the continuation settled back into normal logging.</p>
+    </section>
+
+    <section class="section">
+      <h2>Checkpoint Eval</h2>
+      <table>
+        <thead>
+          <tr><th>Checkpoint</th><th>Lift hit rate</th><th>Best eval batch</th><th>Max cube rise</th><th>Read</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>model_2250.pt</code></td>
+            <td>86.3%</td>
+            <td>88.3%</td>
+            <td>0.257m</td>
+            <td>Closest saved checkpoint to the training spike, but not best in clean eval.</td>
+          </tr>
+          <tr>
+            <td><code>model_2498.pt</code></td>
+            <td>88.5%</td>
+            <td>89.45%</td>
+            <td>0.256m</td>
+            <td>Best saved checkpoint from this continuation, but still just under 90%.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Key Signals</h2>
+      <table>
+        <thead>
+          <tr><th>Signal</th><th>Final eval result</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>close_near_object_hit_rate</code></td><td>100%</td><td>the policy gets near the cube and closes at the right time</td></tr>
+          <tr><td><code>close_command_hit_rate</code></td><td>100%</td><td>the gripper command is not the obvious blocker anymore</td></tr>
+          <tr><td><code>lift_after_close_near_object_hit_rate</code></td><td>88.5%</td><td>when it attempts a plausible grasp, lift usually works but not always</td></tr>
+          <tr><td><code>object_dropping</code></td><td>0%</td><td>failures are not mostly from dropping below the table</td></tr>
+          <tr><td><code>object_in_bowl</code></td><td>0%</td><td>expected, because this run was still lift-only</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Videos</h2>
+      <p class="small">All videos use final checkpoint <code>model_2498.pt</code>, 750 steps, about 15 seconds. The crop clips are derived from the same 16-env playback to make individual envs easier to inspect.</p>
+      <div class="media-grid">
+        <figure>
+          <video controls preload="metadata" poster="media/gated_lift_progress_cont_1000_model_2498_play_16env_750steps_mid.jpg">
+            <source src="media/gated_lift_progress_cont_1000_model_2498_play_16env_750steps.mp4" type="video/mp4">
+          </video>
+          <figcaption>16-env overview - representative final checkpoint playback.</figcaption>
+        </figure>
+        <figure>
+          <video controls preload="metadata" poster="media/gated_lift_progress_cont_1000_center_crop_mid.jpg">
+            <source src="media/gated_lift_progress_cont_1000_center_crop.mp4" type="video/mp4">
+          </video>
+          <figcaption>Center crop - easier to inspect lifting behavior without the full grid.</figcaption>
+        </figure>
+        <figure>
+          <video controls preload="metadata" poster="media/gated_lift_progress_cont_1000_top_left_crop_mid.jpg">
+            <source src="media/gated_lift_progress_cont_1000_top_left_crop.mp4" type="video/mp4">
+          </video>
+          <figcaption>Top-left crop - second sample region from the same playback.</figcaption>
+        </figure>
+        <figure>
+          <video controls preload="metadata" poster="media/gated_lift_progress_cont_1000_top_right_crop_mid.jpg">
+            <source src="media/gated_lift_progress_cont_1000_top_right_crop.mp4" type="video/mp4">
+          </video>
+          <figcaption>Top-right crop - third sample region from the same playback.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Next Run</h2>
+      <table>
+        <thead>
+          <tr><th>Choice</th><th>Recommendation</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Keep training only?</td><td>Not my first choice.</td><td>It helped, but the curve dipped after the 91.8% spike.</td></tr>
+          <tr><td>Next narrow change</td><td>Slightly improve lift reliability before bowl transport.</td><td>Reach/close are solved enough; the gap is still missed lifts.</td></tr>
+          <tr><td>Do not change yet</td><td>Do not add bowl transport and lift tuning in the same experiment.</td><td>That would make it harder to know what caused the result.</td></tr>
+          <tr><td>Success bar</td><td>Use clean eval, not one training spike.</td><td>The training spike reached 91.8%, but clean eval said 88.5%.</td></tr>
+        </tbody>
+      </table>
+      <div class="grid two">
+        <div class="card">
+          <h3>Simple takeaway</h3>
+          <p>We are close. The reward setup is not broken, but more training alone did not clearly finish the job.</p>
+        </div>
+        <div class="card">
+          <h3>Decision rule</h3>
+          <p>If the next focused lift change gets clean eval above 90%, move on to carry-toward-bowl. If not, keep lift isolated one more iteration.</p>
+        </div>
+      </div>
+      <p class="small">Design source: matched the existing training report and repo debug-viewer style. No new dependencies.</p>
+    </section>
+  </main>
+</body>
+</html>
