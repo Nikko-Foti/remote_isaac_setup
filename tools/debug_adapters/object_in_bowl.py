@@ -226,6 +226,13 @@ def _collect_episode_signals(env: Any, env_index: int) -> dict[str, Any]:
         "_episode_close_command_hit",
         "_episode_close_near_object_hit",
         "_episode_max_lift_progress_after_close_near_object",
+        "_episode_max_lift_progress_while_gate_active",
+        "_episode_gate_active_at_max_lift_progress",
+        "_episode_near_object_at_max_lift_progress",
+        "_episode_close_command_at_max_lift_progress",
+        "_episode_first_close_near_step",
+        "_episode_first_lift_threshold_step",
+        "_episode_lift_threshold_hit",
     )
     signals = {}
     for name in signal_names:
