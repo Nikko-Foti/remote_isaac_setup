@@ -219,6 +219,26 @@ def compute_object_to_target_xy_reward(
     return (1.0 - torch.tanh(xy_distance / std)) * is_lifted.float() * torch.logical_not(is_above_target).float()
 
 
+# Rewards the lifted cube for moving toward the target in XY, keeping max reward inside the target radius.
+def compute_saturated_object_to_target_xy_reward(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    std: float,
+    radius: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward post-lift XY transport and saturate once the object reaches the target area."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    base_reward = 1.0 - torch.tanh(xy_distance / std)
+    radius_reward = 1.0 - torch.tanh(torch.as_tensor(radius, device=env.device) / std)
+    saturated_reward = torch.clamp(base_reward / radius_reward, max=1.0)
+    is_lifted = check_object_lifted(env, minimal_height, object_cfg)
+    return saturated_reward * is_lifted.float()
+
+
 # Rewards the current success milestone.
 def compute_object_above_target_reward(
     env: ManagerBasedRLEnv,
