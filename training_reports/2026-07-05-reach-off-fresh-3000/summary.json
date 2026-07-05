@@ -1,0 +1,25 @@
+{
+  "run": "reach_off_after_lift_fresh_3000_0666645",
+  "checkpoint": "model_2999.pt",
+  "commit": "0666645c85999022da842ec378efd5db7eb40649",
+  "eval_completed_episodes": 8192,
+  "lift_threshold_hit_rate": 0.9990217643489434,
+  "object_in_bowl_success_rate": 0.0,
+  "eval_mean_xy_distance_m": 0.3827180901573155,
+  "eval_min_xy_after_lift_mean_m": 0.23115647448464027,
+  "end_object_position_local_mean_m": [
+    0.32957732677459717,
+    0.10514792054891586,
+    0.3365495502948761
+  ],
+  "end_object_position_local_median_m": [
+    0.3287220001220703,
+    0.10400581359863281,
+    0.3379407227039337
+  ],
+  "end_xy_distance_to_bowl_mean_m": 0.3826058804988861,
+  "end_xy_distance_to_bowl_median_m": 0.3838050067424774,
+  "closest_xy_distance_after_lift_mean_m": 0.23132474720478058,
+  "closest_xy_distance_after_lift_median_m": 0.23236648738384247,
+  "closest_after_lift_inside_bowl_radius_rate": 0.0
+}

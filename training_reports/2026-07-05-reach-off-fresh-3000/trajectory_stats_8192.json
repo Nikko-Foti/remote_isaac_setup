@@ -1,0 +1,1968 @@
+{
+  "checkpoint": "/runpod-volume/projects/isaac_lab/custom_tasks/object_in_bowl/object_in_bowl/logs/rsl_rl/object_in_bowl_franka/2026-07-05_18-20-15_reach_off_after_lift_fresh_3000_0666645/model_2999.pt",
+  "task": "Isaac-Object-In-Bowl-Franka-v0",
+  "num_envs": 1024,
+  "completed_episodes": 8192,
+  "object_lifted_height": 0.10500000000000001,
+  "placement_target_position": [
+    0.7,
+    0.2,
+    0.049
+  ],
+  "bowl_success_radius": 0.11,
+  "tight_reward_radius": 0.08,
+  "end_object_position_local_mean_m": [
+    0.32957732677459717,
+    0.10514792054891586,
+    0.3365495502948761
+  ],
+  "end_object_position_local_median_m": [
+    0.3287220001220703,
+    0.10400581359863281,
+    0.3379407227039337
+  ],
+  "end_offset_from_bowl_mean_m": [
+    -0.3704226613044739,
+    -0.09485209733247757,
+    0.28754955530166626
+  ],
+  "end_offset_from_bowl_median_m": [
+    -0.37127798795700073,
+    -0.09599418938159943,
+    0.2889407277107239
+  ],
+  "end_xy_distance_to_bowl_mean_m": 0.3826058804988861,
+  "end_xy_distance_to_bowl_median_m": 0.3838050067424774,
+  "closest_xy_distance_after_lift_mean_m": 0.23132474720478058,
+  "closest_xy_distance_after_lift_median_m": 0.23236648738384247,
+  "closest_xy_distance_after_lift_p25_m": 0.2263149619102478,
+  "closest_xy_distance_after_lift_p75_m": 0.23811578750610352,
+  "lift_hit_rate": 0.998046875,
+  "end_inside_bowl_radius_rate": 0.0,
+  "closest_after_lift_inside_bowl_radius_rate": 0.0,
+  "closest_after_lift_inside_tight_radius_rate": 0.0,
+  "max_object_z_mean_m": 0.3600105941295624,
+  "max_object_z_median_m": 0.35987386107444763,
+  "samples": [
+    {
+      "end_object_position_local_m": [
+        0.33000946044921875,
+        0.10166549682617188,
+        0.34255823493003845
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3699905276298523,
+        -0.09833450615406036,
+        0.2935582399368286
+      ],
+      "end_xy_distance_to_bowl_m": 0.3828350305557251,
+      "closest_xy_distance_after_lift_m": 0.23767612874507904,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33148193359375,
+        0.11275100708007812,
+        0.33194348216056824
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36851805448532104,
+        -0.08724899590015411,
+        0.2829434871673584
+      ],
+      "end_xy_distance_to_bowl_m": 0.37870562076568604,
+      "closest_xy_distance_after_lift_m": 0.23640866577625275,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.329864501953125,
+        0.113922119140625,
+        0.32927361130714417
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37013548612594604,
+        -0.08607788383960724,
+        0.2802736163139343
+      ],
+      "end_xy_distance_to_bowl_m": 0.38001275062561035,
+      "closest_xy_distance_after_lift_m": 0.23250852525234222,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3250732421875,
+        0.10190582275390625,
+        0.33937156200408936
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37492674589157104,
+        -0.09809418022632599,
+        0.2903715670108795
+      ],
+      "end_xy_distance_to_bowl_m": 0.3875468075275421,
+      "closest_xy_distance_after_lift_m": 0.22942613065242767,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3312263488769531,
+        0.11342239379882812,
+        0.3290928304195404
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3687736392021179,
+        -0.08657760918140411,
+        0.28009283542633057
+      ],
+      "end_xy_distance_to_bowl_m": 0.37880033254623413,
+      "closest_xy_distance_after_lift_m": 0.22140014171600342,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3271980285644531,
+        0.10518264770507812,
+        0.3371608257293701
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3728019595146179,
+        -0.09481735527515411,
+        0.2881608307361603
+      ],
+      "end_xy_distance_to_bowl_m": 0.38467079401016235,
+      "closest_xy_distance_after_lift_m": 0.23082828521728516,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3271064758300781,
+        0.10311508178710938,
+        0.3395349681377411
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3728935122489929,
+        -0.09688492119312286,
+        0.29053497314453125
+      ],
+      "end_xy_distance_to_bowl_m": 0.3852742612361908,
+      "closest_xy_distance_after_lift_m": 0.2275703251361847,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3260383605957031,
+        0.10153007507324219,
+        0.34038957953453064
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3739616274833679,
+        -0.09846992790699005,
+        0.2913895845413208
+      ],
+      "end_xy_distance_to_bowl_m": 0.38670870661735535,
+      "closest_xy_distance_after_lift_m": 0.2393258959054947,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3331336975097656,
+        0.11932373046875,
+        0.3253117501735687
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3668662905693054,
+        -0.08067627251148224,
+        0.2763117551803589
+      ],
+      "end_xy_distance_to_bowl_m": 0.3756321966648102,
+      "closest_xy_distance_after_lift_m": 0.23362018167972565,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3335533142089844,
+        0.11577415466308594,
+        0.32877805829048157
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36644667387008667,
+        -0.0842258483171463,
+        0.27977806329727173
+      ],
+      "end_xy_distance_to_bowl_m": 0.3760015368461609,
+      "closest_xy_distance_after_lift_m": 0.23092354834079742,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32782745361328125,
+        0.1019887924194336,
+        0.3407897651195526
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3721725344657898,
+        -0.09801121056079865,
+        0.2917897701263428
+      ],
+      "end_xy_distance_to_bowl_m": 0.3848617970943451,
+      "closest_xy_distance_after_lift_m": 0.24145707488059998,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33708953857421875,
+        0.11985015869140625,
+        0.32702523469924927
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3629104495048523,
+        -0.08014984428882599,
+        0.27802523970603943
+      ],
+      "end_xy_distance_to_bowl_m": 0.37165573239326477,
+      "closest_xy_distance_after_lift_m": 0.22478002309799194,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32816314697265625,
+        0.10793209075927734,
+        0.33436521887779236
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3718368411064148,
+        -0.0920679122209549,
+        0.2853652238845825
+      ],
+      "end_xy_distance_to_bowl_m": 0.38306543231010437,
+      "closest_xy_distance_after_lift_m": 0.23923367261886597,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33536529541015625,
+        0.11634683609008789,
+        0.3301723301410675
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3646346926689148,
+        -0.08365316689014435,
+        0.28117233514785767
+      ],
+      "end_xy_distance_to_bowl_m": 0.37410736083984375,
+      "closest_xy_distance_after_lift_m": 0.22761133313179016,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33403778076171875,
+        0.11647176742553711,
+        0.3290960490703583
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3659622073173523,
+        -0.08352823555469513,
+        0.28009605407714844
+      ],
+      "end_xy_distance_to_bowl_m": 0.3753735423088074,
+      "closest_xy_distance_after_lift_m": 0.2287372648715973,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3272209167480469,
+        0.12027812004089355,
+        0.32024845480918884
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37277907133102417,
+        -0.07972188293933868,
+        0.271248459815979
+      ],
+      "end_xy_distance_to_bowl_m": 0.3812083601951599,
+      "closest_xy_distance_after_lift_m": 0.22538219392299652,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3232536315917969,
+        0.1016237735748291,
+        0.3383778929710388
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37674635648727417,
+        -0.09837622940540314,
+        0.289377897977829
+      ],
+      "end_xy_distance_to_bowl_m": 0.3893786072731018,
+      "closest_xy_distance_after_lift_m": 0.23069341480731964,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3299102783203125,
+        0.11276984214782715,
+        0.32915154099464417
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37008970975875854,
+        -0.08723016083240509,
+        0.2801515460014343
+      ],
+      "end_xy_distance_to_bowl_m": 0.3802308440208435,
+      "closest_xy_distance_after_lift_m": 0.21333177387714386,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3253974914550781,
+        0.09682655334472656,
+        0.3451729416847229
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3746024966239929,
+        -0.10317344963550568,
+        0.29617294669151306
+      ],
+      "end_xy_distance_to_bowl_m": 0.38855090737342834,
+      "closest_xy_distance_after_lift_m": 0.22778213024139404,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32849884033203125,
+        0.10297012329101562,
+        0.34116941690444946
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3715011477470398,
+        -0.09702987968921661,
+        0.2921694219112396
+      ],
+      "end_xy_distance_to_bowl_m": 0.383963406085968,
+      "closest_xy_distance_after_lift_m": 0.23890188336372375,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32476043701171875,
+        0.10517311096191406,
+        0.3353423476219177
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3752395510673523,
+        -0.09482689201831818,
+        0.2863423526287079
+      ],
+      "end_xy_distance_to_bowl_m": 0.387035995721817,
+      "closest_xy_distance_after_lift_m": 0.23950907588005066,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3276252746582031,
+        0.10861778259277344,
+        0.3319644033908844
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3723747134208679,
+        -0.0913822203874588,
+        0.28296440839767456
+      ],
+      "end_xy_distance_to_bowl_m": 0.3834235966205597,
+      "closest_xy_distance_after_lift_m": 0.2425307184457779,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3293190002441406,
+        0.10002517700195312,
+        0.34377434849739075
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3706809878349304,
+        -0.09997482597827911,
+        0.2947743535041809
+      ],
+      "end_xy_distance_to_bowl_m": 0.38392624258995056,
+      "closest_xy_distance_after_lift_m": 0.24016442894935608,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3337059020996094,
+        0.09837532043457031,
+        0.34838077425956726
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36629408597946167,
+        -0.10162468254566193,
+        0.2993807792663574
+      ],
+      "end_xy_distance_to_bowl_m": 0.3801301419734955,
+      "closest_xy_distance_after_lift_m": 0.2190801054239273,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3302421569824219,
+        0.11196327209472656,
+        0.33006924390792847
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36975783109664917,
+        -0.08803673088550568,
+        0.28106924891471863
+      ],
+      "end_xy_distance_to_bowl_m": 0.3800938129425049,
+      "closest_xy_distance_after_lift_m": 0.22640320658683777,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3278160095214844,
+        0.10452079772949219,
+        0.3378952741622925
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37218397855758667,
+        -0.09547920525074005,
+        0.28889527916908264
+      ],
+      "end_xy_distance_to_bowl_m": 0.38423585891723633,
+      "closest_xy_distance_after_lift_m": 0.2292410284280777,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3291587829589844,
+        0.11196327209472656,
+        0.3302747309207916
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37084120512008667,
+        -0.08803673088550568,
+        0.2812747359275818
+      ],
+      "end_xy_distance_to_bowl_m": 0.3811478316783905,
+      "closest_xy_distance_after_lift_m": 0.23564937710762024,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3312797546386719,
+        0.118560791015625,
+        0.32397252321243286
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36872023344039917,
+        -0.08143921196460724,
+        0.274972528219223
+      ],
+      "end_xy_distance_to_bowl_m": 0.3776068687438965,
+      "closest_xy_distance_after_lift_m": 0.23048390448093414,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3363456726074219,
+        0.11044120788574219,
+        0.33422568440437317
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36365431547164917,
+        -0.08955879509449005,
+        0.28522568941116333
+      ],
+      "end_xy_distance_to_bowl_m": 0.3745200037956238,
+      "closest_xy_distance_after_lift_m": 0.22695648670196533,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3282127380371094,
+        0.11432266235351562,
+        0.3255915641784668
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37178725004196167,
+        -0.08567734062671661,
+        0.27659156918525696
+      ],
+      "end_xy_distance_to_bowl_m": 0.38153162598609924,
+      "closest_xy_distance_after_lift_m": 0.21074651181697845,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3323783874511719,
+        0.11598587036132812,
+        0.3281554877758026
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36762160062789917,
+        -0.08401413261890411,
+        0.2791554927825928
+      ],
+      "end_xy_distance_to_bowl_m": 0.3770994544029236,
+      "closest_xy_distance_after_lift_m": 0.21472907066345215,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3293571472167969,
+        0.10992050170898438,
+        0.3322335183620453
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37064284086227417,
+        -0.09007950127124786,
+        0.28323352336883545
+      ],
+      "end_xy_distance_to_bowl_m": 0.38143208622932434,
+      "closest_xy_distance_after_lift_m": 0.22895970940589905,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33111572265625,
+        0.09752655029296875,
+        0.3462078273296356
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36888426542282104,
+        -0.10247345268726349,
+        0.2972078323364258
+      ],
+      "end_xy_distance_to_bowl_m": 0.3828529715538025,
+      "closest_xy_distance_after_lift_m": 0.22256691753864288,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3317375183105469,
+        0.10163497924804688,
+        0.343145489692688
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36826246976852417,
+        -0.09836502373218536,
+        0.29414549469947815
+      ],
+      "end_xy_distance_to_bowl_m": 0.3811730742454529,
+      "closest_xy_distance_after_lift_m": 0.23460914194583893,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33139801025390625,
+        0.11403656005859375,
+        0.3297213315963745
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3686019778251648,
+        -0.08596344292163849,
+        0.2807213366031647
+      ],
+      "end_xy_distance_to_bowl_m": 0.37849321961402893,
+      "closest_xy_distance_after_lift_m": 0.23408085107803345,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3260688781738281,
+        0.10375785827636719,
+        0.3376132845878601
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3739311099052429,
+        -0.09624214470386505,
+        0.28861328959465027
+      ],
+      "end_xy_distance_to_bowl_m": 0.3861179053783417,
+      "closest_xy_distance_after_lift_m": 0.23205280303955078,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33911895751953125,
+        0.10027885437011719,
+        0.34503430128097534
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3608810305595398,
+        -0.09972114861011505,
+        0.2960343062877655
+      ],
+      "end_xy_distance_to_bowl_m": 0.3744054436683655,
+      "closest_xy_distance_after_lift_m": 0.2301875352859497,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3276329040527344,
+        0.10753059387207031,
+        0.3339552879333496
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37236708402633667,
+        -0.09246940910816193,
+        0.28495529294013977
+      ],
+      "end_xy_distance_to_bowl_m": 0.3836767077445984,
+      "closest_xy_distance_after_lift_m": 0.23669570684432983,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.331390380859375,
+        0.09357643127441406,
+        0.3503074645996094
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36860960721969604,
+        -0.10642357170581818,
+        0.30130746960639954
+      ],
+      "end_xy_distance_to_bowl_m": 0.3836652338504791,
+      "closest_xy_distance_after_lift_m": 0.21954210102558136,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32817840576171875,
+        0.10242080688476562,
+        0.34073248505592346
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3718215823173523,
+        -0.09757919609546661,
+        0.2917324900627136
+      ],
+      "end_xy_distance_to_bowl_m": 0.3844125270843506,
+      "closest_xy_distance_after_lift_m": 0.23169124126434326,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33111572265625,
+        0.10147666931152344,
+        0.34394195675849915
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36888426542282104,
+        -0.0985233336687088,
+        0.2949419617652893
+      ],
+      "end_xy_distance_to_bowl_m": 0.3818146586418152,
+      "closest_xy_distance_after_lift_m": 0.23686757683753967,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3281517028808594,
+        0.10877418518066406,
+        0.33413517475128174
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37184828519821167,
+        -0.09122581779956818,
+        0.2851351797580719
+      ],
+      "end_xy_distance_to_bowl_m": 0.3828750550746918,
+      "closest_xy_distance_after_lift_m": 0.219863161444664,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33629608154296875,
+        0.1143350601196289,
+        0.32940369844436646
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3637039065361023,
+        -0.08566494286060333,
+        0.2804037034511566
+      ],
+      "end_xy_distance_to_bowl_m": 0.3736562728881836,
+      "closest_xy_distance_after_lift_m": 0.22687973082065582,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33136749267578125,
+        0.09708404541015625,
+        0.3479132652282715
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3686324954032898,
+        -0.10291595757007599,
+        0.29891327023506165
+      ],
+      "end_xy_distance_to_bowl_m": 0.382729172706604,
+      "closest_xy_distance_after_lift_m": 0.23929566144943237,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3355140686035156,
+        0.10701465606689453,
+        0.33924365043640137
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3644859194755554,
+        -0.09298534691333771,
+        0.29024365544319153
+      ],
+      "end_xy_distance_to_bowl_m": 0.3761599063873291,
+      "closest_xy_distance_after_lift_m": 0.21480987966060638,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3296966552734375,
+        0.0993490219116211,
+        0.34489989280700684
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37030333280563354,
+        -0.10065098106861115,
+        0.295899897813797
+      ],
+      "end_xy_distance_to_bowl_m": 0.3837383985519409,
+      "closest_xy_distance_after_lift_m": 0.24265156686306,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3358345031738281,
+        0.1126394271850586,
+        0.33313480019569397
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3641654849052429,
+        -0.08736057579517365,
+        0.28413480520248413
+      ],
+      "end_xy_distance_to_bowl_m": 0.37449750304222107,
+      "closest_xy_distance_after_lift_m": 0.22657090425491333,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3347358703613281,
+        0.11306905746459961,
+        0.33009645342826843
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3652641177177429,
+        -0.08693094551563263,
+        0.2810964584350586
+      ],
+      "end_xy_distance_to_bowl_m": 0.3754661977291107,
+      "closest_xy_distance_after_lift_m": 0.21440552175045013,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3333473205566406,
+        0.09309589862823486,
+        0.35100066661834717
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3666526675224304,
+        -0.10690410435199738,
+        0.30200067162513733
+      ],
+      "end_xy_distance_to_bowl_m": 0.3819197118282318,
+      "closest_xy_distance_after_lift_m": 0.21708273887634277,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33484649658203125,
+        0.11395382881164551,
+        0.3300338685512543
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3651534914970398,
+        -0.08604617416858673,
+        0.28103387355804443
+      ],
+      "end_xy_distance_to_bowl_m": 0.37515464425086975,
+      "closest_xy_distance_after_lift_m": 0.213224396109581,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.332977294921875,
+        0.1036524772644043,
+        0.3430263102054596
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36702269315719604,
+        -0.09634752571582794,
+        0.29402631521224976
+      ],
+      "end_xy_distance_to_bowl_m": 0.37945815920829773,
+      "closest_xy_distance_after_lift_m": 0.23621858656406403,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3282356262207031,
+        0.11394977569580078,
+        0.32884252071380615
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3717643618583679,
+        -0.08605022728443146,
+        0.2798425257205963
+      ],
+      "end_xy_distance_to_bowl_m": 0.3815932273864746,
+      "closest_xy_distance_after_lift_m": 0.2115461826324463,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3266563415527344,
+        0.10073661804199219,
+        0.341784805059433
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37334364652633667,
+        -0.09926338493824005,
+        0.29278481006622314
+      ],
+      "end_xy_distance_to_bowl_m": 0.3863142430782318,
+      "closest_xy_distance_after_lift_m": 0.23781467974185944,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.326629638671875,
+        0.10014533996582031,
+        0.3422682285308838
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37337034940719604,
+        -0.09985466301441193,
+        0.29326823353767395
+      ],
+      "end_xy_distance_to_bowl_m": 0.38649237155914307,
+      "closest_xy_distance_after_lift_m": 0.24479545652866364,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33036041259765625,
+        0.10458946228027344,
+        0.3392174541950226
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3696395754814148,
+        -0.0954105406999588,
+        0.29021745920181274
+      ],
+      "end_xy_distance_to_bowl_m": 0.381754606962204,
+      "closest_xy_distance_after_lift_m": 0.2416771650314331,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3230171203613281,
+        0.10714149475097656,
+        0.33224955201148987
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3769828677177429,
+        -0.09285850822925568,
+        0.28324955701828003
+      ],
+      "end_xy_distance_to_bowl_m": 0.3882509469985962,
+      "closest_xy_distance_after_lift_m": 0.24021592736244202,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32879638671875,
+        0.1080780029296875,
+        0.3347929120063782
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37120360136032104,
+        -0.09192200005054474,
+        0.28579291701316833
+      ],
+      "end_xy_distance_to_bowl_m": 0.3824157118797302,
+      "closest_xy_distance_after_lift_m": 0.21503946185112,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3212852478027344,
+        0.09923744201660156,
+        0.3400306701660156
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37871474027633667,
+        -0.10076256096363068,
+        0.2910306751728058
+      ],
+      "end_xy_distance_to_bowl_m": 0.3918902277946472,
+      "closest_xy_distance_after_lift_m": 0.23167988657951355,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3254966735839844,
+        0.10143089294433594,
+        0.33994781970977783
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37450331449508667,
+        -0.0985691100358963,
+        0.290947824716568
+      ],
+      "end_xy_distance_to_bowl_m": 0.38725781440734863,
+      "closest_xy_distance_after_lift_m": 0.24487674236297607,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3311576843261719,
+        0.09967994689941406,
+        0.34395354986190796
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36884230375289917,
+        -0.10032005608081818,
+        0.2949535548686981
+      ],
+      "end_xy_distance_to_bowl_m": 0.38224175572395325,
+      "closest_xy_distance_after_lift_m": 0.22305238246917725,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.325653076171875,
+        0.10886192321777344,
+        0.32927119731903076
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37434691190719604,
+        -0.0911380797624588,
+        0.2802712023258209
+      ],
+      "end_xy_distance_to_bowl_m": 0.38528141379356384,
+      "closest_xy_distance_after_lift_m": 0.2417721450328827,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3284454345703125,
+        0.10894012451171875,
+        0.3319743275642395
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37155455350875854,
+        -0.09105987846851349,
+        0.28297433257102966
+      ],
+      "end_xy_distance_to_bowl_m": 0.3825502395629883,
+      "closest_xy_distance_after_lift_m": 0.22810126841068268,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3314857482910156,
+        0.11438369750976562,
+        0.32885241508483887
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3685142397880554,
+        -0.08561630547046661,
+        0.27985242009162903
+      ],
+      "end_xy_distance_to_bowl_m": 0.3783290684223175,
+      "closest_xy_distance_after_lift_m": 0.2311059683561325,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3328857421875,
+        0.11641311645507812,
+        0.327287882566452
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36711424589157104,
+        -0.08358688652515411,
+        0.2782878875732422
+      ],
+      "end_xy_distance_to_bowl_m": 0.37650981545448303,
+      "closest_xy_distance_after_lift_m": 0.2311098426580429,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3262481689453125,
+        0.10566329956054688,
+        0.33650368452072144
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37375181913375854,
+        -0.09433670341968536,
+        0.2875036895275116
+      ],
+      "end_xy_distance_to_bowl_m": 0.3854735493659973,
+      "closest_xy_distance_after_lift_m": 0.23124419152736664,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3285331726074219,
+        0.10651397705078125,
+        0.33667731285095215
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37146681547164917,
+        -0.09348602592945099,
+        0.2876773178577423
+      ],
+      "end_xy_distance_to_bowl_m": 0.3830499053001404,
+      "closest_xy_distance_after_lift_m": 0.2370072305202484,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3295860290527344,
+        0.10462188720703125,
+        0.33941859006881714
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37041395902633667,
+        -0.09537811577320099,
+        0.2904185950756073
+      ],
+      "end_xy_distance_to_bowl_m": 0.3824963867664337,
+      "closest_xy_distance_after_lift_m": 0.24278788268566132,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3290519714355469,
+        0.09904861450195312,
+        0.34438323974609375
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37094801664352417,
+        -0.10095138847827911,
+        0.2953832447528839
+      ],
+      "end_xy_distance_to_bowl_m": 0.3844393491744995,
+      "closest_xy_distance_after_lift_m": 0.2411791980266571,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3280906677246094,
+        0.09304428100585938,
+        0.34930506348609924
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37190932035446167,
+        -0.10695572197437286,
+        0.3003050684928894
+      ],
+      "end_xy_distance_to_bowl_m": 0.38698330521583557,
+      "closest_xy_distance_after_lift_m": 0.2237599641084671,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33551788330078125,
+        0.09056472778320312,
+        0.35486605763435364
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3644821047782898,
+        -0.10943527519702911,
+        0.3058660626411438
+      ],
+      "end_xy_distance_to_bowl_m": 0.38055655360221863,
+      "closest_xy_distance_after_lift_m": 0.21325118839740753,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3316764831542969,
+        0.11322402954101562,
+        0.33127546310424805
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36832350492477417,
+        -0.08677597343921661,
+        0.2822754681110382
+      ],
+      "end_xy_distance_to_bowl_m": 0.3784075379371643,
+      "closest_xy_distance_after_lift_m": 0.23390761017799377,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32897186279296875,
+        0.09924697875976562,
+        0.34515321254730225
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3710281252861023,
+        -0.10075302422046661,
+        0.2961532175540924
+      ],
+      "end_xy_distance_to_bowl_m": 0.3844646215438843,
+      "closest_xy_distance_after_lift_m": 0.23929928243160248,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32944488525390625,
+        0.11247825622558594,
+        0.3301717936992645
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3705551028251648,
+        -0.0875217467546463,
+        0.2811717987060547
+      ],
+      "end_xy_distance_to_bowl_m": 0.38075077533721924,
+      "closest_xy_distance_after_lift_m": 0.22516898810863495,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32521820068359375,
+        0.10605812072753906,
+        0.33496636152267456
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3747817873954773,
+        -0.09394188225269318,
+        0.2859663665294647
+      ],
+      "end_xy_distance_to_bowl_m": 0.3863760530948639,
+      "closest_xy_distance_after_lift_m": 0.22620365023612976,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3349037170410156,
+        0.11173343658447266,
+        0.332100510597229
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3650962710380554,
+        -0.08826656639575958,
+        0.28310051560401917
+      ],
+      "end_xy_distance_to_bowl_m": 0.3756145238876343,
+      "closest_xy_distance_after_lift_m": 0.22736455500125885,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3280754089355469,
+        0.11005878448486328,
+        0.33077460527420044
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37192457914352417,
+        -0.08994121849536896,
+        0.2817746102809906
+      ],
+      "end_xy_distance_to_bowl_m": 0.3826451599597931,
+      "closest_xy_distance_after_lift_m": 0.23331061005592346,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3243598937988281,
+        0.10493755340576172,
+        0.335585355758667
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3756400942802429,
+        -0.09506244957447052,
+        0.28658536076545715
+      ],
+      "end_xy_distance_to_bowl_m": 0.38748204708099365,
+      "closest_xy_distance_after_lift_m": 0.23822273313999176,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3339195251464844,
+        0.11866426467895508,
+        0.32677745819091797
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36608046293258667,
+        -0.08133573830127716,
+        0.27777746319770813
+      ],
+      "end_xy_distance_to_bowl_m": 0.3750072121620178,
+      "closest_xy_distance_after_lift_m": 0.22339394688606262,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3296394348144531,
+        0.1044013500213623,
+        0.33852964639663696
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3703605532646179,
+        -0.09559865295886993,
+        0.2895296514034271
+      ],
+      "end_xy_distance_to_bowl_m": 0.38249972462654114,
+      "closest_xy_distance_after_lift_m": 0.22783708572387695,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32526397705078125,
+        0.10473394393920898,
+        0.33621394634246826
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3747360110282898,
+        -0.09526605904102325,
+        0.2872139513492584
+      ],
+      "end_xy_distance_to_bowl_m": 0.3866558074951172,
+      "closest_xy_distance_after_lift_m": 0.2357880175113678,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3276824951171875,
+        0.10194337368011475,
+        0.3408164381980896
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37231749296188354,
+        -0.09805662930011749,
+        0.29181644320487976
+      ],
+      "end_xy_distance_to_bowl_m": 0.38501355051994324,
+      "closest_xy_distance_after_lift_m": 0.23373635113239288,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3280754089355469,
+        0.11008167266845703,
+        0.3315246105194092
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37192457914352417,
+        -0.08991833031177521,
+        0.28252461552619934
+      ],
+      "end_xy_distance_to_bowl_m": 0.3826397955417633,
+      "closest_xy_distance_after_lift_m": 0.2349136620759964,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3244209289550781,
+        0.1031651496887207,
+        0.3377673923969269
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3755790591239929,
+        -0.09683485329151154,
+        0.28876739740371704
+      ],
+      "end_xy_distance_to_bowl_m": 0.38786160945892334,
+      "closest_xy_distance_after_lift_m": 0.23503553867340088,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3316001892089844,
+        0.11432075500488281,
+        0.32969939708709717
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36839979887008667,
+        -0.08567924797534943,
+        0.28069940209388733
+      ],
+      "end_xy_distance_to_bowl_m": 0.37823185324668884,
+      "closest_xy_distance_after_lift_m": 0.23425163328647614,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33222198486328125,
+        0.09670352935791016,
+        0.34881362318992615
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3677780032157898,
+        -0.10329647362232208,
+        0.2998136281967163
+      ],
+      "end_xy_distance_to_bowl_m": 0.3820089101791382,
+      "closest_xy_distance_after_lift_m": 0.23958855867385864,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.331146240234375,
+        0.10972118377685547,
+        0.33439913392066956
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36885374784469604,
+        -0.09027881920337677,
+        0.2853991389274597
+      ],
+      "end_xy_distance_to_bowl_m": 0.3797411620616913,
+      "closest_xy_distance_after_lift_m": 0.21243977546691895,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3321495056152344,
+        0.11371421813964844,
+        0.32843726873397827
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36785048246383667,
+        -0.0862857848405838,
+        0.27943727374076843
+      ],
+      "end_xy_distance_to_bowl_m": 0.37783488631248474,
+      "closest_xy_distance_after_lift_m": 0.23052440583705902,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.329803466796875,
+        0.11998176574707031,
+        0.3215465843677521
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37019652128219604,
+        -0.08001823723316193,
+        0.27254658937454224
+      ],
+      "end_xy_distance_to_bowl_m": 0.37874579429626465,
+      "closest_xy_distance_after_lift_m": 0.22611252963542938,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3260231018066406,
+        0.10017585754394531,
+        0.3419089913368225
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3739768862724304,
+        -0.09982414543628693,
+        0.29290899634361267
+      ],
+      "end_xy_distance_to_bowl_m": 0.3870704770088196,
+      "closest_xy_distance_after_lift_m": 0.24541763961315155,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32585906982421875,
+        0.09909629821777344,
+        0.3431444466114044
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3741409182548523,
+        -0.1009037047624588,
+        0.2941444516181946
+      ],
+      "end_xy_distance_to_bowl_m": 0.38750869035720825,
+      "closest_xy_distance_after_lift_m": 0.22845090925693512,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.329315185546875,
+        0.10042762756347656,
+        0.34350529313087463
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37068480253219604,
+        -0.09957237541675568,
+        0.2945052981376648
+      ],
+      "end_xy_distance_to_bowl_m": 0.3838253319263458,
+      "closest_xy_distance_after_lift_m": 0.23822826147079468,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32926177978515625,
+        0.10543441772460938,
+        0.33789464831352234
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3707382082939148,
+        -0.09456558525562286,
+        0.2888946533203125
+      ],
+      "end_xy_distance_to_bowl_m": 0.3826087713241577,
+      "closest_xy_distance_after_lift_m": 0.24368281662464142,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.326690673828125,
+        0.10179328918457031,
+        0.34041735529899597
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37330931425094604,
+        -0.09820671379566193,
+        0.29141736030578613
+      ],
+      "end_xy_distance_to_bowl_m": 0.38601088523864746,
+      "closest_xy_distance_after_lift_m": 0.23692893981933594,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3312225341796875,
+        0.11178207397460938,
+        0.329939603805542
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36877745389938354,
+        -0.08821792900562286,
+        0.28093960881233215
+      ],
+      "end_xy_distance_to_bowl_m": 0.37918227910995483,
+      "closest_xy_distance_after_lift_m": 0.20976684987545013,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3233070373535156,
+        0.10279083251953125,
+        0.3374347984790802
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3766929507255554,
+        -0.09720917046070099,
+        0.28843480348587036
+      ],
+      "end_xy_distance_to_bowl_m": 0.3890336751937866,
+      "closest_xy_distance_after_lift_m": 0.233991801738739,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3343315124511719,
+        0.11847686767578125,
+        0.32542937994003296
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36566847562789917,
+        -0.08152313530445099,
+        0.2764293849468231
+      ],
+      "end_xy_distance_to_bowl_m": 0.37464576959609985,
+      "closest_xy_distance_after_lift_m": 0.22467339038848877,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3297843933105469,
+        0.116058349609375,
+        0.32594558596611023
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37021559476852417,
+        -0.08394165337085724,
+        0.2769455909729004
+      ],
+      "end_xy_distance_to_bowl_m": 0.37961268424987793,
+      "closest_xy_distance_after_lift_m": 0.23344428837299347,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33205604553222656,
+        0.11417388916015625,
+        0.33025527000427246
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3679439425468445,
+        -0.08582611382007599,
+        0.2812552750110626
+      ],
+      "end_xy_distance_to_bowl_m": 0.3778212070465088,
+      "closest_xy_distance_after_lift_m": 0.2336006611585617,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3351020812988281,
+        0.09184646606445312,
+        0.3587162494659424
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3648979067802429,
+        -0.10815353691577911,
+        0.30971625447273254
+      ],
+      "end_xy_distance_to_bowl_m": 0.3805885910987854,
+      "closest_xy_distance_after_lift_m": 0.19751335680484772,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3294219970703125,
+        0.09956550598144531,
+        0.34380680322647095
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37057799100875854,
+        -0.10043449699878693,
+        0.2948068082332611
+      ],
+      "end_xy_distance_to_bowl_m": 0.3839467763900757,
+      "closest_xy_distance_after_lift_m": 0.23634500801563263,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32874488830566406,
+        0.10344314575195312,
+        0.3395507335662842
+      ],
+      "end_offset_from_bowl_m": [
+        -0.371255099773407,
+        -0.09655685722827911,
+        0.29055073857307434
+      ],
+      "end_xy_distance_to_bowl_m": 0.3836060166358948,
+      "closest_xy_distance_after_lift_m": 0.22558706998825073,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32683372497558594,
+        0.10427284240722656,
+        0.3384696841239929
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3731662631034851,
+        -0.09572716057300568,
+        0.2894696891307831
+      ],
+      "end_xy_distance_to_bowl_m": 0.38524895906448364,
+      "closest_xy_distance_after_lift_m": 0.24128277599811554,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3230743408203125,
+        0.09834098815917969,
+        0.3420182466506958
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37692564725875854,
+        -0.10165901482105255,
+        0.29301825165748596
+      ],
+      "end_xy_distance_to_bowl_m": 0.39039403200149536,
+      "closest_xy_distance_after_lift_m": 0.22990331053733826,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32740020751953125,
+        0.10265350341796875,
+        0.33963772654533386
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3725997805595398,
+        -0.09734649956226349,
+        0.290637731552124
+      ],
+      "end_xy_distance_to_bowl_m": 0.3851063847541809,
+      "closest_xy_distance_after_lift_m": 0.2330048680305481,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3279762268066406,
+        0.10197830200195312,
+        0.34113311767578125
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3720237612724304,
+        -0.09802170097827911,
+        0.2921331226825714
+      ],
+      "end_xy_distance_to_bowl_m": 0.3847205936908722,
+      "closest_xy_distance_after_lift_m": 0.23354868590831757,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32444190979003906,
+        0.10460090637207031,
+        0.3341255187988281
+      ],
+      "end_offset_from_bowl_m": [
+        -0.375558078289032,
+        -0.09539909660816193,
+        0.2851255238056183
+      ],
+      "end_xy_distance_to_bowl_m": 0.3874852955341339,
+      "closest_xy_distance_after_lift_m": 0.2405092865228653,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3258399963378906,
+        0.10465145111083984,
+        0.3359992802143097
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3741599917411804,
+        -0.0953485518693924,
+        0.28699928522109985
+      ],
+      "end_xy_distance_to_bowl_m": 0.3861179053783417,
+      "closest_xy_distance_after_lift_m": 0.23001094162464142,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32481956481933594,
+        0.10819721221923828,
+        0.33308202028274536
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3751804232597351,
+        -0.09180279076099396,
+        0.2840820252895355
+      ],
+      "end_xy_distance_to_bowl_m": 0.38624876737594604,
+      "closest_xy_distance_after_lift_m": 0.2362658977508545,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3327598571777344,
+        0.11629962921142578,
+        0.32693570852279663
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36724013090133667,
+        -0.08370037376880646,
+        0.2779357135295868
+      ],
+      "end_xy_distance_to_bowl_m": 0.37665775418281555,
+      "closest_xy_distance_after_lift_m": 0.22731776535511017,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32526206970214844,
+        0.10874271392822266,
+        0.33113688230514526
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3747379183769226,
+        -0.09125728905200958,
+        0.2821368873119354
+      ],
+      "end_xy_distance_to_bowl_m": 0.38568952679634094,
+      "closest_xy_distance_after_lift_m": 0.23883843421936035,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3252239227294922,
+        0.10839056968688965,
+        0.33213940262794495
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37477606534957886,
+        -0.09160943329334259,
+        0.2831394076347351
+      ],
+      "end_xy_distance_to_bowl_m": 0.3858100473880768,
+      "closest_xy_distance_after_lift_m": 0.24008344113826752,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33097076416015625,
+        0.1146550178527832,
+        0.3278271555900574
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3690292239189148,
+        -0.08534498512744904,
+        0.27882716059684753
+      ],
+      "end_xy_distance_to_bowl_m": 0.37876948714256287,
+      "closest_xy_distance_after_lift_m": 0.23167423903942108,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3307647705078125,
+        0.10050523281097412,
+        0.3438072204589844
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36923521757125854,
+        -0.09949477016925812,
+        0.29480722546577454
+      ],
+      "end_xy_distance_to_bowl_m": 0.3824053704738617,
+      "closest_xy_distance_after_lift_m": 0.22198082506656647,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3350944519042969,
+        0.11985635757446289,
+        0.3248633146286011
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36490553617477417,
+        -0.08014364540576935,
+        0.27586331963539124
+      ],
+      "end_xy_distance_to_bowl_m": 0.3736027777194977,
+      "closest_xy_distance_after_lift_m": 0.2222362756729126,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3281726837158203,
+        0.10224533081054688,
+        0.34101200103759766
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37182730436325073,
+        -0.09775467216968536,
+        0.2920120060443878
+      ],
+      "end_xy_distance_to_bowl_m": 0.3844626545906067,
+      "closest_xy_distance_after_lift_m": 0.24492156505584717,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3316173553466797,
+        0.11472225189208984,
+        0.32888665795326233
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36838263273239136,
+        -0.0852777510881424,
+        0.2798866629600525
+      ],
+      "end_xy_distance_to_bowl_m": 0.3781243860721588,
+      "closest_xy_distance_after_lift_m": 0.23953409492969513,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3270683288574219,
+        0.1023712158203125,
+        0.34050601720809937
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37293165922164917,
+        -0.09762878715991974,
+        0.2915060222148895
+      ],
+      "end_xy_distance_to_bowl_m": 0.38549891114234924,
+      "closest_xy_distance_after_lift_m": 0.2363804429769516,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3248462677001953,
+        0.10558891296386719,
+        0.33482635021209717
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37515372037887573,
+        -0.09441109001636505,
+        0.28582635521888733
+      ],
+      "end_xy_distance_to_bowl_m": 0.38685110211372375,
+      "closest_xy_distance_after_lift_m": 0.2406647801399231,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3266315460205078,
+        0.10160446166992188,
+        0.34041085839271545
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37336844205856323,
+        -0.09839554131031036,
+        0.2914108633995056
+      ],
+      "end_xy_distance_to_bowl_m": 0.3861161470413208,
+      "closest_xy_distance_after_lift_m": 0.23771457374095917,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3245658874511719,
+        0.10414695739746094,
+        0.33675262331962585
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37543410062789917,
+        -0.0958530455827713,
+        0.287752628326416
+      ],
+      "end_xy_distance_to_bowl_m": 0.38747718930244446,
+      "closest_xy_distance_after_lift_m": 0.23735885322093964,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3272571563720703,
+        0.10004615783691406,
+        0.3423260450363159
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37274283170700073,
+        -0.09995384514331818,
+        0.2933260500431061
+      ],
+      "end_xy_distance_to_bowl_m": 0.38591188192367554,
+      "closest_xy_distance_after_lift_m": 0.2268664836883545,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.331329345703125,
+        0.09093666076660156,
+        0.35297852754592896
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36867064237594604,
+        -0.10906334221363068,
+        0.3039785325527191
+      ],
+      "end_xy_distance_to_bowl_m": 0.3844643533229828,
+      "closest_xy_distance_after_lift_m": 0.2183287888765335,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.32924652099609375,
+        0.10136222839355469,
+        0.34296607971191406
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3707534670829773,
+        -0.09863777458667755,
+        0.2939660847187042
+      ],
+      "end_xy_distance_to_bowl_m": 0.3836503028869629,
+      "closest_xy_distance_after_lift_m": 0.2337685078382492,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.33476829528808594,
+        0.112152099609375,
+        0.3332517743110657
+      ],
+      "end_offset_from_bowl_m": [
+        -0.3652316927909851,
+        -0.08784790337085724,
+        0.28425177931785583
+      ],
+      "end_xy_distance_to_bowl_m": 0.37564805150032043,
+      "closest_xy_distance_after_lift_m": 0.20530076324939728,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3286457061767578,
+        0.10014152526855469,
+        0.3431435227394104
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37135428190231323,
+        -0.09985847771167755,
+        0.29414352774620056
+      ],
+      "end_xy_distance_to_bowl_m": 0.3845461308956146,
+      "closest_xy_distance_after_lift_m": 0.24344347417354584,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3314800262451172,
+        0.09700775146484375,
+        0.34709689021110535
+      ],
+      "end_offset_from_bowl_m": [
+        -0.36851996183395386,
+        -0.10299225151538849,
+        0.2980968952178955
+      ],
+      "end_xy_distance_to_bowl_m": 0.3826413154602051,
+      "closest_xy_distance_after_lift_m": 0.23990468680858612,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3288421630859375,
+        0.11134719848632812,
+        0.3304515480995178
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37115782499313354,
+        -0.08865280449390411,
+        0.281451553106308
+      ],
+      "end_xy_distance_to_bowl_m": 0.381598562002182,
+      "closest_xy_distance_after_lift_m": 0.23437169194221497,
+      "lift_hit": true
+    },
+    {
+      "end_object_position_local_m": [
+        0.3251304626464844,
+        0.106689453125,
+        0.3346160650253296
+      ],
+      "end_offset_from_bowl_m": [
+        -0.37486952543258667,
+        -0.09331054985523224,
+        0.28561607003211975
+      ],
+      "end_xy_distance_to_bowl_m": 0.3863081932067871,
+      "closest_xy_distance_after_lift_m": 0.23747357726097107,
+      "lift_hit": true
+    }
+  ]
+}

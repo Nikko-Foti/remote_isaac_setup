@@ -1,0 +1,3 @@
+local_main_commit=0666645c85999022da842ec378efd5db7eb40649
+experiment=reach_off_after_lift_fresh_3000
+change=reaching_object reward disabled after OBJECT_LIFTED_HEIGHT; fresh training, no checkpoint resume
