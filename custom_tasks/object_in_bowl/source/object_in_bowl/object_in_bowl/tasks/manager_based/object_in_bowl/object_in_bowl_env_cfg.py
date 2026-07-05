@@ -34,6 +34,8 @@ OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
 LIFT_PROGRESS_REWARD_WEIGHT = 5.0
 LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
+OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
+OBJECT_TO_BOWL_XY_REWARD_STD = 0.35
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
 PLACEMENT_COMMAND_Y_RANGE = (0.12, 0.28)
@@ -342,6 +344,16 @@ class RewardsCfg:
         func=mdp.compute_object_lifted_reward,
         weight=15.0,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
+    )
+    object_to_bowl_xy = RewTerm(
+        func=mdp.compute_saturated_object_to_target_xy_reward,
+        weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "std": OBJECT_TO_BOWL_XY_REWARD_STD,
+            "radius": BOWL_SUCCESS_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
     )
 
 
