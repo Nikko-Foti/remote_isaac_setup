@@ -1,0 +1,86 @@
+[
+  {
+    "iteration": 2500,
+    "mean_reward": 5.28,
+    "success_rate": 0.0,
+    "lift_rate": 0.507,
+    "min_xy_after_lift": 0.209,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 0.0739,
+    "lifting_reward": 0.2533,
+    "lift_progress_reward": 0.0967
+  },
+  {
+    "iteration": 2750,
+    "mean_reward": 88.72,
+    "success_rate": 0.0,
+    "lift_rate": 0.8601,
+    "min_xy_after_lift": 0.2308,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.1214,
+    "lifting_reward": 10.8555,
+    "lift_progress_reward": 3.6358
+  },
+  {
+    "iteration": 3000,
+    "mean_reward": 86.03,
+    "success_rate": 0.0,
+    "lift_rate": 0.8622,
+    "min_xy_after_lift": 0.1797,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.3093,
+    "lifting_reward": 10.8405,
+    "lift_progress_reward": 3.6197
+  },
+  {
+    "iteration": 3250,
+    "mean_reward": 90.99,
+    "success_rate": 0.0,
+    "lift_rate": 0.8817,
+    "min_xy_after_lift": 0.1643,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.4301,
+    "lifting_reward": 11.0313,
+    "lift_progress_reward": 3.6925
+  },
+  {
+    "iteration": 3500,
+    "mean_reward": 84.4,
+    "success_rate": 0.0,
+    "lift_rate": 0.8728,
+    "min_xy_after_lift": 0.1484,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.4233,
+    "lifting_reward": 10.8635,
+    "lift_progress_reward": 3.6357
+  },
+  {
+    "iteration": 3750,
+    "mean_reward": 89.88,
+    "success_rate": 0.0,
+    "lift_rate": 0.8842,
+    "min_xy_after_lift": 0.142,
+    "bowl_radius_after_lift_rate": 0.0,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.4534,
+    "lifting_reward": 10.9482,
+    "lift_progress_reward": 3.6672
+  },
+  {
+    "iteration": 3998,
+    "mean_reward": 93.94,
+    "success_rate": 0.0,
+    "lift_rate": 0.9219,
+    "min_xy_after_lift": 0.1445,
+    "bowl_radius_after_lift_rate": 0.002,
+    "tight_radius_after_lift_rate": 0.0,
+    "object_to_bowl_xy_reward": 2.5749,
+    "lifting_reward": 11.5139,
+    "lift_progress_reward": 3.858
+  }
+]
