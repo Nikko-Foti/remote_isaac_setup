@@ -68,6 +68,8 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         min_finger_joint_pos = torch.min(finger_joint_pos, dim=1).values
         lift_range = OBJECT_LIFTED_HEIGHT - self._episode_start_object_z
         lift_progress = torch.clamp(object_z_delta / lift_range, min=0.0, max=1.0)
+        target = get_placement_target_position(self, PLACEMENT_TARGET_POSITION)
+        xy_distance_to_bowl = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
 
         arm_action = self.action_manager.get_term("arm_action").raw_actions
         gripper_action = self.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
@@ -128,6 +130,20 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         self._episode_lift_threshold_hit = torch.maximum(
             self._episode_lift_threshold_hit, crossed_lift_threshold.float()
+        )
+        has_lifted = self._episode_lift_threshold_hit > 0.0
+        self._episode_min_xy_distance_after_lift = torch.where(
+            has_lifted,
+            torch.minimum(self._episode_min_xy_distance_after_lift, xy_distance_to_bowl),
+            self._episode_min_xy_distance_after_lift,
+        )
+        self._episode_bowl_radius_hit_after_lift = torch.maximum(
+            self._episode_bowl_radius_hit_after_lift,
+            (has_lifted & (xy_distance_to_bowl < BOWL_SUCCESS_RADIUS)).float(),
+        )
+        self._episode_tight_radius_hit_after_lift = torch.maximum(
+            self._episode_tight_radius_hit_after_lift,
+            (has_lifted & (xy_distance_to_bowl < PLACEMENT_TARGET_RADIUS)).float(),
         )
 
         crossed_lift_005m = object_z_delta > 0.005
@@ -270,6 +286,20 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Diagnostics/lift_010m_hit_rate": (max_object_z_delta > 0.010).float().mean(),
             "Episode_Diagnostics/lift_020m_hit_rate": (max_object_z_delta > 0.020).float().mean(),
             "Episode_Diagnostics/lift_threshold_hit_rate": lift_threshold_hit.float().mean(),
+            "Episode_Diagnostics/min_xy_distance_after_lift": self._masked_mean(
+                torch.where(
+                    lift_threshold_hit,
+                    self._episode_min_xy_distance_after_lift[env_ids],
+                    torch.zeros_like(self._episode_min_xy_distance_after_lift[env_ids]),
+                ),
+                lift_threshold_hit,
+            ),
+            "Episode_Diagnostics/bowl_radius_hit_after_lift_rate": (
+                self._episode_bowl_radius_hit_after_lift[env_ids].mean()
+            ),
+            "Episode_Diagnostics/tight_radius_hit_after_lift_rate": (
+                self._episode_tight_radius_hit_after_lift[env_ids].mean()
+            ),
             "Episode_Diagnostics/max_lift_progress_after_close_near_object": (
                 self._episode_max_lift_progress_after_close_near_object[env_ids].mean()
             ),
@@ -473,6 +503,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_lift_005m_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_lift_020m_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_lift_threshold_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_min_xy_distance_after_lift = torch.full((self.num_envs,), torch.inf, device=self.device)
+        self._episode_bowl_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
+        self._episode_tight_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
         self._episode_post_lift_005m_step_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_post_lift_005m_gate_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_post_lift_005m_near_count = torch.zeros(self.num_envs, device=self.device)
@@ -521,6 +554,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_lift_005m_hit[env_ids] = 0.0
         self._episode_lift_020m_hit[env_ids] = 0.0
         self._episode_lift_threshold_hit[env_ids] = 0.0
+        self._episode_min_xy_distance_after_lift[env_ids] = torch.inf
+        self._episode_bowl_radius_hit_after_lift[env_ids] = 0.0
+        self._episode_tight_radius_hit_after_lift[env_ids] = 0.0
         self._episode_post_lift_005m_step_count[env_ids] = 0.0
         self._episode_post_lift_005m_gate_count[env_ids] = 0.0
         self._episode_post_lift_005m_near_count[env_ids] = 0.0

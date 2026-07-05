@@ -37,9 +37,6 @@ LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
 OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
 OBJECT_TO_BOWL_XY_REWARD_STD = 0.35
 PLACEMENT_TARGET_XY = (0.70, 0.20)
-PLACEMENT_COMMAND_X_RANGE = (0.62, 0.78)
-PLACEMENT_COMMAND_Y_RANGE = (0.12, 0.28)
-PLACEMENT_COMMAND_Z_RANGE = (0.25, 0.45)
 PLACEMENT_TARGET_RADIUS = 0.08
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
 BOWL_ASSET_POSITION = (PLACEMENT_TARGET_XY[0], PLACEMENT_TARGET_XY[1], 0.025)
@@ -232,7 +229,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 ##
 
 
-# Keeps the existing sampled bowl-area command in the environment.
+# Gives the policy the fixed bowl target used by placement rewards.
 @configclass
 class CommandsCfg:
     """Command terms used by observations and later placement experiments."""
@@ -243,9 +240,9 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=False,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=PLACEMENT_COMMAND_X_RANGE,
-            pos_y=PLACEMENT_COMMAND_Y_RANGE,
-            pos_z=PLACEMENT_COMMAND_Z_RANGE,
+            pos_x=(PLACEMENT_TARGET_POSITION[0], PLACEMENT_TARGET_POSITION[0]),
+            pos_y=(PLACEMENT_TARGET_POSITION[1], PLACEMENT_TARGET_POSITION[1]),
+            pos_z=(PLACEMENT_TARGET_POSITION[2], PLACEMENT_TARGET_POSITION[2]),
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(0.0, 0.0),
