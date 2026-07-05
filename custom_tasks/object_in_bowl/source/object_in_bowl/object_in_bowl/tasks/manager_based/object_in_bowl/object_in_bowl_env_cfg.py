@@ -326,7 +326,7 @@ class RewardsCfg:
     reaching_object = RewTerm(
         func=mdp.compute_reaching_object_reward,
         weight=1.0,
-        params={"std": 0.10},
+        params={"std": 0.10, "disable_after_lift_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lift_progress = RewTerm(
         func=mdp.compute_gated_object_height_progress_reward,

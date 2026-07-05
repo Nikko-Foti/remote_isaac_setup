@@ -83,17 +83,22 @@ def check_object_in_bowl(
     return is_inside_radius & is_inside_height & is_settled & is_not_spinning & is_gripper_open
 
 
-# Rewards the hand for getting close to the cube.
+# Rewards the hand for getting close to the cube before it has been lifted.
 def compute_reaching_object_reward(
     env: ManagerBasedRLEnv,
     std: float,
+    disable_after_lift_height: float | None = None,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Reward the hand for getting near the object."""
+    """Reward the hand for getting near the object, optionally only before lift."""
     ee_position = get_ee_position(env)
     object_position = get_object_position(env, object_cfg)
     distance = torch.linalg.norm(ee_position - object_position, dim=1)
-    return 1.0 - torch.tanh(distance / std)
+    reward = 1.0 - torch.tanh(distance / std)
+    if disable_after_lift_height is None:
+        return reward
+    not_lifted = torch.logical_not(check_object_lifted(env, disable_after_lift_height, object_cfg))
+    return reward * not_lifted.float()
 
 
 # Rewards closing the gripper only when the hand is already near the cube.
