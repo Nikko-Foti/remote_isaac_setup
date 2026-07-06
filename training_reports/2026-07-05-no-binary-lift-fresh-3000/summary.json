@@ -1,0 +1,31 @@
+{
+  "checkpoint": "model_1050.pt",
+  "close_near_object_hit_rate": 0.9997211414905768,
+  "commit": "cde68c8917137dce97e97eff6c80513c437cc855",
+  "completed_episodes": 8192,
+  "early_stop_reason": "Stopped around iteration 1050 because no episode achieved even 5mm lift.",
+  "end_object_position_local_mean_m": [
+    0.34153080990654416,
+    -0.0010555146873230115,
+    0.02100739337606683
+  ],
+  "end_object_position_local_median_m": [
+    0.2813253402709961,
+    -0.0001068115234375,
+    0.020999940112233162
+  ],
+  "end_xy_distance_to_bowl_mean_m": 0.4198826419960824,
+  "end_xy_distance_to_bowl_median_m": 0.4598013609647751,
+  "lift_005m_hit_rate": 0.0,
+  "lift_threshold_hit_rate": 0.0,
+  "max_object_z_delta_m": 1.8186558148095535e-07,
+  "min_ee_object_distance_m": 0.014895792284619801,
+  "object_lift_progress_reward": 0.0,
+  "object_to_bowl_xy_reward": 0.0,
+  "reaching_reward": 0.7042439683446334,
+  "recommendation": "Restore the binary lifting_object reward for the next isolated fresh run; keep the other rewards unchanged.",
+  "reviewer_a": "Binary `lifting_object` was not redundant. Fresh training learned reach and close, but never produced object motion, so lift progress and bowl transport never had useful signal. Best next isolated move: restore the previous binary lift milestone unchanged.",
+  "reviewer_b": "The dense lift progress term is too sparse as the first-lift bootstrap signal. It may shape height after motion starts, but it did not teach the first grasp/lift transition. Reintroduce a binary lift-acquisition signal.",
+  "run": "no_binary_lift_fresh_1050_cde68c8",
+  "success_rate": 0.0
+}

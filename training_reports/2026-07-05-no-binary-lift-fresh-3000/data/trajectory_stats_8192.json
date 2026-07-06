@@ -1,0 +1,1562 @@
+{
+  "checkpoint": "/workspace/isaaclab/logs/rsl_rl/object_in_bowl_franka/2026-07-06_00-16-48_no_binary_lift_fresh_3000_cde68c8/model_1050.pt",
+  "closest_after_lift_inside_bowl_radius_rate": 0.0,
+  "closest_after_lift_inside_tight_radius_rate": 0.0,
+  "closest_xy_distance_after_lift_mean_m": null,
+  "closest_xy_distance_after_lift_median_m": null,
+  "closest_xy_distance_after_lift_p25_m": null,
+  "closest_xy_distance_after_lift_p75_m": null,
+  "completed_episodes": 8192,
+  "end_object_position_local_mean_m": [
+    0.34153080990654416,
+    -0.0010555146873230115,
+    0.02100739337606683
+  ],
+  "end_object_position_local_median_m": [
+    0.2813253402709961,
+    -0.0001068115234375,
+    0.020999940112233162
+  ],
+  "end_xy_distance_to_bowl_mean_m": 0.4198826419960824,
+  "end_xy_distance_to_bowl_median_m": 0.4598013609647751,
+  "lift_hit_rate": 0.0,
+  "requested_episodes": 8192,
+  "sample_records": [
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23954391479492188,
+        0.008182525634765625,
+        0.020999915897846222
+      ],
+      "end_xy_distance_to_bowl_m": 0.49881234765052795,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3282012939453125,
+        -0.0073699951171875,
+        0.020999828353524208
+      ],
+      "end_xy_distance_to_bowl_m": 0.42571890354156494,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5527877807617188,
+        -0.09312820434570312,
+        0.020999906584620476
+      ],
+      "end_xy_distance_to_bowl_m": 0.3280176520347595,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2554969787597656,
+        -0.008785247802734375,
+        0.021000005304813385
+      ],
+      "end_xy_distance_to_bowl_m": 0.4910949170589447,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24124526977539062,
+        -0.009632110595703125,
+        0.020999962463974953
+      ],
+      "end_xy_distance_to_bowl_m": 0.504382312297821,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2955818176269531,
+        -0.010942459106445312,
+        0.021000009030103683
+      ],
+      "end_xy_distance_to_bowl_m": 0.4561258554458618,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.21360015869140625,
+        -0.009088516235351562,
+        0.020999982953071594
+      ],
+      "end_xy_distance_to_bowl_m": 0.5294363498687744,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5776252746582031,
+        -0.0061168670654296875,
+        0.020999781787395477
+      ],
+      "end_xy_distance_to_bowl_m": 0.2397076040506363,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.239959716796875,
+        0.003330230712890625,
+        0.020999878644943237
+      ],
+      "end_xy_distance_to_bowl_m": 0.5003159642219543,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.317169189453125,
+        -0.007625579833984375,
+        0.020999955013394356
+      ],
+      "end_xy_distance_to_bowl_m": 0.435508668422699,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.28989410400390625,
+        -0.005415916442871094,
+        0.020999958738684654
+      ],
+      "end_xy_distance_to_bowl_m": 0.4586747884750366,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.25405120849609375,
+        -0.006316184997558594,
+        0.020999865606427193
+      ],
+      "end_xy_distance_to_bowl_m": 0.491362065076828,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2876930236816406,
+        -0.010743141174316406,
+        0.020999912172555923
+      ],
+      "end_xy_distance_to_bowl_m": 0.4630439579486847,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.262451171875,
+        -0.005099773406982422,
+        0.020999915897846222
+      ],
+      "end_xy_distance_to_bowl_m": 0.483233779668808,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5649223327636719,
+        -0.03415513038635254,
+        0.02099996991455555
+      ],
+      "end_xy_distance_to_bowl_m": 0.27032312750816345,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5463180541992188,
+        0.033136963844299316,
+        0.020999927073717117
+      ],
+      "end_xy_distance_to_bowl_m": 0.22685107588768005,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2864570617675781,
+        0.022184133529663086,
+        0.020999934524297714
+      ],
+      "end_xy_distance_to_bowl_m": 0.45015135407447815,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2663993835449219,
+        -0.009403467178344727,
+        0.02099982276558876
+      ],
+      "end_xy_distance_to_bowl_m": 0.4815177023410797,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5481758117675781,
+        0.03676557540893555,
+        0.020999997854232788
+      ],
+      "end_xy_distance_to_bowl_m": 0.22292612493038177,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5753898620605469,
+        0.04568004608154297,
+        0.020999975502490997
+      ],
+      "end_xy_distance_to_bowl_m": 0.1983490139245987,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2638816833496094,
+        0.007340431213378906,
+        0.020999876782298088
+      ],
+      "end_xy_distance_to_bowl_m": 0.4767776131629944,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5674819946289062,
+        -2.09808349609375e-05,
+        0.020999953150749207
+      ],
+      "end_xy_distance_to_bowl_m": 0.23993626236915588,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2861671447753906,
+        -0.005687713623046875,
+        0.020999914035201073
+      ],
+      "end_xy_distance_to_bowl_m": 0.46213099360466003,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2867546081542969,
+        0.0284423828125,
+        0.020999813452363014
+      ],
+      "end_xy_distance_to_bowl_m": 0.44744133949279785,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3494758605957031,
+        -0.010477066040039062,
+        0.020999973639845848
+      ],
+      "end_xy_distance_to_bowl_m": 0.40886154770851135,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2884864807128906,
+        0.010190963745117188,
+        0.020999861881136894
+      ],
+      "end_xy_distance_to_bowl_m": 0.45317861437797546,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5724258422851562,
+        -0.011640548706054688,
+        0.02099982090294361
+      ],
+      "end_xy_distance_to_bowl_m": 0.24711716175079346,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2081298828125,
+        0.0060443878173828125,
+        0.020999953150749207
+      ],
+      "end_xy_distance_to_bowl_m": 0.5287296175956726,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2544746398925781,
+        0.014970779418945312,
+        0.020999986678361893
+      ],
+      "end_xy_distance_to_bowl_m": 0.48241958022117615,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2677040100097656,
+        0.015537261962890625,
+        0.020999955013394356
+      ],
+      "end_xy_distance_to_bowl_m": 0.4700067341327667,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.26479339599609375,
+        0.01085662841796875,
+        0.020999900996685028
+      ],
+      "end_xy_distance_to_bowl_m": 0.4745313227176666,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.4811210632324219,
+        -0.0025482177734375,
+        0.020999781787395477
+      ],
+      "end_xy_distance_to_bowl_m": 0.29821765422821045,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2750816345214844,
+        0.017181396484375,
+        0.02099994756281376
+      ],
+      "end_xy_distance_to_bowl_m": 0.46257784962654114,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.47100067138671875,
+        -0.051647186279296875,
+        0.02149280533194542
+      ],
+      "end_xy_distance_to_bowl_m": 0.34024548530578613,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2792205810546875,
+        0.028514862060546875,
+        0.02099996618926525
+      ],
+      "end_xy_distance_to_bowl_m": 0.45438140630722046,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23292922973632812,
+        -0.002887725830078125,
+        0.020999925211071968
+      ],
+      "end_xy_distance_to_bowl_m": 0.509233295917511,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5480308532714844,
+        0.04466056823730469,
+        0.020999960601329803
+      ],
+      "end_xy_distance_to_bowl_m": 0.21731305122375488,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.574737548828125,
+        -0.08986473083496094,
+        0.020999854430556297
+      ],
+      "end_xy_distance_to_bowl_m": 0.3157724440097809,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.171600341796875,
+        -0.002758026123046875,
+        0.020999906584620476
+      ],
+      "end_xy_distance_to_bowl_m": 0.5659655332565308,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2620811462402344,
+        -0.00275421142578125,
+        0.020999979227781296
+      ],
+      "end_xy_distance_to_bowl_m": 0.48257866501808167,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.22488784790039062,
+        0.0040607452392578125,
+        0.0209999717772007
+      ],
+      "end_xy_distance_to_bowl_m": 0.5139297246932983,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23592758178710938,
+        -0.008031845092773438,
+        0.020999867469072342
+      ],
+      "end_xy_distance_to_bowl_m": 0.5085670948028564,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.574676513671875,
+        0.02695178985595703,
+        0.02099994570016861
+      ],
+      "end_xy_distance_to_bowl_m": 0.21366249024868011,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5719032287597656,
+        0.045823097229003906,
+        0.02099989540874958
+      ],
+      "end_xy_distance_to_bowl_m": 0.20044773817062378,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.34465789794921875,
+        0.04047203063964844,
+        0.020999900996685028
+      ],
+      "end_xy_distance_to_bowl_m": 0.3895088732242584,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2659187316894531,
+        0.009659767150878906,
+        0.020999934524297714
+      ],
+      "end_xy_distance_to_bowl_m": 0.47397884726524353,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2861366271972656,
+        0.0364680290222168,
+        0.020999925211071968
+      ],
+      "end_xy_distance_to_bowl_m": 0.44500067830085754,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.20100021362304688,
+        -0.0025451183319091797,
+        0.021000118926167488
+      ],
+      "end_xy_distance_to_bowl_m": 0.5385399460792542,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.22485733032226562,
+        0.0025560855865478516,
+        0.02099994383752346
+      ],
+      "end_xy_distance_to_bowl_m": 0.5145334005355835,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2523040771484375,
+        0.0076563358306884766,
+        0.02099992148578167
+      ],
+      "end_xy_distance_to_bowl_m": 0.48726555705070496,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24666213989257812,
+        -0.008055686950683594,
+        0.020999958738684654
+      ],
+      "end_xy_distance_to_bowl_m": 0.49880093336105347,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.33507537841796875,
+        -0.010603904724121094,
+        0.020999958738684654
+      ],
+      "end_xy_distance_to_bowl_m": 0.42133593559265137,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3357086181640625,
+        -0.013342857360839844,
+        0.02099982462823391
+      ],
+      "end_xy_distance_to_bowl_m": 0.4221651256084442,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2880821228027344,
+        -0.010162353515625,
+        0.020999988541007042
+      ],
+      "end_xy_distance_to_bowl_m": 0.4624333083629608,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5786514282226562,
+        0.01625823974609375,
+        0.020999940112233162
+      ],
+      "end_xy_distance_to_bowl_m": 0.22019651532173157,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.27435302734375,
+        0.024282455444335938,
+        0.020999806001782417
+      ],
+      "end_xy_distance_to_bowl_m": 0.46049103140830994,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.34452056884765625,
+        0.03893280029296875,
+        0.02099992334842682
+      ],
+      "end_xy_distance_to_bowl_m": 0.39026689529418945,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24795150756835938,
+        -0.0021038055419921875,
+        0.020999928936362267
+      ],
+      "end_xy_distance_to_bowl_m": 0.4951704442501068,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.26430511474609375,
+        0.01885223388671875,
+        0.021000098437070847
+      ],
+      "end_xy_distance_to_bowl_m": 0.47185224294662476,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24361419677734375,
+        0.00255584716796875,
+        0.02099999412894249
+      ],
+      "end_xy_distance_to_bowl_m": 0.49726468324661255,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2634849548339844,
+        -0.008993148803710938,
+        0.021000007167458534
+      ],
+      "end_xy_distance_to_bowl_m": 0.4839664399623871,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2907371520996094,
+        0.026439666748046875,
+        0.02099999226629734
+      ],
+      "end_xy_distance_to_bowl_m": 0.44454386830329895,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.20294189453125,
+        -0.007354736328125,
+        0.020999973639845848
+      ],
+      "end_xy_distance_to_bowl_m": 0.5385746955871582,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.336090087890625,
+        -0.01373291015625,
+        0.020999891683459282
+      ],
+      "end_xy_distance_to_bowl_m": 0.4220333993434906,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.30693817138671875,
+        -0.0084228515625,
+        0.021000023931264877
+      ],
+      "end_xy_distance_to_bowl_m": 0.44490188360214233,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2780494689941406,
+        0.030612945556640625,
+        0.021000029519200325
+      ],
+      "end_xy_distance_to_bowl_m": 0.45468035340309143,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24810409545898438,
+        -0.006740570068359375,
+        0.02099996618926525
+      ],
+      "end_xy_distance_to_bowl_m": 0.4969421923160553,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.458740234375,
+        0.015827178955078125,
+        0.020968260243535042
+      ],
+      "end_xy_distance_to_bowl_m": 0.3035224676132202,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2583045959472656,
+        -0.0034084320068359375,
+        0.020999830216169357
+      ],
+      "end_xy_distance_to_bowl_m": 0.4862816333770752,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.226654052734375,
+        -0.000736236572265625,
+        0.020999522879719734
+      ],
+      "end_xy_distance_to_bowl_m": 0.5141511559486389,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.29853057861328125,
+        5.7220458984375e-05,
+        0.020999999716877937
+      ],
+      "end_xy_distance_to_bowl_m": 0.4485028386116028,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.26293182373046875,
+        0.021472930908203125,
+        0.02099982462823391
+      ],
+      "end_xy_distance_to_bowl_m": 0.472123384475708,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3347969055175781,
+        -0.013410568237304688,
+        0.02099996991455555
+      ],
+      "end_xy_distance_to_bowl_m": 0.42298623919487,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5398178100585938,
+        -0.039768218994140625,
+        0.020999927073717117
+      ],
+      "end_xy_distance_to_bowl_m": 0.28835242986679077,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23917770385742188,
+        -0.011025428771972656,
+        0.020999828353524208
+      ],
+      "end_xy_distance_to_bowl_m": 0.5068421363830566,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5651969909667969,
+        -0.022325515747070312,
+        0.020999815315008163
+      ],
+      "end_xy_distance_to_bowl_m": 0.26000094413757324,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2775688171386719,
+        0.013840675354003906,
+        0.020999982953071594
+      ],
+      "end_xy_distance_to_bowl_m": 0.4616312086582184,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.28005218505859375,
+        0.004485607147216797,
+        0.020999811589717865
+      ],
+      "end_xy_distance_to_bowl_m": 0.4632299840450287,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2753562927246094,
+        0.01992201805114746,
+        0.020999908447265625
+      ],
+      "end_xy_distance_to_bowl_m": 0.4612486958503723,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5791091918945312,
+        0.04596531391143799,
+        0.020999928936362267
+      ],
+      "end_xy_distance_to_bowl_m": 0.1958092600107193,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5711288452148438,
+        0.04596400260925293,
+        0.0209999680519104
+      ],
+      "end_xy_distance_to_bowl_m": 0.20083540678024292,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2600898742675781,
+        -0.007873296737670898,
+        0.02099999599158764
+      ],
+      "end_xy_distance_to_bowl_m": 0.48655134439468384,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2778739929199219,
+        0.030302047729492188,
+        0.020999835804104805
+      ],
+      "end_xy_distance_to_bowl_m": 0.45495906472206116,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5531387329101562,
+        0.026734352111816406,
+        0.020999928936362267
+      ],
+      "end_xy_distance_to_bowl_m": 0.22713258862495422,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.26166534423828125,
+        0.014446258544921875,
+        0.020999984815716743
+      ],
+      "end_xy_distance_to_bowl_m": 0.47599101066589355,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.272003173828125,
+        -0.012104034423828125,
+        0.02099984511733055
+      ],
+      "end_xy_distance_to_bowl_m": 0.4776707887649536,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5392532348632812,
+        0.010223388671875,
+        0.020999936386942863
+      ],
+      "end_xy_distance_to_bowl_m": 0.24870601296424866,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5441551208496094,
+        0.09053230285644531,
+        0.02099999040365219
+      ],
+      "end_xy_distance_to_bowl_m": 0.19044893980026245,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.24686431884765625,
+        -0.009321212768554688,
+        0.020999979227781296
+      ],
+      "end_xy_distance_to_bowl_m": 0.49914658069610596,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2530632019042969,
+        -0.0034618377685546875,
+        0.020999906584620476
+      ],
+      "end_xy_distance_to_bowl_m": 0.4910694658756256,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23272705078125,
+        -0.007928848266601562,
+        0.02099982649087906
+      ],
+      "end_xy_distance_to_bowl_m": 0.5114473700523376,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.30561065673828125,
+        -0.010034561157226562,
+        0.021000893786549568
+      ],
+      "end_xy_distance_to_bowl_m": 0.4468304514884949,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5728797912597656,
+        -0.09773445129394531,
+        0.020999876782298088
+      ],
+      "end_xy_distance_to_bowl_m": 0.3237365186214447,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3153419494628906,
+        -0.00433349609375,
+        0.021000012755393982
+      ],
+      "end_xy_distance_to_bowl_m": 0.4355616867542267,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.20110321044921875,
+        0.002155303955078125,
+        0.021000036969780922
+      ],
+      "end_xy_distance_to_bowl_m": 0.5366940498352051,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2787437438964844,
+        0.02901458740234375,
+        0.02099989727139473
+      ],
+      "end_xy_distance_to_bowl_m": 0.4546348452568054,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5746726989746094,
+        -0.08498001098632812,
+        0.02099994197487831
+      ],
+      "end_xy_distance_to_bowl_m": 0.31132063269615173,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.28832435607910156,
+        -0.007831573486328125,
+        0.020999962463974953
+      ],
+      "end_xy_distance_to_bowl_m": 0.46116241812705994,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2422351837158203,
+        -0.00516510009765625,
+        0.020999887958168983
+      ],
+      "end_xy_distance_to_bowl_m": 0.501638650894165,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.27227020263671875,
+        -0.003978729248046875,
+        0.021000009030103683
+      ],
+      "end_xy_distance_to_bowl_m": 0.4738777279853821,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2543773651123047,
+        -0.0073719024658203125,
+        0.020999975502490997
+      ],
+      "end_xy_distance_to_bowl_m": 0.4915105700492859,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.27393531799316406,
+        0.019863128662109375,
+        0.0209998469799757
+      ],
+      "end_xy_distance_to_bowl_m": 0.462580144405365,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2126598358154297,
+        -0.002399444580078125,
+        0.020999813452363014
+      ],
+      "end_xy_distance_to_bowl_m": 0.5276987552642822,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.27304649353027344,
+        -0.010417938232421875,
+        0.02099999412894249
+      ],
+      "end_xy_distance_to_bowl_m": 0.4759884476661682,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.19919776916503906,
+        -0.0059814453125,
+        0.020999975502490997
+      ],
+      "end_xy_distance_to_bowl_m": 0.5415082573890686,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2500762939453125,
+        -0.009386062622070312,
+        0.02099994570016861
+      ],
+      "end_xy_distance_to_bowl_m": 0.496259868144989,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.4906730651855469,
+        0.012520790100097656,
+        0.020999908447265625
+      ],
+      "end_xy_distance_to_bowl_m": 0.2810092866420746,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2692890167236328,
+        0.0031890869140625,
+        0.020999984815716743
+      ],
+      "end_xy_distance_to_bowl_m": 0.47354671359062195,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.27850341796875,
+        0.01761341094970703,
+        0.020999902859330177
+      ],
+      "end_xy_distance_to_bowl_m": 0.459264874458313,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5772953033447266,
+        -0.07917070388793945,
+        0.020999932661652565
+      ],
+      "end_xy_distance_to_bowl_m": 0.3049470782279968,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.35031890869140625,
+        -0.010448694229125977,
+        0.020999960601329803
+      ],
+      "end_xy_distance_to_bowl_m": 0.4081243872642517,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5398941040039062,
+        0.011020541191101074,
+        0.020999962463974953
+      ],
+      "end_xy_distance_to_bowl_m": 0.24768352508544922,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5326042175292969,
+        -0.08704245090484619,
+        0.020999982953071594
+      ],
+      "end_xy_distance_to_bowl_m": 0.332287073135376,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5452117919921875,
+        0.1044759750366211,
+        0.020999981090426445
+      ],
+      "end_xy_distance_to_bowl_m": 0.18189069628715515,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5429286956787109,
+        -0.01833629608154297,
+        0.020999949425458908
+      ],
+      "end_xy_distance_to_bowl_m": 0.2689649164676666,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2622337341308594,
+        -0.003955841064453125,
+        0.021000010892748833
+      ],
+      "end_xy_distance_to_bowl_m": 0.4829464554786682,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.3254241943359375,
+        -0.009927749633789062,
+        0.021000036969780922
+      ],
+      "end_xy_distance_to_bowl_m": 0.4293910562992096,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2686023712158203,
+        -0.00592803955078125,
+        0.020999988541007042
+      ],
+      "end_xy_distance_to_bowl_m": 0.47802746295928955,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2839088439941406,
+        0.021413803100585938,
+        0.020999930799007416
+      ],
+      "end_xy_distance_to_bowl_m": 0.45279672741889954,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.1638946533203125,
+        -0.01214599609375,
+        0.021000050008296967
+      ],
+      "end_xy_distance_to_bowl_m": 0.5765542984008789,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.28186607360839844,
+        -0.010456085205078125,
+        0.021000003442168236
+      ],
+      "end_xy_distance_to_bowl_m": 0.4681107997894287,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2520484924316406,
+        -0.00792694091796875,
+        0.021000012755393982
+      ],
+      "end_xy_distance_to_bowl_m": 0.49385643005371094,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.5592288970947266,
+        -0.02500152587890625,
+        0.0209998469799757
+      ],
+      "end_xy_distance_to_bowl_m": 0.2654094696044922,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.4762001037597656,
+        -0.020694732666015625,
+        0.020999915897846222
+      ],
+      "end_xy_distance_to_bowl_m": 0.31431281566619873,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2770843505859375,
+        0.01366424560546875,
+        0.020999964326620102
+      ],
+      "end_xy_distance_to_bowl_m": 0.46214571595191956,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.23496055603027344,
+        0.002651214599609375,
+        0.02099999599158764
+      ],
+      "end_xy_distance_to_bowl_m": 0.5051813721656799,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.2602386474609375,
+        -0.00740814208984375,
+        0.02099987491965294
+      ],
+      "end_xy_distance_to_bowl_m": 0.48621824383735657,
+      "lift_hit": false
+    },
+    {
+      "closest_after_lift_inside_bowl_radius": false,
+      "closest_after_lift_inside_tight_radius": false,
+      "closest_xy_distance_after_lift_m": null,
+      "end_object_position_local_m": [
+        0.21099281311035156,
+        -0.00536346435546875,
+        0.020999912172555923
+      ],
+      "end_xy_distance_to_bowl_m": 0.5303792953491211,
+      "lift_hit": false
+    }
+  ]
+}
