@@ -246,7 +246,9 @@ def _collect_stages(snapshot: dict[str, Any], metrics: dict[str, Any]) -> list[d
     object_asset = _find_asset(snapshot, "object")
     object_position = object_asset.get("position") if object_asset else None
     target_position = _termination_param(snapshot, "object_in_bowl", "target_position")
-    lifted_height = _reward_param(snapshot, "lifting_object", "minimal_height")
+    lifted_height = _reward_param(snapshot, "lifting_object", "minimal_height") or _reward_param(
+        snapshot, "object_lift_progress", "target_height"
+    )
     bowl_radius = _termination_param(snapshot, "object_in_bowl", "radius")
     bowl_min_height = _termination_param(snapshot, "object_in_bowl", "min_height")
     bowl_max_height = _termination_param(snapshot, "object_in_bowl", "max_height")
