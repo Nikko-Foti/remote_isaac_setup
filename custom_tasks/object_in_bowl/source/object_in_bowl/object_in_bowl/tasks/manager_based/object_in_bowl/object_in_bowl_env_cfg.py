@@ -337,11 +337,6 @@ class RewardsCfg:
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
         },
     )
-    lifting_object = RewTerm(
-        func=mdp.compute_object_lifted_reward,
-        weight=15.0,
-        params={"minimal_height": OBJECT_LIFTED_HEIGHT},
-    )
     object_to_bowl_xy = RewTerm(
         func=mdp.compute_saturated_object_to_target_xy_reward,
         weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
