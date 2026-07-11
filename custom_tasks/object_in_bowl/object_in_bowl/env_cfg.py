@@ -32,7 +32,7 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 # Height threshold for the binary lift reward.
 OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
-LIFT_PROGRESS_REWARD_WEIGHT = 5.0
+LIFT_PROGRESS_REWARD_WEIGHT = 20.0
 LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
 OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
 OBJECT_TO_BOWL_XY_REWARD_STD = 0.15
@@ -336,11 +336,6 @@ class RewardsCfg:
             "target_height": OBJECT_LIFTED_HEIGHT,
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
         },
-    )
-    lifting_object = RewTerm(
-        func=rewards.compute_object_lifted_reward,
-        weight=15.0,
-        params={"minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_to_bowl_xy = RewTerm(
         func=rewards.compute_saturated_object_to_target_xy_reward,
