@@ -5,7 +5,7 @@
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
-from isaaclab.envs import ManagerBasedRLEnvCfg
+from isaaclab.envs import ManagerBasedRLEnvCfg, mdp
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -19,7 +19,7 @@ from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdF
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
-from . import mdp
+from . import observations, rewards
 
 ##
 # Pre-defined configs
@@ -282,7 +282,7 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_position = ObsTerm(func=mdp.get_object_position_in_robot_root_frame)
+        object_position = ObsTerm(func=observations.get_object_position_in_robot_root_frame)
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
 
@@ -320,16 +320,16 @@ class RewardsCfg:
 
     # Logs diagnostics without changing the reward value.
     episode_diagnostics = RewTerm(
-        func=mdp.update_episode_diagnostics,
+        func=rewards.update_episode_diagnostics,
         weight=1.0,
     )
     reaching_object = RewTerm(
-        func=mdp.compute_reaching_object_reward,
+        func=rewards.compute_reaching_object_reward,
         weight=1.0,
         params={"std": 0.10, "disable_after_lift_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lift_progress = RewTerm(
-        func=mdp.compute_gated_object_height_progress_reward,
+        func=rewards.compute_gated_object_height_progress_reward,
         weight=LIFT_PROGRESS_REWARD_WEIGHT,
         params={
             "initial_height": OBJECT_START_POSITION[2],
@@ -338,12 +338,12 @@ class RewardsCfg:
         },
     )
     lifting_object = RewTerm(
-        func=mdp.compute_object_lifted_reward,
+        func=rewards.compute_object_lifted_reward,
         weight=15.0,
         params={"minimal_height": OBJECT_LIFTED_HEIGHT},
     )
     object_to_bowl_xy = RewTerm(
-        func=mdp.compute_saturated_object_to_target_xy_reward,
+        func=rewards.compute_saturated_object_to_target_xy_reward,
         weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
@@ -365,7 +365,7 @@ class TerminationsCfg:
         params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")},
     )
     object_in_bowl = DoneTerm(
-        func=mdp.terminate_on_object_in_bowl_success,
+        func=rewards.terminate_on_object_in_bowl_success,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
             "radius": BOWL_SUCCESS_RADIUS,
