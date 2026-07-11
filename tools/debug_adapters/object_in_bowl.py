@@ -401,8 +401,8 @@ def _probe_row(name: str, label: str, value: Any, detail: str, env_index: int) -
 def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]]) -> list[dict[str, Any]]:
     try:
         from isaaclab.managers import SceneEntityCfg
-        from object_in_bowl.tasks.manager_based.object_in_bowl import mdp
-        from object_in_bowl.tasks.manager_based.object_in_bowl.object_in_bowl_env_cfg import (
+        from object_in_bowl import rewards
+        from object_in_bowl.env_cfg import (
             BOWL_LOWERING_RADIUS,
             BOWL_LOWERING_REWARD_MIN_HEIGHT,
             BOWL_LOWERING_TARGET_HEIGHT,
@@ -431,13 +431,13 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
         (
             "grasping_object",
             "Would grasp reward fire?",
-            lambda: mdp.compute_grasping_object_reward(env, std=0.10, minimal_height=OBJECT_LIFTED_HEIGHT),
+            lambda: rewards.compute_grasping_object_reward(env, std=0.10, minimal_height=OBJECT_LIFTED_HEIGHT),
             "near cube + closing gripper before lift",
         ),
         (
             "object_lift_progress",
             "Would gated lift-progress reward fire?",
-            lambda: mdp.compute_gated_object_height_progress_reward(
+            lambda: rewards.compute_gated_object_height_progress_reward(
                 env,
                 initial_height=OBJECT_START_POSITION[2],
                 target_height=OBJECT_LIFTED_HEIGHT,
@@ -448,7 +448,7 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
         (
             "object_to_bowl",
             "Would carry-to-bowl reward fire?",
-            lambda: mdp.compute_object_to_target_reward(
+            lambda: rewards.compute_object_to_target_reward(
                 env,
                 target_position=PLACEMENT_TARGET_POSITION,
                 std=0.30,
@@ -459,7 +459,7 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
         (
             "lowering_into_bowl",
             "Would lowering reward fire?",
-            lambda: mdp.compute_object_lowering_into_bowl_reward(
+            lambda: rewards.compute_object_lowering_into_bowl_reward(
                 env,
                 target_position=PLACEMENT_TARGET_POSITION,
                 radius=BOWL_LOWERING_RADIUS,
@@ -472,7 +472,7 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
         (
             "object_in_bowl_success",
             "Would bowl success reward fire?",
-            lambda: mdp.compute_object_in_bowl_success_reward(
+            lambda: rewards.compute_object_in_bowl_success_reward(
                 env,
                 target_position=PLACEMENT_TARGET_POSITION,
                 radius=BOWL_SUCCESS_RADIUS,

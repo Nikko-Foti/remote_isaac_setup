@@ -58,7 +58,7 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
-import object_in_bowl.tasks  # noqa: F401
+import object_in_bowl  # noqa: F401
 
 
 COUNT_SUFFIX = "_count"

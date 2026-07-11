@@ -36,7 +36,7 @@ import torch
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import parse_env_cfg
 
-import object_in_bowl.tasks  # noqa: F401
+import object_in_bowl  # noqa: F401
 
 
 def main():

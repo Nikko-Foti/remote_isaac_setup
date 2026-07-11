@@ -35,7 +35,7 @@ simulation_app = app_launcher.app
 import gymnasium as gym
 from prettytable import PrettyTable
 
-import object_in_bowl.tasks  # noqa: F401
+import object_in_bowl  # noqa: F401
 
 
 def main():

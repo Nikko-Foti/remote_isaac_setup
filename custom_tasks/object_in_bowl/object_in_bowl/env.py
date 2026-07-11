@@ -13,8 +13,7 @@ from isaaclab.assets import Articulation, RigidObject
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.managers import SceneEntityCfg
 
-from .mdp.observations import get_ee_position, get_object_position, get_placement_target_position
-from .object_in_bowl_env_cfg import (
+from .env_cfg import (
     BOWL_LOWERING_RADIUS,
     BOWL_LOWERING_TARGET_HEIGHT,
     BOWL_SUCCESS_MAX_ANGULAR_SPEED,
@@ -29,6 +28,7 @@ from .object_in_bowl_env_cfg import (
     PLACEMENT_TARGET_POSITION,
     PLACEMENT_TARGET_RADIUS,
 )
+from .observations import get_ee_position, get_object_position, get_placement_target_position
 
 
 class ObjectInBowlEnv(ManagerBasedRLEnv):

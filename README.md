@@ -24,7 +24,7 @@ It keeps task code outside of the core Isaac Lab repository while leaving room f
 
     ```bash
     # use 'PATH_TO_isaaclab.sh|bat -p' instead of 'python' if Isaac Lab is not installed in Python venv or conda
-    python -m pip install -e custom_tasks/object_in_bowl/source/object_in_bowl
+    python -m pip install -e custom_tasks/object_in_bowl
     ```
 
 - Verify that the extension is correctly installed by:
@@ -113,14 +113,14 @@ This helps in indexing all the python modules for intelligent suggestions while 
 ### Setup as Omniverse Extension (Optional)
 
 We provide an example UI extension that will load upon enabling your extension defined in
-`custom_tasks/object_in_bowl/source/object_in_bowl/object_in_bowl/ui_extension_example.py`.
+`custom_tasks/object_in_bowl/object_in_bowl/ui_extension_example.py`.
 
 To enable your extension, follow these steps:
 
 1. **Add the search path of this project/repository** to the extension manager:
     - Navigate to the extension manager using `Window` -> `Extensions`.
     - Click on the **Hamburger Icon**, then go to `Settings`.
-    - In the `Extension Search Paths`, enter the absolute path to `custom_tasks/object_in_bowl/source`.
+    - In the `Extension Search Paths`, enter the absolute path to `custom_tasks`.
     - If not already present, in the `Extension Search Paths`, enter the path that leads to Isaac Lab's extension directory directory (`IsaacLab/source`)
     - Click on the **Hamburger Icon**, then click `Refresh`.
 
@@ -153,7 +153,7 @@ In this case, add the path to your extension in `.vscode/settings.json` under th
 ```json
 {
     "python.analysis.extraPaths": [
-        "<path-to-ext-repo>/custom_tasks/object_in_bowl/source/object_in_bowl"
+        "<path-to-ext-repo>/custom_tasks/object_in_bowl"
     ]
 }
 ```
