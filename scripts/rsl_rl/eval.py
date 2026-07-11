@@ -18,6 +18,7 @@ from pathlib import Path
 from isaaclab.app import AppLauncher
 
 import cli_args  # isort: skip
+from eval_metrics import get_new_episode_log_weight, validate_episode_log_total  # isort: skip
 
 
 parser = argparse.ArgumentParser(description="Evaluate an RSL-RL checkpoint for a fixed number of episodes.")
@@ -247,7 +248,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             log = _extract_log(info)
             numeric_log = _numeric_log(log)
             reset_count = numeric_log.get("Episode_Diagnostics/reset_env_count") if numeric_log else None
-            log_weight = reset_count if reset_count is not None and reset_count > 0.0 else float(done_count)
+            try:
+                log_weight = get_new_episode_log_weight(done_count, reset_count)
+            except ValueError as exc:
+                raise RuntimeError(f"Invalid episode log at completed episode {completed_episodes}: {exc}") from exc
 
             if numeric_log and log_weight > 0.0:
                 logged_episode_weight += log_weight
@@ -268,6 +272,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             completed_episodes += done_count
             if completed_episodes >= args_cli.num_episodes:
                 break
+
+    try:
+        validate_episode_log_total(completed_episodes, logged_episode_weight)
+    except ValueError as exc:
+        raise RuntimeError(f"Evaluation log mismatch: {exc}") from exc
 
     metrics = {
         key: value / metric_weights[key]
