@@ -1728,9 +1728,13 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
     mock_gripper_command = -0.72 if viewer_mode == "policy" else 0.0
     step_dt = 0.02
     reaching_value = 0.6
-    lifting_value = 0.0
-    reward_total = reaching_value + lifting_value
     ee_distance = _distance(ee, cube)
+    lift_progress = max(0.0, min(1.0, (cube[2] - 0.055) / 0.05))
+    lift_gate_active = ee_distance < 0.08 and mock_gripper_command < 0.0
+    lifting_value = 20.0 * (
+        0.25 * lift_progress * float(lift_gate_active) + 0.75 * float(cube[2] > 0.105)
+    )
+    reward_total = reaching_value + lifting_value
     object_target_distance = _distance(cube, target)
     mock_task = "Mock-Object-In-Bowl-Task-v0"
     mock_adapter = resolve_task_adapter(mock_task)
@@ -1912,9 +1916,9 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
             },
             {
                 "type": "height_plane",
-                "label": "lifting_object minimal_height",
+                "label": "object_lift_progress target_height",
                 "z": 0.10500000000000001,
-                "source": "reward.lifting_object.params.minimal_height",
+                "source": "reward.object_lift_progress.params.target_height",
                 "confidence": "medium",
                 "color": "#f2b84b",
             },
