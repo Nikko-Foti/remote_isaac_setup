@@ -356,6 +356,15 @@ class RewardsCfg:
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
         },
     )
+    verified_grasp = RewTerm(
+        func=rewards.compute_verified_grasp_reward,
+        weight=2.0,
+        params={
+            "force_threshold": VERIFIED_GRASP_FORCE_THRESHOLD,
+            "history_length": VERIFIED_GRASP_HISTORY_LENGTH,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
     object_to_bowl_xy = RewTerm(
         func=rewards.compute_saturated_object_to_target_xy_reward,
         weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
