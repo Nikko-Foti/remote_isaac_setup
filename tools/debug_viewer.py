@@ -1793,13 +1793,19 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 "params": {"std": 0.1},
             },
             {
-                "name": "lifting_object",
-                "weight": 15.0,
+                "name": "object_lift_progress",
+                "weight": 20.0,
                 "weightedPreDtValue": lifting_value,
                 "rawApprox": 0.0,
                 "stepContribution": lifting_value * step_dt,
                 "isFiring": False,
-                "params": {"minimal_height": 0.10500000000000001},
+                "params": {
+                    "initial_height": 0.055,
+                    "target_height": 0.10500000000000001,
+                    "near_distance": 0.08,
+                    "progress_scale": 0.25,
+                    "completion_scale": 0.75,
+                },
             },
         ],
         "rewardSummary": {
