@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts" / "rsl_rl"))
 
-from eval_metrics import get_new_episode_log_weight, validate_episode_log_total
+from eval_metrics import get_new_episode_log_weight, summarize_distribution, validate_episode_log_total
 
 
 class EpisodeLogWeightTest(unittest.TestCase):
@@ -30,6 +30,19 @@ class EpisodeLogWeightTest(unittest.TestCase):
     def test_final_total_requires_exact_episode_count(self):
         with self.assertRaisesRegex(ValueError, "aggregated weight"):
             validate_episode_log_total(completed_episodes=1_000_000_000, logged_episode_weight=1_000_000_001.0)
+
+
+class DistributionSummaryTest(unittest.TestCase):
+    def test_summarizes_all_samples_instead_of_averaging_batch_medians(self):
+        summary = summarize_distribution([0.1, 0.2, 0.3, 10.0])
+
+        self.assertAlmostEqual(summary["mean"], 2.65)
+        self.assertAlmostEqual(summary["median"], 0.25)
+        self.assertAlmostEqual(summary["p10"], 0.13)
+        self.assertAlmostEqual(summary["p90"], 7.09)
+
+    def test_empty_distribution_has_no_statistics(self):
+        self.assertEqual(summarize_distribution([]), {})
 
 
 if __name__ == "__main__":
