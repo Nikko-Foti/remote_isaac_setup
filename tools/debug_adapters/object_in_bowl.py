@@ -52,7 +52,7 @@ def build_mock_diagnostics(
     """Build fake object-in-bowl diagnostics for browser-only screenshots."""
     object_target_distance = distance(cube, target)
     mock_lift_progress = max(0.0, min(1.0, (cube[2] - 0.055) / 0.05))
-    mock_lift_gate_active = viewer_mode == "policy"
+    mock_lift_gate_active = distance(ee, cube) < NEAR_OBJECT_DISTANCE and mock_gripper_command < 0.0
     return {
         "adapterName": ADAPTER_NAME,
         "displayName": DISPLAY_NAME,

@@ -1723,7 +1723,7 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
     """Build a fake snapshot for browser verification without Isaac Lab installed."""
     phase = step_count / 18.0
     cube = [0.5 + 0.03 * math.sin(phase), 0.02 * math.cos(phase), 0.055 + 0.015 * max(0, math.sin(phase))]
-    ee = [cube[0] - 0.05 * math.cos(phase), cube[1] + 0.04 * math.sin(phase), cube[2] + 0.11]
+    ee = [cube[0] - 0.05 * math.cos(phase), cube[1] + 0.04 * math.sin(phase), cube[2] + 0.04]
     target = [0.7, 0.2, 0.049]
     mock_gripper_command = -0.72 if viewer_mode == "policy" else 0.0
     step_dt = 0.02
@@ -1800,9 +1800,9 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
                 "name": "object_lift_progress",
                 "weight": 20.0,
                 "weightedPreDtValue": lifting_value,
-                "rawApprox": 0.0,
+                "rawApprox": lifting_value / 20.0,
                 "stepContribution": lifting_value * step_dt,
-                "isFiring": False,
+                "isFiring": lifting_value > 0.0,
                 "params": {
                     "initial_height": 0.055,
                     "target_height": 0.10500000000000001,
