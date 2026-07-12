@@ -13,6 +13,7 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
+from isaaclab.sensors import ContactSensorCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg, OffsetCfg
 from isaaclab.sim.schemas.schemas_cfg import CollisionPropertiesCfg, RigidBodyPropertiesCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
@@ -34,6 +35,8 @@ OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
 LIFT_PROGRESS_REWARD_WEIGHT = 20.0
 LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
+VERIFIED_GRASP_FORCE_THRESHOLD = 1.0
+VERIFIED_GRASP_HISTORY_LENGTH = 2
 OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
 OBJECT_TO_BOWL_XY_REWARD_STD = 0.15
 PLACEMENT_TARGET_XY = (0.70, 0.20)
@@ -98,6 +101,22 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
 
     # robot
     robot: ArticulationCfg = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot.spawn.activate_contact_sensors = True
+
+    left_finger_object_contact = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/panda_leftfinger",
+        update_period=0.0,
+        history_length=VERIFIED_GRASP_HISTORY_LENGTH,
+        debug_vis=False,
+        filter_prim_paths_expr=["{ENV_REGEX_NS}/Object"],
+    )
+    right_finger_object_contact = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/panda_rightfinger",
+        update_period=0.0,
+        history_length=VERIFIED_GRASP_HISTORY_LENGTH,
+        debug_vis=False,
+        filter_prim_paths_expr=["{ENV_REGEX_NS}/Object"],
+    )
 
     # end-effector frame used by later observations and rewards
     ee_frame = _make_ee_frame_cfg()

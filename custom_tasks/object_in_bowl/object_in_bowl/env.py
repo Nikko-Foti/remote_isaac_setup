@@ -27,8 +27,11 @@ from .env_cfg import (
     OBJECT_START_POSITION,
     PLACEMENT_TARGET_POSITION,
     PLACEMENT_TARGET_RADIUS,
+    VERIFIED_GRASP_FORCE_THRESHOLD,
+    VERIFIED_GRASP_HISTORY_LENGTH,
 )
 from .observations import get_ee_position, get_object_position, get_placement_target_position
+from .rewards import check_verified_grasp
 
 
 class ObjectInBowlEnv(ManagerBasedRLEnv):
@@ -79,16 +82,25 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         is_close_command = closing_gripper > 0.0
         is_near_object = ee_object_distance < LIFT_PROGRESS_NEAR_OBJECT_DISTANCE
         is_gate_active = is_close_command & is_near_object
+        is_verified_grasp = check_verified_grasp(
+            self,
+            force_threshold=VERIFIED_GRASP_FORCE_THRESHOLD,
+            history_length=VERIFIED_GRASP_HISTORY_LENGTH,
+        )
         current_step = self._episode_step_count + 1.0
 
         self._episode_step_count += 1.0
         self._episode_close_command_count += is_close_command.float()
         self._episode_close_near_object_count += is_gate_active.float()
+        self._episode_verified_grasp_count += is_verified_grasp.float()
         self._episode_close_command_hit = torch.maximum(
             self._episode_close_command_hit, is_close_command.float()
         )
         self._episode_close_near_object_hit = torch.maximum(
             self._episode_close_near_object_hit, is_gate_active.float()
+        )
+        self._episode_verified_grasp_hit = torch.maximum(
+            self._episode_verified_grasp_hit, is_verified_grasp.float()
         )
 
         first_close_near = is_gate_active & (self._episode_first_close_near_step < 0.0)
@@ -336,6 +348,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             ),
             "Episode_Diagnostics/close_near_object_step_fraction": close_near_step_fraction,
             "Episode_Diagnostics/ever_close_near_object_rate": self._episode_close_near_object_hit[env_ids].mean(),
+            "Episode_Diagnostics/verified_grasp_hit_rate": self._episode_verified_grasp_hit[env_ids].mean(),
+            "Episode_Diagnostics/verified_grasp_step_fraction": (
+                self._episode_verified_grasp_count[env_ids] / step_count
+            ).mean(),
             "Episode_Diagnostics/gate_active_at_max_lift_rate": (
                 self._episode_gate_active_at_max_lift_progress[env_ids].mean()
             ),
@@ -512,8 +528,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_step_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_close_command_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_close_near_object_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_verified_grasp_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_close_command_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_close_near_object_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_verified_grasp_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_object_z = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_object_z_delta = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_lift_progress = torch.zeros(self.num_envs, device=self.device)
@@ -566,8 +584,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_step_count[env_ids] = 0.0
         self._episode_close_command_count[env_ids] = 0.0
         self._episode_close_near_object_count[env_ids] = 0.0
+        self._episode_verified_grasp_count[env_ids] = 0.0
         self._episode_close_command_hit[env_ids] = 0.0
         self._episode_close_near_object_hit[env_ids] = 0.0
+        self._episode_verified_grasp_hit[env_ids] = 0.0
         self._episode_max_object_z[env_ids] = object_position[:, 2]
         self._episode_max_object_z_delta[env_ids] = 0.0
         self._episode_max_lift_progress[env_ids] = 0.0
