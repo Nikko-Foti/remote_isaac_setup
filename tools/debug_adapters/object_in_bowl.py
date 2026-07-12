@@ -130,13 +130,13 @@ def build_mock_diagnostics(
             },
             {
                 "name": "object_lift_progress",
-                "label": "Would gated lift-progress reward fire?",
+                "label": "Would staged lift reward fire?",
                 "probeKind": "inactive_candidate",
                 "statusLabel": "candidate",
                 "isActiveReward": False,
-                "currentValue": mock_lift_progress if mock_lift_gate_active else 0.0,
-                "wouldFire": mock_lift_gate_active and cube[2] > 0.055,
-                "detail": "lift progress gated by near cube + closing gripper",
+                "currentValue": 0.25 * mock_lift_progress * mock_lift_gate_active + 0.75 * (cube[2] > 0.105),
+                "wouldFire": (mock_lift_gate_active and cube[2] > 0.055) or cube[2] > 0.105,
+                "detail": "partial lift progress plus full-lift completion milestone",
                 "source": "object_in_bowl_adapter",
             },
         ],
@@ -436,14 +436,16 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
         ),
         (
             "object_lift_progress",
-            "Would gated lift-progress reward fire?",
-            lambda: rewards.compute_gated_object_height_progress_reward(
+            "Would staged lift reward fire?",
+            lambda: rewards.compute_staged_object_lift_reward(
                 env,
                 initial_height=OBJECT_START_POSITION[2],
                 target_height=OBJECT_LIFTED_HEIGHT,
                 near_distance=LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
+                progress_scale=0.25,
+                completion_scale=0.75,
             ),
-            "lift progress gated by near cube + closing gripper",
+            "partial lift progress plus full-lift completion milestone",
         ),
         (
             "object_to_bowl",

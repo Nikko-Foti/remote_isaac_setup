@@ -348,12 +348,14 @@ class RewardsCfg:
         params={"std": 0.10, "disable_after_lift_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lift_progress = RewTerm(
-        func=rewards.compute_gated_object_height_progress_reward,
+        func=rewards.compute_staged_object_lift_reward,
         weight=LIFT_PROGRESS_REWARD_WEIGHT,
         params={
             "initial_height": OBJECT_START_POSITION[2],
             "target_height": OBJECT_LIFTED_HEIGHT,
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
+            "progress_scale": 0.25,
+            "completion_scale": 0.75,
         },
     )
     object_to_bowl_xy = RewTerm(
