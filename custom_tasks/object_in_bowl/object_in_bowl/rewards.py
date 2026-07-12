@@ -11,6 +11,7 @@ import torch
 
 from isaaclab.assets import Articulation, RigidObject
 from isaaclab.managers import SceneEntityCfg
+from isaaclab.sensors import ContactSensor
 from isaaclab.utils.math import combine_frame_transforms
 
 from .observations import get_ee_position, get_object_position, get_placement_target_position
@@ -117,6 +118,26 @@ def compute_grasping_object_reward(
     closing_gripper = torch.clamp(-gripper_action, min=0.0, max=1.0)
     not_lifted = torch.logical_not(check_object_lifted(env, minimal_height, object_cfg))
     return near_object * closing_gripper * not_lifted.float()
+
+
+def check_verified_grasp(
+    env: ManagerBasedRLEnv,
+    force_threshold: float,
+    history_length: int,
+    left_sensor_cfg: SceneEntityCfg = SceneEntityCfg("left_finger_object_contact"),
+    right_sensor_cfg: SceneEntityCfg = SceneEntityCfg("right_finger_object_contact"),
+) -> torch.Tensor:
+    """Check for sustained bilateral finger contact while the gripper is closing."""
+
+    def has_sustained_contact(sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+        sensor: ContactSensor = env.scene[sensor_cfg.name]
+        force_history = sensor.data.force_matrix_w_history[:, :history_length]
+        force_magnitude = torch.linalg.vector_norm(force_history, dim=-1)
+        return torch.all(force_magnitude > force_threshold, dim=(1, 2, 3))
+
+    gripper_action = env.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
+    is_closing_gripper = torch.clamp(-gripper_action, min=0.0, max=1.0) > 0.0
+    return has_sustained_contact(left_sensor_cfg) & has_sustained_contact(right_sensor_cfg) & is_closing_gripper
 
 
 # Rewards smooth progress as the cube rises from the table.
