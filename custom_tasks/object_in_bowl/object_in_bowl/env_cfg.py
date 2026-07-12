@@ -362,7 +362,8 @@ class RewardsCfg:
         params={
             "force_threshold": VERIFIED_GRASP_FORCE_THRESHOLD,
             "history_length": VERIFIED_GRASP_HISTORY_LENGTH,
-            "minimal_height": OBJECT_LIFTED_HEIGHT,
+            "initial_height": OBJECT_START_POSITION[2],
+            "target_height": OBJECT_LIFTED_HEIGHT,
         },
     )
     object_to_bowl_xy = RewTerm(

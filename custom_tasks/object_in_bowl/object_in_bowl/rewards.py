@@ -145,13 +145,14 @@ def compute_verified_grasp_reward(
     env: ManagerBasedRLEnv,
     force_threshold: float,
     history_length: int,
-    minimal_height: float,
+    initial_height: float,
+    target_height: float,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Reward a sustained bilateral grasp only before full lift."""
+    """Reward a sustained bilateral grasp, tapering to zero at full lift."""
     is_verified_grasp = check_verified_grasp(env, force_threshold, history_length)
-    not_lifted = torch.logical_not(check_object_lifted(env, minimal_height, object_cfg))
-    return (is_verified_grasp & not_lifted).float()
+    lift_progress = compute_object_height_progress_reward(env, initial_height, target_height, object_cfg)
+    return is_verified_grasp.float() * (1.0 - lift_progress)
 
 
 # Rewards smooth progress as the cube rises from the table.
