@@ -50,9 +50,11 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
 
         diagnostics = self._compute_bowl_diagnostics(env_ids)
         diagnostics.update(self._compute_episode_diagnostics(env_ids))
+        successful_lift_height_samples = self._get_successful_lift_height_samples(env_ids)
         super()._reset_idx(env_ids)
         self._reset_episode_diagnostics(env_ids)
         self.extras["log"].update(diagnostics)
+        self.extras["successful_lift_height_samples"] = successful_lift_height_samples
 
     def update_episode_diagnostics(self):
         """Track max/min signals that answer whether the robot ever grasped or lifted."""
@@ -132,6 +134,12 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             self._episode_lift_threshold_hit, crossed_lift_threshold.float()
         )
         has_lifted = self._episode_lift_threshold_hit > 0.0
+        self._episode_post_lift_threshold_step_count += has_lifted.float()
+        self._episode_above_lift_threshold_step_count += (has_lifted & crossed_lift_threshold).float()
+        self._episode_fell_below_lift_threshold = torch.maximum(
+            self._episode_fell_below_lift_threshold,
+            (has_lifted & torch.logical_not(crossed_lift_threshold)).float(),
+        )
         self._episode_min_xy_distance_after_lift = torch.where(
             has_lifted,
             torch.minimum(self._episode_min_xy_distance_after_lift, xy_distance_to_bowl),
@@ -258,6 +266,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         failure_start_xy = self._masked_vector_mean(start_object_xy, failed_to_lift)
         success_count = lift_threshold_hit.float().sum()
         failure_count = failed_to_lift.float().sum()
+        terminal_object_z = get_object_position(self)[env_ids, 2]
+        max_object_z = self._episode_max_object_z[env_ids]
+        post_lift_step_count = torch.clamp(self._episode_post_lift_threshold_step_count[env_ids], min=1.0)
+        lift_retention = self._episode_above_lift_threshold_step_count[env_ids] / post_lift_step_count
         first_lift_threshold_count = (self._episode_first_lift_threshold_step[env_ids] >= 0.0).float().sum()
         action_delta_count = torch.clamp(self._episode_action_delta_count[env_ids], min=1.0)
         arm_action_delta_rms = torch.sqrt(self._episode_arm_action_delta_sq_sum[env_ids] / action_delta_count)
@@ -268,6 +280,19 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         return {
             "Episode_Diagnostics/reset_env_count": torch.as_tensor(len(env_ids), device=self.device, dtype=torch.float32),
             "Episode_Diagnostics/max_object_z": self._episode_max_object_z[env_ids].mean(),
+            "Episode_Diagnostics/terminal_object_z_success_mean": self._masked_mean(
+                terminal_object_z, lift_threshold_hit
+            ),
+            "Episode_Diagnostics/max_object_z_success_mean": self._masked_mean(max_object_z, lift_threshold_hit),
+            "Episode_Diagnostics/lift_retention_episode_mean_success": self._masked_mean(
+                lift_retention, lift_threshold_hit
+            ),
+            "Episode_Diagnostics/terminal_above_lift_threshold_rate_success": self._masked_mean(
+                (terminal_object_z > OBJECT_LIFTED_HEIGHT).float(), lift_threshold_hit
+            ),
+            "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_success": self._masked_mean(
+                self._episode_fell_below_lift_threshold[env_ids], lift_threshold_hit
+            ),
             "Episode_Diagnostics/max_object_z_delta": max_object_z_delta.mean(),
             "Episode_Diagnostics/max_lift_delta_mean": max_object_z_delta.mean(),
             "Episode_Diagnostics/max_lift_progress": self._episode_max_lift_progress[env_ids].mean(),
@@ -503,6 +528,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_lift_005m_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_lift_020m_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_lift_threshold_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_post_lift_threshold_step_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_above_lift_threshold_step_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_fell_below_lift_threshold = torch.zeros(self.num_envs, device=self.device)
         self._episode_min_xy_distance_after_lift = torch.full((self.num_envs,), torch.inf, device=self.device)
         self._episode_bowl_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
         self._episode_tight_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
@@ -554,6 +582,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_lift_005m_hit[env_ids] = 0.0
         self._episode_lift_020m_hit[env_ids] = 0.0
         self._episode_lift_threshold_hit[env_ids] = 0.0
+        self._episode_post_lift_threshold_step_count[env_ids] = 0.0
+        self._episode_above_lift_threshold_step_count[env_ids] = 0.0
+        self._episode_fell_below_lift_threshold[env_ids] = 0.0
         self._episode_min_xy_distance_after_lift[env_ids] = torch.inf
         self._episode_bowl_radius_hit_after_lift[env_ids] = 0.0
         self._episode_tight_radius_hit_after_lift[env_ids] = 0.0
@@ -592,6 +623,15 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         mask = mask.float()
         count = mask.sum()
         return self._safe_rate((values * mask).sum(), count)
+
+    def _get_successful_lift_height_samples(self, env_ids: Sequence[int]) -> dict[str, torch.Tensor]:
+        """Return raw successful-episode heights for exact evaluation statistics."""
+        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        successful = self._episode_lift_threshold_hit[env_ids] > 0.0
+        return {
+            "terminal_object_z": get_object_position(self)[env_ids, 2][successful].detach().clone(),
+            "max_object_z": self._episode_max_object_z[env_ids][successful].detach().clone(),
+        }
 
     def _masked_vector_mean(self, values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """Average vector values only over true mask entries, returning zeros if empty."""

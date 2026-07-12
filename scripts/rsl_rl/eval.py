@@ -18,7 +18,11 @@ from pathlib import Path
 from isaaclab.app import AppLauncher
 
 import cli_args  # isort: skip
-from eval_metrics import get_new_episode_log_weight, validate_episode_log_total  # isort: skip
+from eval_metrics import (  # isort: skip
+    get_new_episode_log_weight,
+    summarize_distribution,
+    validate_episode_log_total,
+)
 
 
 parser = argparse.ArgumentParser(description="Evaluate an RSL-RL checkpoint for a fixed number of episodes.")
@@ -134,6 +138,15 @@ WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/start_object_y_mean_success": "Episode_Diagnostics/success_episode_count",
     "Episode_Diagnostics/arm_action_delta_rms_success": "Episode_Diagnostics/success_episode_count",
     "Episode_Diagnostics/gripper_switch_rate_success": "Episode_Diagnostics/success_episode_count",
+    "Episode_Diagnostics/terminal_object_z_success_mean": "Episode_Diagnostics/success_episode_count",
+    "Episode_Diagnostics/max_object_z_success_mean": "Episode_Diagnostics/success_episode_count",
+    "Episode_Diagnostics/lift_retention_episode_mean_success": "Episode_Diagnostics/success_episode_count",
+    "Episode_Diagnostics/terminal_above_lift_threshold_rate_success": (
+        "Episode_Diagnostics/success_episode_count"
+    ),
+    "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_success": (
+        "Episode_Diagnostics/success_episode_count"
+    ),
     "Episode_Diagnostics/start_object_x_mean_failure": "Episode_Diagnostics/failure_episode_count",
     "Episode_Diagnostics/start_object_y_mean_failure": "Episode_Diagnostics/failure_episode_count",
     "Episode_Diagnostics/failure_start_x_negative_offset_rate": "Episode_Diagnostics/failure_episode_count",
@@ -175,6 +188,21 @@ def _numeric_log(log: dict) -> dict[str, float]:
         if number is not None:
             numbers[key] = number
     return numbers
+
+
+def _successful_lift_height_samples(info: dict) -> dict[str, list[float]]:
+    """Extract raw successful-episode height samples from the environment info."""
+    if not isinstance(info, dict):
+        return {}
+    payload = info.get("successful_lift_height_samples")
+    if not isinstance(payload, dict):
+        return {}
+    samples = {}
+    for key in ("terminal_object_z", "max_object_z"):
+        value = payload.get(key)
+        if isinstance(value, torch.Tensor):
+            samples[key] = value.detach().flatten().float().cpu().tolist()
+    return samples
 
 
 def _default_max_steps(env, requested_episodes: int, num_envs: int) -> int:
@@ -237,6 +265,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     metric_weights: dict[str, float] = defaultdict(float)
     count_totals: dict[str, float] = defaultdict(float)
     logged_episode_weight = 0.0
+    successful_height_samples: dict[str, list[float]] = {
+        "terminal_object_z": [],
+        "max_object_z": [],
+    }
 
     with torch.inference_mode():
         for _ in range(max_steps):
@@ -269,6 +301,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                         weighted_totals[key] += number * metric_weight
                         metric_weights[key] += metric_weight
 
+                height_samples = _successful_lift_height_samples(info)
+                for key, values in height_samples.items():
+                    successful_height_samples[key].extend(values)
+
             completed_episodes += done_count
             if completed_episodes >= args_cli.num_episodes:
                 break
@@ -288,6 +324,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         denominator = count_totals.get(denominator_key, 0.0)
         if denominator > 0.0:
             metrics[rate_key] = count_totals.get(numerator_key, 0.0) / denominator
+    successful_episode_count = int(round(count_totals.get("Episode_Diagnostics/success_episode_count", 0.0)))
+    for sample_name, values in successful_height_samples.items():
+        if len(values) != successful_episode_count:
+            raise RuntimeError(
+                f"collected {len(values)} {sample_name} samples for {successful_episode_count} successful episodes"
+            )
+        for statistic, value in summarize_distribution(values).items():
+            metrics[f"Episode_Diagnostics/{sample_name}_success_{statistic}"] = value
     summary = {
         "task": args_cli.task,
         "checkpoint": resume_path,
