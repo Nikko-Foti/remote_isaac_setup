@@ -1816,7 +1816,7 @@ def build_mock_snapshot(step_count: int, paused: bool, viewer_mode: str = "setup
             "totalWeightedPreDt": reward_total,
             "totalStepContribution": reward_total * step_dt,
             "stepDt": step_dt,
-            "firingCount": 1,
+            "firingCount": 1 + int(lifting_value > 0.0),
             "termCount": 2,
         },
         "terminations": [
