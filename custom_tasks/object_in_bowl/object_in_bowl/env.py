@@ -143,6 +143,13 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         centered_stage = (self._episode_funnel_broad_entry_hit > 0.0) & (
             xy_distance_to_bowl < PLACEMENT_TARGET_RADIUS
         )
+        centered_lowering_active = (xy_distance_to_bowl < PLACEMENT_TARGET_RADIUS) & (
+            object_z > BOWL_SUCCESS_MIN_HEIGHT
+        )
+        self._episode_centered_lowering_active_step_count += centered_lowering_active.float()
+        self._episode_centered_lowering_active_hit = torch.maximum(
+            self._episode_centered_lowering_active_hit, centered_lowering_active.float()
+        )
         self._episode_funnel_centered_hit = torch.maximum(
             self._episode_funnel_centered_hit, centered_stage.float()
         )
@@ -384,6 +391,12 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Funnel/opened_count": self._episode_funnel_opened_hit[env_ids].sum(),
             "Episode_Funnel/released_count": self._episode_funnel_released_hit[env_ids].sum(),
             "Episode_Funnel/supported_settled_count": self._episode_funnel_supported_settled_hit[env_ids].sum(),
+            "Episode_Experiment/centered_lowering_activation_episode_count": (
+                self._episode_centered_lowering_active_hit[env_ids].sum()
+            ),
+            "Episode_Experiment/centered_lowering_activation_step_count": (
+                self._episode_centered_lowering_active_step_count[env_ids].sum()
+            ),
             "Episode_Success/success_5_count": self._episode_success_5_hit[env_ids].sum(),
             "Episode_Success/success_10_count": self._episode_success_10_hit[env_ids].sum(),
             "Episode_Diagnostics/max_object_z": self._episode_max_object_z[env_ids].mean(),
@@ -662,6 +675,8 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_funnel_opened_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_funnel_released_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_funnel_supported_settled_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_centered_lowering_active_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_centered_lowering_active_step_count = torch.zeros(self.num_envs, device=self.device)
         self._success_dwell_steps = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_success_dwell_steps = torch.zeros(self.num_envs, device=self.device)
         self._episode_success_5_hit = torch.zeros(self.num_envs, device=self.device)
@@ -729,6 +744,8 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_funnel_opened_hit[env_ids] = 0.0
         self._episode_funnel_released_hit[env_ids] = 0.0
         self._episode_funnel_supported_settled_hit[env_ids] = 0.0
+        self._episode_centered_lowering_active_hit[env_ids] = 0.0
+        self._episode_centered_lowering_active_step_count[env_ids] = 0.0
         self._success_dwell_steps[env_ids] = 0.0
         self._episode_max_success_dwell_steps[env_ids] = 0.0
         self._episode_success_5_hit[env_ids] = 0.0

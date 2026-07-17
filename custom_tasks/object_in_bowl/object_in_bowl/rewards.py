@@ -358,6 +358,28 @@ def compute_object_lowering_into_bowl_reward(
     return (1.0 - torch.tanh(height_distance / height_std)) * is_over_target.float() * is_lifted.float()
 
 
+def compute_centered_lowering_handoff_reward(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    target_height: float,
+    height_std: float,
+    minimal_height: float,
+    lift_threshold: float,
+    transport_compensation: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward centered lowering without a cliff when the lift-gated transport term turns off."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    height_distance = torch.abs(object_position[:, 2] - target_height)
+    height_reward = 1.0 - torch.tanh(height_distance / height_std)
+    transport_handoff = (object_position[:, 2] <= lift_threshold).float() * transport_compensation
+    is_active = (xy_distance < radius) & (object_position[:, 2] > minimal_height)
+    return (height_reward + transport_handoff) * is_active.float()
+
+
 # Rewards the cube for ending up inside the bowl.
 def compute_object_in_bowl_success_reward(
     env: ManagerBasedRLEnv,
