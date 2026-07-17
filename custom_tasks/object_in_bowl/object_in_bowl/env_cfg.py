@@ -39,6 +39,8 @@ VERIFIED_GRASP_FORCE_THRESHOLD = 1.0
 VERIFIED_GRASP_HISTORY_LENGTH = 2
 OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
 OBJECT_TO_BOWL_XY_REWARD_STD = 0.15
+CENTERED_LOWERING_REWARD_WEIGHT = 60.0
+CENTERED_LOWERING_REWARD_STD = 0.05
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_TARGET_RADIUS = 0.08
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
@@ -385,6 +387,21 @@ class RewardsCfg:
             "std": OBJECT_TO_BOWL_XY_REWARD_STD,
             "radius": PLACEMENT_TARGET_RADIUS,
             "minimal_height": OBJECT_LIFTED_HEIGHT,
+        },
+    )
+    object_lowering_progress = RewTerm(
+        func=rewards.compute_centered_lowering_handoff_reward,
+        weight=CENTERED_LOWERING_REWARD_WEIGHT,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "target_height": BOWL_LOWERING_TARGET_HEIGHT,
+            "height_std": CENTERED_LOWERING_REWARD_STD,
+            "minimal_height": BOWL_SUCCESS_MIN_HEIGHT,
+            "lift_threshold": OBJECT_LIFTED_HEIGHT,
+            "transport_compensation": (
+                OBJECT_TO_BOWL_XY_REWARD_WEIGHT / CENTERED_LOWERING_REWARD_WEIGHT
+            ),
         },
     )
 
