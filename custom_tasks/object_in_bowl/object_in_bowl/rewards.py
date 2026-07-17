@@ -390,6 +390,17 @@ def compute_object_in_bowl_success_reward(
     ).float()
 
 
+def compute_terminal_object_in_bowl_success_reward(
+    env: ManagerBasedRLEnv,
+    termination_name: str = "object_in_bowl",
+) -> torch.Tensor:
+    """Pay once on the exact step that triggers strict success termination."""
+    earns_bonus = env.termination_manager.get_term(termination_name)
+    if hasattr(env, "record_terminal_bonus_award"):
+        env.record_terminal_bonus_award(earns_bonus)
+    return earns_bonus.float()
+
+
 # Stops the episode once the cube is successfully in the bowl.
 def terminate_on_object_in_bowl_success(
     env: ManagerBasedRLEnv,

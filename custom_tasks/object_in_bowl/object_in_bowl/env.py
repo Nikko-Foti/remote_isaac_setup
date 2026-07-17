@@ -83,6 +83,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         return self._success_dwell_steps >= required_steps
 
+    def record_terminal_bonus_award(self, earns_bonus: torch.Tensor):
+        """Count terminal success bonuses for experiment validation."""
+        self._episode_terminal_bonus_award_count += earns_bonus.float()
+
     def update_episode_diagnostics(self):
         """Track max/min signals that answer whether the robot ever grasped or lifted."""
         robot: Articulation = self.scene[self._finger_robot_cfg.name]
@@ -627,12 +631,24 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             & self.termination_manager.get_term("time_out")[env_ids]
         )
         other = torch.logical_not(success | drop | timeout)
+        bonus_awards = self._episode_terminal_bonus_award_count[env_ids]
         return {
             "Episode_End/completed_count": torch.as_tensor(len(env_ids), device=self.device, dtype=torch.float32),
             "Episode_End/success_count": success.float().sum(),
             "Episode_End/drop_count": drop.float().sum(),
             "Episode_End/timeout_count": timeout.float().sum(),
             "Episode_End/other_count": other.float().sum(),
+            "Episode_Experiment/terminal_bonus_award_count": bonus_awards.sum(),
+            "Episode_Experiment/terminal_bonus_on_success_count": bonus_awards[success].sum(),
+            "Episode_Experiment/terminal_bonus_on_non_success_count": bonus_awards[
+                torch.logical_not(success)
+            ].sum(),
+            "Episode_Experiment/success_with_bad_bonus_count": (
+                success & (bonus_awards != 1.0)
+            ).float().sum(),
+            "Episode_Experiment/non_success_with_bonus_count": (
+                torch.logical_not(success) & (bonus_awards != 0.0)
+            ).float().sum(),
         }
 
     def _compute_reward_sum_diagnostics(self, env_ids: Sequence[int]) -> dict[str, torch.Tensor]:
@@ -666,6 +682,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_max_success_dwell_steps = torch.zeros(self.num_envs, device=self.device)
         self._episode_success_5_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_success_10_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_terminal_bonus_award_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_object_z = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_object_z_delta = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_lift_progress = torch.zeros(self.num_envs, device=self.device)
@@ -733,6 +750,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_max_success_dwell_steps[env_ids] = 0.0
         self._episode_success_5_hit[env_ids] = 0.0
         self._episode_success_10_hit[env_ids] = 0.0
+        self._episode_terminal_bonus_award_count[env_ids] = 0.0
         self._episode_max_object_z[env_ids] = object_position[:, 2]
         self._episode_max_object_z_delta[env_ids] = 0.0
         self._episode_max_lift_progress[env_ids] = 0.0
