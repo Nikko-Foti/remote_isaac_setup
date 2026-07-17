@@ -291,6 +291,22 @@ def _resolve_checkpoint(agent_cfg: RslRlBaseRunnerCfg) -> str:
     return get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
 
 
+def _validate_experiment_counts(count_totals: dict[str, float]) -> None:
+    """Validate experiment-specific counters when the active branch emits them."""
+    if "Episode_Experiment/terminal_bonus_award_count" not in count_totals:
+        return
+    if count_totals["Episode_Experiment/terminal_bonus_award_count"] != count_totals.get(
+        "Episode_End/success_count", 0.0
+    ):
+        raise RuntimeError("terminal success bonus did not fire exactly once per success")
+    if count_totals.get("Episode_Experiment/terminal_bonus_on_non_success_count", 0.0) != 0.0:
+        raise RuntimeError("terminal success bonus fired on a non-success episode")
+    if count_totals.get("Episode_Experiment/success_with_bad_bonus_count", 0.0) != 0.0:
+        raise RuntimeError("a success episode did not receive exactly one terminal bonus")
+    if count_totals.get("Episode_Experiment/non_success_with_bonus_count", 0.0) != 0.0:
+        raise RuntimeError("a non-success episode received a terminal bonus")
+
+
 def _make_runner(env, agent_cfg: RslRlBaseRunnerCfg, resume_path: str):
     """Create an RSL-RL runner and load the checkpoint."""
     if agent_cfg.class_name == "OnPolicyRunner":
@@ -434,6 +450,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         "Episode_End/success_count", 0.0
     ):
         raise RuntimeError("10-step funnel success count does not match success termination count")
+    _validate_experiment_counts(count_totals)
 
     lift_episode_count = int(round(count_totals.get("Episode_Diagnostics/lift_episode_count", 0.0)))
     for sample_name, values in successful_height_samples.items():
