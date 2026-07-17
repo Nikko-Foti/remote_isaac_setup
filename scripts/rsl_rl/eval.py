@@ -21,7 +21,9 @@ import cli_args  # isort: skip
 from eval_metrics import (  # isort: skip
     get_new_episode_log_weight,
     summarize_distribution,
+    validate_exclusive_end_counts,
     validate_episode_log_total,
+    validate_sequential_funnel,
 )
 
 
@@ -45,6 +47,7 @@ app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 import gymnasium as gym
+import object_in_bowl  # noqa: F401
 import torch
 from rsl_rl.runners import DistillationRunner, OnPolicyRunner
 
@@ -63,11 +66,59 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
-import object_in_bowl  # noqa: F401
-
-
 COUNT_SUFFIX = "_count"
+SUM_SUFFIX = "_sum"
+FUNNEL_COUNT_KEYS = [
+    "Episode_Funnel/verified_grasp_count",
+    "Episode_Funnel/lift_count",
+    "Episode_Funnel/broad_entry_count",
+    "Episode_Funnel/centered_count",
+    "Episode_Funnel/lowered_count",
+    "Episode_Funnel/opened_count",
+    "Episode_Funnel/released_count",
+    "Episode_Funnel/supported_settled_count",
+]
 RATIO_SPECS = {
+    "Episode_Funnel/verified_grasp_given_completed_rate": (
+        "Episode_Funnel/verified_grasp_count",
+        "Episode_End/completed_count",
+    ),
+    "Episode_Funnel/lift_given_verified_grasp_rate": (
+        "Episode_Funnel/lift_count",
+        "Episode_Funnel/verified_grasp_count",
+    ),
+    "Episode_Funnel/broad_entry_given_lift_rate": (
+        "Episode_Funnel/broad_entry_count",
+        "Episode_Funnel/lift_count",
+    ),
+    "Episode_Funnel/centered_given_broad_entry_rate": (
+        "Episode_Funnel/centered_count",
+        "Episode_Funnel/broad_entry_count",
+    ),
+    "Episode_Funnel/lowered_given_centered_rate": (
+        "Episode_Funnel/lowered_count",
+        "Episode_Funnel/centered_count",
+    ),
+    "Episode_Funnel/opened_given_lowered_rate": (
+        "Episode_Funnel/opened_count",
+        "Episode_Funnel/lowered_count",
+    ),
+    "Episode_Funnel/released_given_opened_rate": (
+        "Episode_Funnel/released_count",
+        "Episode_Funnel/opened_count",
+    ),
+    "Episode_Funnel/supported_settled_given_released_rate": (
+        "Episode_Funnel/supported_settled_count",
+        "Episode_Funnel/released_count",
+    ),
+    "Episode_Success/success_5_rate": (
+        "Episode_Success/success_5_count",
+        "Episode_End/completed_count",
+    ),
+    "Episode_Success/success_10_given_success_5_rate": (
+        "Episode_Success/success_10_count",
+        "Episode_Success/success_5_count",
+    ),
     "Episode_Diagnostics/gate_rate_after_lift_005m": (
         "Episode_Diagnostics/post_lift_005m_gate_count",
         "Episode_Diagnostics/post_lift_005m_step_count",
@@ -134,27 +185,28 @@ WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/close_near_before_lift_threshold_rate": (
         "Episode_Diagnostics/first_lift_threshold_crossing_episode_count"
     ),
-    "Episode_Diagnostics/start_object_x_mean_success": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/start_object_y_mean_success": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/arm_action_delta_rms_success": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/gripper_switch_rate_success": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/terminal_object_z_success_mean": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/max_object_z_success_mean": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/lift_retention_episode_mean_success": "Episode_Diagnostics/success_episode_count",
-    "Episode_Diagnostics/terminal_above_lift_threshold_rate_success": (
-        "Episode_Diagnostics/success_episode_count"
+    "Episode_Diagnostics/min_xy_distance_after_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/start_object_x_mean_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/start_object_y_mean_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/arm_action_delta_rms_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/gripper_switch_rate_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/terminal_object_z_lift_mean": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/max_object_z_lift_mean": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/lift_retention_episode_mean_lift": "Episode_Diagnostics/lift_episode_count",
+    "Episode_Diagnostics/terminal_above_lift_threshold_rate_lift": (
+        "Episode_Diagnostics/lift_episode_count"
     ),
-    "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_success": (
-        "Episode_Diagnostics/success_episode_count"
+    "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_lift": (
+        "Episode_Diagnostics/lift_episode_count"
     ),
-    "Episode_Diagnostics/start_object_x_mean_failure": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/start_object_y_mean_failure": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/failure_start_x_negative_offset_rate": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/failure_start_x_positive_offset_rate": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/failure_start_y_negative_offset_rate": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/failure_start_y_positive_offset_rate": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/arm_action_delta_rms_failure": "Episode_Diagnostics/failure_episode_count",
-    "Episode_Diagnostics/gripper_switch_rate_failure": "Episode_Diagnostics/failure_episode_count",
+    "Episode_Diagnostics/start_object_x_mean_no_lift": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/start_object_y_mean_no_lift": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/no_lift_start_x_negative_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/no_lift_start_x_positive_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/no_lift_start_y_negative_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/no_lift_start_y_positive_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/arm_action_delta_rms_no_lift": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Diagnostics/gripper_switch_rate_no_lift": "Episode_Diagnostics/no_lift_episode_count",
 }
 
 
@@ -203,6 +255,20 @@ def _successful_lift_height_samples(info: dict) -> dict[str, list[float]]:
         if isinstance(value, torch.Tensor):
             samples[key] = value.detach().flatten().float().cpu().tolist()
     return samples
+
+
+def _episode_samples(info: dict) -> dict[str, list[float]]:
+    """Extract raw episode samples used for exact endpoint distributions."""
+    if not isinstance(info, dict):
+        return {}
+    payload = info.get("episode_samples")
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        key: value.detach().flatten().float().cpu().tolist()
+        for key, value in payload.items()
+        if isinstance(value, torch.Tensor)
+    }
 
 
 def _default_max_steps(env, requested_episodes: int, num_envs: int) -> int:
@@ -264,11 +330,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     weighted_totals: dict[str, float] = defaultdict(float)
     metric_weights: dict[str, float] = defaultdict(float)
     count_totals: dict[str, float] = defaultdict(float)
+    sum_totals: dict[str, float] = defaultdict(float)
     logged_episode_weight = 0.0
     successful_height_samples: dict[str, list[float]] = {
         "terminal_object_z": [],
         "max_object_z": [],
     }
+    episode_samples: dict[str, list[float]] = defaultdict(list)
 
     with torch.inference_mode():
         for _ in range(max_steps):
@@ -293,6 +361,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                     if key.endswith(COUNT_SUFFIX):
                         count_totals[key] += number
                         continue
+                    if key.endswith(SUM_SUFFIX):
+                        sum_totals[key] += number
+                        continue
                     if key in RATIO_SPECS:
                         continue
                     metric_weight_key = WEIGHT_KEY_BY_METRIC.get(key)
@@ -304,6 +375,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 height_samples = _successful_lift_height_samples(info)
                 for key, values in height_samples.items():
                     successful_height_samples[key].extend(values)
+                for key, values in _episode_samples(info).items():
+                    episode_samples[key].extend(values)
 
             completed_episodes += done_count
             if completed_episodes >= args_cli.num_episodes:
@@ -320,26 +393,78 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         if metric_weights[key] > 0.0
     }
     metrics.update(dict(sorted(count_totals.items())))
+    metrics.update(dict(sorted(sum_totals.items())))
+    for key, value in sum_totals.items():
+        if key.startswith("Episode_Reward_Sum/") and completed_episodes > 0:
+            metrics[key.removesuffix(SUM_SUFFIX) + "_mean_per_episode"] = value / completed_episodes
     for rate_key, (numerator_key, denominator_key) in RATIO_SPECS.items():
         denominator = count_totals.get(denominator_key, 0.0)
         if denominator > 0.0:
             metrics[rate_key] = count_totals.get(numerator_key, 0.0) / denominator
-    successful_episode_count = int(round(count_totals.get("Episode_Diagnostics/success_episode_count", 0.0)))
+    end_completed_count = count_totals.get("Episode_End/completed_count", 0.0)
+    if int(round(end_completed_count)) != completed_episodes:
+        raise RuntimeError(
+            f"end-reason logs cover {end_completed_count:g} episodes, but evaluator observed {completed_episodes}"
+        )
+    try:
+        validate_exclusive_end_counts(
+            completed_episodes,
+            count_totals.get("Episode_End/success_count", 0.0),
+            count_totals.get("Episode_End/timeout_count", 0.0),
+            count_totals.get("Episode_End/drop_count", 0.0),
+            count_totals.get("Episode_End/other_count", 0.0),
+        )
+        validate_sequential_funnel(
+            [("Episode_End/completed_count", end_completed_count)]
+            + [(key, count_totals.get(key, 0.0)) for key in FUNNEL_COUNT_KEYS]
+        )
+        validate_sequential_funnel(
+            [
+                ("Episode_End/completed_count", end_completed_count),
+                ("Episode_Success/success_5_count", count_totals.get("Episode_Success/success_5_count", 0.0)),
+                (
+                    "Episode_Success/success_10_count",
+                    count_totals.get("Episode_Success/success_10_count", 0.0),
+                ),
+            ]
+        )
+    except ValueError as exc:
+        raise RuntimeError(f"Evaluation diagnostics are inconsistent: {exc}") from exc
+    if count_totals.get("Episode_Success/success_10_count", 0.0) != count_totals.get(
+        "Episode_End/success_count", 0.0
+    ):
+        raise RuntimeError("10-step funnel success count does not match success termination count")
+
+    lift_episode_count = int(round(count_totals.get("Episode_Diagnostics/lift_episode_count", 0.0)))
     for sample_name, values in successful_height_samples.items():
-        if len(values) != successful_episode_count:
+        if len(values) != lift_episode_count:
             raise RuntimeError(
-                f"collected {len(values)} {sample_name} samples for {successful_episode_count} successful episodes"
+                f"collected {len(values)} {sample_name} samples for {lift_episode_count} lifted episodes"
             )
         for statistic, value in summarize_distribution(values).items():
-            metrics[f"Episode_Diagnostics/{sample_name}_success_{statistic}"] = value
+            metrics[f"Episode_Diagnostics/{sample_name}_lift_{statistic}"] = value
+    for sample_name, values in episode_samples.items():
+        expected_count = lift_episode_count if sample_name == "min_xy_distance_after_lift" else completed_episodes
+        if len(values) != expected_count:
+            raise RuntimeError(
+                f"collected {len(values)} {sample_name} samples, expected {expected_count}"
+            )
+        for statistic, value in summarize_distribution(values).items():
+            metrics[f"Episode_Distribution/{sample_name}_{statistic}"] = value
     summary = {
         "task": args_cli.task,
         "checkpoint": resume_path,
         "requested_episodes": args_cli.num_episodes,
         "completed_episodes": completed_episodes,
+        "episode_overshoot_count": completed_episodes - args_cli.num_episodes,
         "logged_episode_weight": logged_episode_weight,
         "num_envs": args_cli.num_envs,
         "max_steps": max_steps,
+        "seed": agent_cfg.seed,
+        "step_dt": env.unwrapped.step_dt,
+        "sim_dt": env.unwrapped.cfg.sim.dt,
+        "decimation": env.unwrapped.cfg.decimation,
+        "episode_length_s": env.unwrapped.cfg.episode_length_s,
         "metrics": metrics,
     }
 

@@ -4,7 +4,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts" / "rsl_rl"))
 
-from eval_metrics import get_new_episode_log_weight, summarize_distribution, validate_episode_log_total
+from eval_metrics import (
+    get_new_episode_log_weight,
+    summarize_distribution,
+    validate_episode_log_total,
+    validate_exclusive_end_counts,
+    validate_sequential_funnel,
+)
 
 
 class EpisodeLogWeightTest(unittest.TestCase):
@@ -43,6 +49,38 @@ class DistributionSummaryTest(unittest.TestCase):
 
     def test_empty_distribution_has_no_statistics(self):
         self.assertEqual(summarize_distribution([]), {})
+
+
+class PlacementLogValidationTest(unittest.TestCase):
+    def test_accepts_exclusive_end_counts(self):
+        validate_exclusive_end_counts(
+            completed_episodes=100,
+            success_count=4.0,
+            timeout_count=90.0,
+            drop_count=5.0,
+            other_count=1.0,
+        )
+
+    def test_rejects_missing_end_reason(self):
+        with self.assertRaisesRegex(ValueError, "end-reason count"):
+            validate_exclusive_end_counts(
+                completed_episodes=100,
+                success_count=4.0,
+                timeout_count=90.0,
+                drop_count=5.0,
+                other_count=0.0,
+            )
+
+    def test_accepts_monotonic_stage_funnel(self):
+        validate_sequential_funnel(
+            [("completed", 100.0), ("grasp", 90.0), ("lift", 80.0), ("success", 5.0)]
+        )
+
+    def test_rejects_non_monotonic_stage_funnel(self):
+        with self.assertRaisesRegex(ValueError, "exceeds"):
+            validate_sequential_funnel(
+                [("completed", 100.0), ("grasp", 90.0), ("lift", 95.0)]
+            )
 
 
 if __name__ == "__main__":

@@ -64,10 +64,12 @@ def check_object_in_bowl(
     max_speed: float,
     max_angular_speed: float,
     min_gripper_open: float,
+    support_force_threshold: float,
+    finger_contact_force_threshold: float,
     robot_cfg: SceneEntityCfg,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Check whether the object is inside the bowl area and moving slowly."""
+    """Check whether the released object is settled and supported inside the bowl."""
     robot: Articulation = env.scene[robot_cfg.name]
     object_asset: RigidObject = env.scene[object_cfg.name]
     object_position = get_object_position(env, object_cfg)
@@ -81,7 +83,12 @@ def check_object_in_bowl(
     is_settled = object_speed < max_speed
     is_not_spinning = object_angular_speed < max_angular_speed
     is_gripper_open = torch.all(finger_joint_pos > min_gripper_open, dim=1)
-    return is_inside_radius & is_inside_height & is_settled & is_not_spinning & is_gripper_open
+    is_released = is_gripper_open & torch.logical_not(
+        check_finger_object_contact(env, finger_contact_force_threshold)
+    )
+    has_object_contact = check_bowl_support_contact(env, support_force_threshold)
+    is_bowl_supported = is_inside_radius & is_inside_height & is_released & has_object_contact
+    return is_settled & is_not_spinning & is_bowl_supported
 
 
 # Rewards the hand for getting close to the cube before it has been lifted.
@@ -138,6 +145,43 @@ def check_verified_grasp(
     gripper_action = env.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
     is_closing_gripper = torch.clamp(-gripper_action, min=0.0, max=1.0) > 0.0
     return has_sustained_contact(left_sensor_cfg) & has_sustained_contact(right_sensor_cfg) & is_closing_gripper
+
+
+def check_filtered_contact(
+    env: ManagerBasedRLEnv,
+    force_threshold: float,
+    sensor_cfg: SceneEntityCfg,
+) -> torch.Tensor:
+    """Check whether a filtered contact sensor currently exceeds a force threshold."""
+    sensor: ContactSensor = env.scene[sensor_cfg.name]
+    if sensor.data.force_matrix_w is None:
+        raise RuntimeError(f"Contact sensor '{sensor_cfg.name}' has no filtered force data.")
+    force_magnitude = torch.linalg.vector_norm(sensor.data.force_matrix_w, dim=-1)
+    contact_dims = tuple(range(1, force_magnitude.ndim))
+    return torch.any(force_magnitude > force_threshold, dim=contact_dims)
+
+
+def check_finger_object_contact(
+    env: ManagerBasedRLEnv,
+    force_threshold: float,
+    left_sensor_cfg: SceneEntityCfg = SceneEntityCfg("left_finger_object_contact"),
+    right_sensor_cfg: SceneEntityCfg = SceneEntityCfg("right_finger_object_contact"),
+) -> torch.Tensor:
+    """Check whether either gripper finger still contacts the object."""
+    return check_filtered_contact(env, force_threshold, left_sensor_cfg) | check_filtered_contact(
+        env, force_threshold, right_sensor_cfg
+    )
+
+
+def check_bowl_support_contact(
+    env: ManagerBasedRLEnv,
+    force_threshold: float,
+    sensor_cfg: SceneEntityCfg = SceneEntityCfg("object_bowl_support_contact"),
+) -> torch.Tensor:
+    """Check whether the object is supported by the bowl collision geometry."""
+    sensor: ContactSensor = env.scene[sensor_cfg.name]
+    force_magnitude = torch.linalg.vector_norm(sensor.data.net_forces_w, dim=-1)
+    return torch.any(force_magnitude > force_threshold, dim=1)
 
 
 # Rewards verified bilateral contact before the cube reaches full lift.
@@ -238,7 +282,9 @@ def compute_object_goal_distance_reward(
     reward = (1.0 - torch.tanh(distance / std)) * is_high_enough.float()
     if gate_target_position is None:
         return reward
-    is_over_gate_target = check_object_above_target(env, gate_target_position, gate_radius, gate_minimal_height, object_cfg)
+    is_over_gate_target = check_object_above_target(
+        env, gate_target_position, gate_radius, gate_minimal_height, object_cfg
+    )
     return torch.where(is_over_gate_target, reward * gate_reward_scale, reward)
 
 
@@ -322,6 +368,8 @@ def compute_object_in_bowl_success_reward(
     max_speed: float,
     max_angular_speed: float,
     min_gripper_open: float,
+    support_force_threshold: float,
+    finger_contact_force_threshold: float,
     robot_cfg: SceneEntityCfg,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
@@ -335,6 +383,8 @@ def compute_object_in_bowl_success_reward(
         max_speed,
         max_angular_speed,
         min_gripper_open,
+        support_force_threshold,
+        finger_contact_force_threshold,
         robot_cfg,
         object_cfg,
     ).float()
@@ -350,11 +400,14 @@ def terminate_on_object_in_bowl_success(
     max_speed: float,
     max_angular_speed: float,
     min_gripper_open: float,
+    support_force_threshold: float,
+    finger_contact_force_threshold: float,
+    dwell_steps: int,
     robot_cfg: SceneEntityCfg,
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
     """End the episode when the object is inside the bowl and settled."""
-    return check_object_in_bowl(
+    is_success_state = check_object_in_bowl(
         env,
         target_position,
         radius,
@@ -363,6 +416,11 @@ def terminate_on_object_in_bowl_success(
         max_speed,
         max_angular_speed,
         min_gripper_open,
+        support_force_threshold,
+        finger_contact_force_threshold,
         robot_cfg,
         object_cfg,
     )
+    if hasattr(env, "update_success_dwell"):
+        return env.update_success_dwell(is_success_state, dwell_steps)
+    return is_success_state

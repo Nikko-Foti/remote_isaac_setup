@@ -16,12 +16,14 @@ from isaaclab.managers import SceneEntityCfg
 from .env_cfg import (
     BOWL_LOWERING_RADIUS,
     BOWL_LOWERING_TARGET_HEIGHT,
+    BOWL_RELEASE_CONTACT_FORCE_THRESHOLD,
     BOWL_SUCCESS_MAX_ANGULAR_SPEED,
     BOWL_SUCCESS_MAX_HEIGHT,
     BOWL_SUCCESS_MAX_SPEED,
     BOWL_SUCCESS_MIN_GRIPPER_OPEN,
     BOWL_SUCCESS_MIN_HEIGHT,
     BOWL_SUCCESS_RADIUS,
+    BOWL_SUPPORT_FORCE_THRESHOLD,
     LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
     OBJECT_LIFTED_HEIGHT,
     OBJECT_START_POSITION,
@@ -31,7 +33,7 @@ from .env_cfg import (
     VERIFIED_GRASP_HISTORY_LENGTH,
 )
 from .observations import get_ee_position, get_object_position, get_placement_target_position
-from .rewards import check_verified_grasp
+from .rewards import check_bowl_support_contact, check_finger_object_contact, check_verified_grasp
 
 
 class ObjectInBowlEnv(ManagerBasedRLEnv):
@@ -53,11 +55,33 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
 
         diagnostics = self._compute_bowl_diagnostics(env_ids)
         diagnostics.update(self._compute_episode_diagnostics(env_ids))
+        diagnostics.update(self._compute_end_reason_diagnostics(env_ids))
+        diagnostics.update(self._compute_reward_sum_diagnostics(env_ids))
         successful_lift_height_samples = self._get_successful_lift_height_samples(env_ids)
+        episode_samples = self._get_episode_samples(env_ids)
         super()._reset_idx(env_ids)
         self._reset_episode_diagnostics(env_ids)
         self.extras["log"].update(diagnostics)
         self.extras["successful_lift_height_samples"] = successful_lift_height_samples
+        self.extras["episode_samples"] = episode_samples
+
+    def update_success_dwell(self, is_success_state: torch.Tensor, required_steps: int) -> torch.Tensor:
+        """Require the physical success state to persist before terminating an episode."""
+        self._success_dwell_steps = torch.where(
+            is_success_state,
+            self._success_dwell_steps + 1.0,
+            torch.zeros_like(self._success_dwell_steps),
+        )
+        self._episode_max_success_dwell_steps = torch.maximum(
+            self._episode_max_success_dwell_steps, self._success_dwell_steps
+        )
+        self._episode_success_5_hit = torch.maximum(
+            self._episode_success_5_hit, (self._success_dwell_steps >= 5).float()
+        )
+        self._episode_success_10_hit = torch.maximum(
+            self._episode_success_10_hit, (self._success_dwell_steps >= 10).float()
+        )
+        return self._success_dwell_steps >= required_steps
 
     def update_episode_diagnostics(self):
         """Track max/min signals that answer whether the robot ever grasped or lifted."""
@@ -75,6 +99,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         lift_progress = torch.clamp(object_z_delta / lift_range, min=0.0, max=1.0)
         target = get_placement_target_position(self, PLACEMENT_TARGET_POSITION)
         xy_distance_to_bowl = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+        object_asset: RigidObject = self.scene["object"]
+        object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
+        object_angular_speed = torch.linalg.norm(object_asset.data.root_ang_vel_w[:, :3], dim=1)
 
         arm_action = self.action_manager.get_term("arm_action").raw_actions
         gripper_action = self.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
@@ -87,6 +114,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             force_threshold=VERIFIED_GRASP_FORCE_THRESHOLD,
             history_length=VERIFIED_GRASP_HISTORY_LENGTH,
         )
+        is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
+        has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)
+        has_bowl_support = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)
         current_step = self._episode_step_count + 1.0
 
         self._episode_step_count += 1.0
@@ -101,6 +131,49 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         self._episode_verified_grasp_hit = torch.maximum(
             self._episode_verified_grasp_hit, is_verified_grasp.float()
+        )
+
+        verified_stage = self._episode_verified_grasp_hit > 0.0
+        lifted_stage = verified_stage & (object_z > OBJECT_LIFTED_HEIGHT)
+        self._episode_funnel_lift_hit = torch.maximum(self._episode_funnel_lift_hit, lifted_stage.float())
+        broad_entry_stage = (self._episode_funnel_lift_hit > 0.0) & (xy_distance_to_bowl < BOWL_SUCCESS_RADIUS)
+        self._episode_funnel_broad_entry_hit = torch.maximum(
+            self._episode_funnel_broad_entry_hit, broad_entry_stage.float()
+        )
+        centered_stage = (self._episode_funnel_broad_entry_hit > 0.0) & (
+            xy_distance_to_bowl < PLACEMENT_TARGET_RADIUS
+        )
+        self._episode_funnel_centered_hit = torch.maximum(
+            self._episode_funnel_centered_hit, centered_stage.float()
+        )
+        lowered_stage = (self._episode_funnel_centered_hit > 0.0) & (
+            (object_z > BOWL_SUCCESS_MIN_HEIGHT) & (object_z < BOWL_SUCCESS_MAX_HEIGHT)
+        )
+        self._episode_funnel_lowered_hit = torch.maximum(
+            self._episode_funnel_lowered_hit, lowered_stage.float()
+        )
+        opened_stage = (self._episode_funnel_lowered_hit > 0.0) & is_gripper_open
+        self._episode_funnel_opened_hit = torch.maximum(self._episode_funnel_opened_hit, opened_stage.float())
+        released_stage = (
+            (self._episode_funnel_opened_hit > 0.0)
+            & is_gripper_open
+            & torch.logical_not(has_finger_contact)
+        )
+        self._episode_funnel_released_hit = torch.maximum(
+            self._episode_funnel_released_hit, released_stage.float()
+        )
+        supported_settled_stage = (
+            (self._episode_funnel_released_hit > 0.0)
+            & (xy_distance_to_bowl < BOWL_SUCCESS_RADIUS)
+            & (object_z > BOWL_SUCCESS_MIN_HEIGHT)
+            & (object_z < BOWL_SUCCESS_MAX_HEIGHT)
+            & released_stage
+            & has_bowl_support
+            & (object_speed < BOWL_SUCCESS_MAX_SPEED)
+            & (object_angular_speed < BOWL_SUCCESS_MAX_ANGULAR_SPEED)
+        )
+        self._episode_funnel_supported_settled_hit = torch.maximum(
+            self._episode_funnel_supported_settled_hit, supported_settled_stage.float()
         )
 
         first_close_near = is_gate_active & (self._episode_first_close_near_step < 0.0)
@@ -231,7 +304,11 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         is_slow = object_speed < BOWL_SUCCESS_MAX_SPEED
         is_not_spinning = object_angular_speed < BOWL_SUCCESS_MAX_ANGULAR_SPEED
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
-        is_success = is_inside_radius & is_inside_height & is_slow & is_not_spinning & is_gripper_open
+        has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)[env_ids]
+        has_object_contact = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)[env_ids]
+        is_released = is_gripper_open & torch.logical_not(has_finger_contact)
+        has_bowl_support = is_inside_radius & is_inside_height & is_released & has_object_contact
+        is_success_state = is_slow & is_not_spinning & has_bowl_support
         is_over_tight_placement_area = xy_distance < PLACEMENT_TARGET_RADIUS
         is_over_lowering_area = xy_distance < BOWL_LOWERING_RADIUS
 
@@ -246,7 +323,13 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Bowl/slow_linear_rate": is_slow.float().mean(),
             "Episode_Bowl/slow_angular_rate": is_not_spinning.float().mean(),
             "Episode_Bowl/gripper_open_rate": is_gripper_open.float().mean(),
-            "Episode_Bowl/success_rate": is_success.float().mean(),
+            "Episode_Bowl/no_finger_contact_rate": torch.logical_not(has_finger_contact).float().mean(),
+            "Episode_Bowl/bowl_support_rate": has_bowl_support.float().mean(),
+            "Episode_Bowl/released_rate": is_released.float().mean(),
+            "Episode_Bowl/raw_success_state_at_end_rate": is_success_state.float().mean(),
+            "Episode_Bowl/success_5_step_rate": self._episode_success_5_hit[env_ids].mean(),
+            "Episode_Bowl/success_rate": self._episode_success_10_hit[env_ids].mean(),
+            "Episode_Bowl/max_success_dwell_steps": self._episode_max_success_dwell_steps[env_ids].mean(),
             "Episode_Bowl/over_bridge_area_rate": is_over_tight_placement_area.float().mean(),
             "Episode_Bowl/tight_placement_radius_rate": is_over_tight_placement_area.float().mean(),
             "Episode_Bowl/lowering_radius_rate": is_over_lowering_area.float().mean(),
@@ -274,10 +357,10 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         lift_after_close_near_object_hit = self._episode_max_lift_progress_after_close_near_object[env_ids] >= 1.0
         close_near_step_fraction = (self._episode_close_near_object_count[env_ids] / step_count).mean()
         start_object_xy = self._episode_start_object_xy[env_ids]
-        success_start_xy = self._masked_vector_mean(start_object_xy, lift_threshold_hit)
-        failure_start_xy = self._masked_vector_mean(start_object_xy, failed_to_lift)
-        success_count = lift_threshold_hit.float().sum()
-        failure_count = failed_to_lift.float().sum()
+        lift_start_xy = self._masked_vector_mean(start_object_xy, lift_threshold_hit)
+        no_lift_start_xy = self._masked_vector_mean(start_object_xy, failed_to_lift)
+        lift_count = lift_threshold_hit.float().sum()
+        no_lift_count = failed_to_lift.float().sum()
         terminal_object_z = get_object_position(self)[env_ids, 2]
         max_object_z = self._episode_max_object_z[env_ids]
         post_lift_step_count = torch.clamp(self._episode_post_lift_threshold_step_count[env_ids], min=1.0)
@@ -290,19 +373,31 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         start_y_offset = start_object_xy[:, 1] - OBJECT_START_POSITION[1]
 
         return {
-            "Episode_Diagnostics/reset_env_count": torch.as_tensor(len(env_ids), device=self.device, dtype=torch.float32),
+            "Episode_Diagnostics/reset_env_count": torch.as_tensor(
+                len(env_ids), device=self.device, dtype=torch.float32
+            ),
+            "Episode_Funnel/verified_grasp_count": self._episode_verified_grasp_hit[env_ids].sum(),
+            "Episode_Funnel/lift_count": self._episode_funnel_lift_hit[env_ids].sum(),
+            "Episode_Funnel/broad_entry_count": self._episode_funnel_broad_entry_hit[env_ids].sum(),
+            "Episode_Funnel/centered_count": self._episode_funnel_centered_hit[env_ids].sum(),
+            "Episode_Funnel/lowered_count": self._episode_funnel_lowered_hit[env_ids].sum(),
+            "Episode_Funnel/opened_count": self._episode_funnel_opened_hit[env_ids].sum(),
+            "Episode_Funnel/released_count": self._episode_funnel_released_hit[env_ids].sum(),
+            "Episode_Funnel/supported_settled_count": self._episode_funnel_supported_settled_hit[env_ids].sum(),
+            "Episode_Success/success_5_count": self._episode_success_5_hit[env_ids].sum(),
+            "Episode_Success/success_10_count": self._episode_success_10_hit[env_ids].sum(),
             "Episode_Diagnostics/max_object_z": self._episode_max_object_z[env_ids].mean(),
-            "Episode_Diagnostics/terminal_object_z_success_mean": self._masked_mean(
+            "Episode_Diagnostics/terminal_object_z_lift_mean": self._masked_mean(
                 terminal_object_z, lift_threshold_hit
             ),
-            "Episode_Diagnostics/max_object_z_success_mean": self._masked_mean(max_object_z, lift_threshold_hit),
-            "Episode_Diagnostics/lift_retention_episode_mean_success": self._masked_mean(
+            "Episode_Diagnostics/max_object_z_lift_mean": self._masked_mean(max_object_z, lift_threshold_hit),
+            "Episode_Diagnostics/lift_retention_episode_mean_lift": self._masked_mean(
                 lift_retention, lift_threshold_hit
             ),
-            "Episode_Diagnostics/terminal_above_lift_threshold_rate_success": self._masked_mean(
+            "Episode_Diagnostics/terminal_above_lift_threshold_rate_lift": self._masked_mean(
                 (terminal_object_z > OBJECT_LIFTED_HEIGHT).float(), lift_threshold_hit
             ),
-            "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_success": self._masked_mean(
+            "Episode_Diagnostics/fell_below_lift_threshold_after_lift_rate_lift": self._masked_mean(
                 self._episode_fell_below_lift_threshold[env_ids], lift_threshold_hit
             ),
             "Episode_Diagnostics/max_object_z_delta": max_object_z_delta.mean(),
@@ -487,38 +582,66 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             "Episode_Diagnostics/close_near_object_hit_rate": (
                 self._episode_close_near_object_hit[env_ids].mean()
             ),
-            "Episode_Diagnostics/start_object_x_mean_success": success_start_xy[0],
-            "Episode_Diagnostics/start_object_y_mean_success": success_start_xy[1],
-            "Episode_Diagnostics/start_object_x_mean_failure": failure_start_xy[0],
-            "Episode_Diagnostics/start_object_y_mean_failure": failure_start_xy[1],
-            "Episode_Diagnostics/success_episode_count": success_count,
-            "Episode_Diagnostics/failure_episode_count": failure_count,
-            "Episode_Diagnostics/failure_start_x_negative_offset_rate": self._masked_mean(
+            "Episode_Diagnostics/start_object_x_mean_lift": lift_start_xy[0],
+            "Episode_Diagnostics/start_object_y_mean_lift": lift_start_xy[1],
+            "Episode_Diagnostics/start_object_x_mean_no_lift": no_lift_start_xy[0],
+            "Episode_Diagnostics/start_object_y_mean_no_lift": no_lift_start_xy[1],
+            "Episode_Diagnostics/lift_episode_count": lift_count,
+            "Episode_Diagnostics/no_lift_episode_count": no_lift_count,
+            "Episode_Diagnostics/no_lift_start_x_negative_offset_rate": self._masked_mean(
                 (start_x_offset < 0.0).float(), failed_to_lift
             ),
-            "Episode_Diagnostics/failure_start_x_positive_offset_rate": self._masked_mean(
+            "Episode_Diagnostics/no_lift_start_x_positive_offset_rate": self._masked_mean(
                 (start_x_offset >= 0.0).float(), failed_to_lift
             ),
-            "Episode_Diagnostics/failure_start_y_negative_offset_rate": self._masked_mean(
+            "Episode_Diagnostics/no_lift_start_y_negative_offset_rate": self._masked_mean(
                 (start_y_offset < 0.0).float(), failed_to_lift
             ),
-            "Episode_Diagnostics/failure_start_y_positive_offset_rate": self._masked_mean(
+            "Episode_Diagnostics/no_lift_start_y_positive_offset_rate": self._masked_mean(
                 (start_y_offset >= 0.0).float(), failed_to_lift
             ),
             "Episode_Diagnostics/arm_action_delta_rms": arm_action_delta_rms.mean(),
-            "Episode_Diagnostics/arm_action_delta_rms_success": self._masked_mean(
+            "Episode_Diagnostics/arm_action_delta_rms_lift": self._masked_mean(
                 arm_action_delta_rms, lift_threshold_hit
             ),
-            "Episode_Diagnostics/arm_action_delta_rms_failure": self._masked_mean(
+            "Episode_Diagnostics/arm_action_delta_rms_no_lift": self._masked_mean(
                 arm_action_delta_rms, failed_to_lift
             ),
             "Episode_Diagnostics/gripper_switch_rate": gripper_switch_rate.mean(),
-            "Episode_Diagnostics/gripper_switch_rate_success": self._masked_mean(
+            "Episode_Diagnostics/gripper_switch_rate_lift": self._masked_mean(
                 gripper_switch_rate, lift_threshold_hit
             ),
-            "Episode_Diagnostics/gripper_switch_rate_failure": self._masked_mean(
+            "Episode_Diagnostics/gripper_switch_rate_no_lift": self._masked_mean(
                 gripper_switch_rate, failed_to_lift
             ),
+        }
+
+    def _compute_end_reason_diagnostics(self, env_ids: Sequence[int]) -> dict[str, torch.Tensor]:
+        """Count mutually exclusive episode outcomes for evaluator consistency checks."""
+        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        success = self.termination_manager.get_term("object_in_bowl")[env_ids]
+        drop = torch.logical_not(success) & self.termination_manager.get_term("object_dropping")[env_ids]
+        timeout = (
+            torch.logical_not(success)
+            & torch.logical_not(drop)
+            & self.termination_manager.get_term("time_out")[env_ids]
+        )
+        other = torch.logical_not(success | drop | timeout)
+        return {
+            "Episode_End/completed_count": torch.as_tensor(len(env_ids), device=self.device, dtype=torch.float32),
+            "Episode_End/success_count": success.float().sum(),
+            "Episode_End/drop_count": drop.float().sum(),
+            "Episode_End/timeout_count": timeout.float().sum(),
+            "Episode_End/other_count": other.float().sum(),
+        }
+
+    def _compute_reward_sum_diagnostics(self, env_ids: Sequence[int]) -> dict[str, torch.Tensor]:
+        """Expose each manager reward term's raw episode sum before reset clears it."""
+        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        episode_sums = getattr(self.reward_manager, "_episode_sums", {})
+        return {
+            f"Episode_Reward_Sum/{term_name}_sum": values[env_ids].sum()
+            for term_name, values in episode_sums.items()
         }
 
     def _init_episode_diagnostic_buffers(self):
@@ -532,6 +655,17 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_close_command_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_close_near_object_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_verified_grasp_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_lift_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_broad_entry_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_centered_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_lowered_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_opened_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_released_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_funnel_supported_settled_hit = torch.zeros(self.num_envs, device=self.device)
+        self._success_dwell_steps = torch.zeros(self.num_envs, device=self.device)
+        self._episode_max_success_dwell_steps = torch.zeros(self.num_envs, device=self.device)
+        self._episode_success_5_hit = torch.zeros(self.num_envs, device=self.device)
+        self._episode_success_10_hit = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_object_z = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_object_z_delta = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_lift_progress = torch.zeros(self.num_envs, device=self.device)
@@ -588,6 +722,17 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_close_command_hit[env_ids] = 0.0
         self._episode_close_near_object_hit[env_ids] = 0.0
         self._episode_verified_grasp_hit[env_ids] = 0.0
+        self._episode_funnel_lift_hit[env_ids] = 0.0
+        self._episode_funnel_broad_entry_hit[env_ids] = 0.0
+        self._episode_funnel_centered_hit[env_ids] = 0.0
+        self._episode_funnel_lowered_hit[env_ids] = 0.0
+        self._episode_funnel_opened_hit[env_ids] = 0.0
+        self._episode_funnel_released_hit[env_ids] = 0.0
+        self._episode_funnel_supported_settled_hit[env_ids] = 0.0
+        self._success_dwell_steps[env_ids] = 0.0
+        self._episode_max_success_dwell_steps[env_ids] = 0.0
+        self._episode_success_5_hit[env_ids] = 0.0
+        self._episode_success_10_hit[env_ids] = 0.0
         self._episode_max_object_z[env_ids] = object_position[:, 2]
         self._episode_max_object_z_delta[env_ids] = 0.0
         self._episode_max_lift_progress[env_ids] = 0.0
@@ -651,6 +796,27 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         return {
             "terminal_object_z": get_object_position(self)[env_ids, 2][successful].detach().clone(),
             "max_object_z": self._episode_max_object_z[env_ids][successful].detach().clone(),
+        }
+
+    def _get_episode_samples(self, env_ids: Sequence[int]) -> dict[str, torch.Tensor]:
+        """Return raw endpoint and closest-approach samples for exact distributions."""
+        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        object_position = get_object_position(self)[env_ids]
+        target = get_placement_target_position(self, PLACEMENT_TARGET_POSITION)[env_ids]
+        lifted = self._episode_lift_threshold_hit[env_ids] > 0.0
+        return {
+            "terminal_object_x": object_position[:, 0].detach().clone(),
+            "terminal_object_y": object_position[:, 1].detach().clone(),
+            "terminal_object_z": object_position[:, 2].detach().clone(),
+            "terminal_xy_distance_to_bowl": torch.linalg.norm(
+                object_position[:, :2] - target[:, :2], dim=1
+            )
+            .detach()
+            .clone(),
+            "max_object_z": self._episode_max_object_z[env_ids].detach().clone(),
+            "min_xy_distance_after_lift": self._episode_min_xy_distance_after_lift[env_ids][lifted]
+            .detach()
+            .clone(),
         }
 
     def _masked_vector_mean(self, values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
