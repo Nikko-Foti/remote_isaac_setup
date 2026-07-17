@@ -140,6 +140,21 @@ def check_verified_grasp(
     return has_sustained_contact(left_sensor_cfg) & has_sustained_contact(right_sensor_cfg) & is_closing_gripper
 
 
+# Rewards verified bilateral contact before the cube reaches full lift.
+def compute_verified_grasp_reward(
+    env: ManagerBasedRLEnv,
+    force_threshold: float,
+    history_length: int,
+    initial_height: float,
+    target_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward a sustained bilateral grasp, tapering to zero at full lift."""
+    is_verified_grasp = check_verified_grasp(env, force_threshold, history_length)
+    lift_progress = compute_object_height_progress_reward(env, initial_height, target_height, object_cfg)
+    return is_verified_grasp.float() * (1.0 - lift_progress)
+
+
 # Rewards smooth progress as the cube rises from the table.
 def compute_object_height_progress_reward(
     env: ManagerBasedRLEnv,
