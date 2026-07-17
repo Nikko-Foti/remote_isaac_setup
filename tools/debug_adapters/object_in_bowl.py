@@ -15,7 +15,6 @@ from .base import (
     xy_distance,
 )
 
-
 ADAPTER_NAME = "object_in_bowl"
 DISPLAY_NAME = "Object-in-bowl adapter"
 DESCRIPTION = "Shows task-specific stages for reaching, lifting, carrying, settling, and release."
@@ -335,7 +334,11 @@ def _collect_stages(snapshot: dict[str, Any], metrics: dict[str, Any]) -> list[d
         stage(
             "inside_bowl_height",
             "Cube at bowl height",
-            inside_height if object_z is not None and bowl_min_height is not None and bowl_max_height is not None else None,
+            (
+                inside_height
+                if object_z is not None and bowl_min_height is not None and bowl_max_height is not None
+                else None
+            ),
             f"cube z {fmt_number(object_z)}m, allowed {fmt_number(bowl_min_height)}-{fmt_number(bowl_max_height)}m",
             object_z,
             _height_margin(object_z, bowl_min_height, bowl_max_height),
@@ -400,23 +403,26 @@ def _probe_row(name: str, label: str, value: Any, detail: str, env_index: int) -
 
 def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]]) -> list[dict[str, Any]]:
     try:
-        from isaaclab.managers import SceneEntityCfg
         from object_in_bowl import rewards
         from object_in_bowl.env_cfg import (
             BOWL_LOWERING_RADIUS,
             BOWL_LOWERING_REWARD_MIN_HEIGHT,
             BOWL_LOWERING_TARGET_HEIGHT,
+            BOWL_RELEASE_CONTACT_FORCE_THRESHOLD,
             BOWL_SUCCESS_MAX_ANGULAR_SPEED,
             BOWL_SUCCESS_MAX_HEIGHT,
             BOWL_SUCCESS_MAX_SPEED,
             BOWL_SUCCESS_MIN_GRIPPER_OPEN,
             BOWL_SUCCESS_MIN_HEIGHT,
             BOWL_SUCCESS_RADIUS,
+            BOWL_SUPPORT_FORCE_THRESHOLD,
             LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
             OBJECT_LIFTED_HEIGHT,
             OBJECT_START_POSITION,
             PLACEMENT_TARGET_POSITION,
         )
+
+        from isaaclab.managers import SceneEntityCfg
     except Exception as exc:
         record_error(errors, "object_in_bowl.reward_probe_imports", exc)
         return []
@@ -481,6 +487,8 @@ def _collect_reward_probes(env: Any, env_index: int, errors: list[dict[str, str]
                 max_speed=BOWL_SUCCESS_MAX_SPEED,
                 max_angular_speed=BOWL_SUCCESS_MAX_ANGULAR_SPEED,
                 min_gripper_open=BOWL_SUCCESS_MIN_GRIPPER_OPEN,
+                support_force_threshold=BOWL_SUPPORT_FORCE_THRESHOLD,
+                finger_contact_force_threshold=BOWL_RELEASE_CONTACT_FORCE_THRESHOLD,
                 robot_cfg=robot_cfg,
             ),
             "inside bowl radius, correct height, slow, not spinning, released",

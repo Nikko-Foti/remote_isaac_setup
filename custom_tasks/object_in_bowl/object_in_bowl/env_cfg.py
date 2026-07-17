@@ -62,11 +62,14 @@ BOWL_COLLISION_WALL_CENTER_Z = BOWL_COLLISION_FLOOR_TOP_Z + BOWL_COLLISION_WALL_
 BOWL_LOWERING_RADIUS = BOWL_SUCCESS_RADIUS
 BOWL_LOWERING_REWARD_MIN_HEIGHT = OBJECT_START_POSITION[2] + 0.035
 BOWL_SUCCESS_MIN_HEIGHT = PLACEMENT_TARGET_POSITION[2] - 0.005
-BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.06
-BOWL_LOWERING_TARGET_HEIGHT = (BOWL_SUCCESS_MIN_HEIGHT + BOWL_SUCCESS_MAX_HEIGHT) / 2.0
-BOWL_SUCCESS_MAX_SPEED = 0.30
-BOWL_SUCCESS_MAX_ANGULAR_SPEED = 1.0
+BOWL_SUCCESS_MAX_HEIGHT = PLACEMENT_TARGET_POSITION[2] + 0.01
+BOWL_LOWERING_TARGET_HEIGHT = PLACEMENT_TARGET_POSITION[2]
+BOWL_SUCCESS_MAX_SPEED = 0.05
+BOWL_SUCCESS_MAX_ANGULAR_SPEED = 0.5
 BOWL_SUCCESS_MIN_GRIPPER_OPEN = 0.03
+BOWL_SUPPORT_FORCE_THRESHOLD = 0.05
+BOWL_RELEASE_CONTACT_FORCE_THRESHOLD = 0.05
+BOWL_SUCCESS_DWELL_STEPS = 10
 
 
 ##
@@ -141,6 +144,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         spawn=UsdFileCfg(
             usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
             scale=(0.8, 0.8, 0.8),
+            activate_contact_sensors=True,
             rigid_props=RigidBodyPropertiesCfg(
                 solver_position_iteration_count=16,
                 solver_velocity_iteration_count=1,
@@ -150,6 +154,13 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
                 disable_gravity=False,
             ),
         ),
+    )
+
+    object_bowl_support_contact = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Object",
+        update_period=0.0,
+        history_length=1,
+        debug_vis=False,
     )
 
     # fixed YCB bowl at the placement corner
@@ -398,6 +409,9 @@ class TerminationsCfg:
             "max_speed": BOWL_SUCCESS_MAX_SPEED,
             "max_angular_speed": BOWL_SUCCESS_MAX_ANGULAR_SPEED,
             "min_gripper_open": BOWL_SUCCESS_MIN_GRIPPER_OPEN,
+            "support_force_threshold": BOWL_SUPPORT_FORCE_THRESHOLD,
+            "finger_contact_force_threshold": BOWL_RELEASE_CONTACT_FORCE_THRESHOLD,
+            "dwell_steps": BOWL_SUCCESS_DWELL_STEPS,
             "robot_cfg": SceneEntityCfg("robot", joint_names=["panda_finger.*"]),
         },
     )
