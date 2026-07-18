@@ -14,9 +14,16 @@ args_cli = parser.parse_args()
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
+import gymnasium as gym
 import torch
 from object_in_bowl import rewards
-from object_in_bowl.env_cfg import LIFT_PROGRESS_NEAR_OBJECT_DISTANCE, OBJECT_LIFTED_HEIGHT, OBJECT_START_POSITION
+from object_in_bowl.env_cfg import (
+    LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
+    LIFT_PROGRESS_REWARD_WEIGHT,
+    OBJECT_LIFTED_HEIGHT,
+    OBJECT_START_POSITION,
+    ObjectInBowlEnvCfg,
+)
 
 
 def main() -> None:
@@ -77,8 +84,8 @@ def main() -> None:
 
     try:
         set_progress((0.2, 0.5))
-        weighted_reward = production_reward() * 80.0 * fake_env.step_dt
-        if not torch.allclose(weighted_reward, torch.tensor([16.0, 40.0], device=args_cli.device)):
+        weighted_reward = production_reward() * LIFT_PROGRESS_REWARD_WEIGHT * fake_env.step_dt
+        if not torch.allclose(weighted_reward, torch.tensor([4.0, 10.0], device=args_cli.device)):
             raise RuntimeError(f"multiple environments did not progress independently: {weighted_reward}")
 
         set_progress((0.2, 0.4))
@@ -96,23 +103,81 @@ def main() -> None:
 
         fake_env._lift_reward_best_progress[0] = 0.0
         set_progress((0.3, 0.8))
-        partial_reset_reward = production_reward() * 80.0 * fake_env.step_dt
-        expected_partial = torch.tensor([24.0, 8.0], device=args_cli.device)
+        partial_reset_reward = production_reward() * LIFT_PROGRESS_REWARD_WEIGHT * fake_env.step_dt
+        expected_partial = torch.tensor([6.0, 2.0], device=args_cli.device)
         if not torch.allclose(partial_reset_reward, expected_partial, atol=1e-5):
             raise RuntimeError(f"partial reset changed the wrong environment: {partial_reset_reward}")
 
         fake_env._lift_reward_best_progress.zero_()
         set_progress((1.5, 1.0))
-        full_lift_reward = production_reward() * 80.0 * fake_env.step_dt
-        if not torch.allclose(full_lift_reward, torch.tensor([80.0, 80.0], device=args_cli.device)):
-            raise RuntimeError(f"full lift was not capped and scaled to 80: {full_lift_reward}")
+        full_lift_reward = production_reward() * LIFT_PROGRESS_REWARD_WEIGHT * fake_env.step_dt
+        if not torch.allclose(full_lift_reward, torch.tensor([20.0, 20.0], device=args_cli.device)):
+            raise RuntimeError(f"full lift was not capped and scaled to 20: {full_lift_reward}")
         if not torch.all(fake_env._lift_reward_best_progress == 1.0):
             raise RuntimeError("production wrapper did not update the capped high-water mark")
     finally:
         rewards.get_ee_position = original_get_ee_position
         rewards.get_object_position = original_get_object_position
 
-    print("[INFO] Episode-best lift progress smoke passed.", flush=True)
+    cfg = ObjectInBowlEnvCfg()
+    cfg.scene.num_envs = 2
+    cfg.seed = 42
+    cfg.sim.device = args_cli.device
+    env = gym.make("Isaac-Object-In-Bowl-Franka-v0", cfg=cfg)
+    unwrapped = env.unwrapped
+    synthetic_object_position = torch.zeros((2, 3), device=unwrapped.device)
+    synthetic_ee_position = torch.zeros_like(synthetic_object_position)
+    original_get_ee_position = rewards.get_ee_position
+    original_get_object_position = rewards.get_object_position
+    rewards.get_ee_position = lambda env: synthetic_ee_position
+    rewards.get_object_position = lambda env, object_cfg=None: synthetic_object_position
+
+    def set_integration_progress(progress: tuple[float, float]) -> None:
+        heights = torch.tensor(progress, device=unwrapped.device) * (
+            OBJECT_LIFTED_HEIGHT - OBJECT_START_POSITION[2]
+        ) + OBJECT_START_POSITION[2]
+        synthetic_object_position[:, 2] = heights
+        synthetic_ee_position.copy_(synthetic_object_position)
+
+    try:
+        reward_manager = unwrapped.reward_manager
+        term_index = reward_manager.active_terms.index("object_lift_progress")
+        term_cfg = reward_manager.get_term_cfg("object_lift_progress")
+        if term_cfg.weight != LIFT_PROGRESS_REWARD_WEIGHT:
+            raise RuntimeError(f"registered reward weight is {term_cfg.weight}, expected {LIFT_PROGRESS_REWARD_WEIGHT}")
+
+        gripper_term = unwrapped.action_manager.get_term("gripper_action")
+        gripper_term._raw_actions.fill_(-1.0)
+        set_integration_progress((0.2, 0.5))
+        reward_manager.compute(unwrapped.step_dt)
+        first_reward = reward_manager._step_reward[:, term_index] * unwrapped.step_dt
+        if not torch.allclose(first_reward, torch.tensor([4.0, 10.0], device=unwrapped.device), atol=1e-5):
+            raise RuntimeError(f"registered manager returned unexpected first reward: {first_reward}")
+
+        reward_manager.compute(unwrapped.step_dt)
+        held_reward = reward_manager._step_reward[:, term_index] * unwrapped.step_dt
+        if torch.any(held_reward != 0.0):
+            raise RuntimeError(f"registered manager repaid held progress: {held_reward}")
+
+        unwrapped._reset_idx(torch.tensor([0], device=unwrapped.device, dtype=torch.long))
+        gripper_term._raw_actions.fill_(-1.0)
+        set_integration_progress((0.3, 0.8))
+        reward_manager.compute(unwrapped.step_dt)
+        reset_reward = reward_manager._step_reward[:, term_index] * unwrapped.step_dt
+        if not torch.allclose(reset_reward, torch.tensor([6.0, 6.0], device=unwrapped.device), atol=1e-5):
+            raise RuntimeError(f"partial environment reset leaked reward state: {reset_reward}")
+        expected_sums = torch.tensor([6.0, 16.0], device=unwrapped.device)
+        if not torch.allclose(reward_manager._episode_sums["object_lift_progress"], expected_sums, atol=1e-5):
+            raise RuntimeError(
+                "registered manager episode sums did not preserve per-environment isolation: "
+                f"{reward_manager._episode_sums['object_lift_progress']}"
+            )
+    finally:
+        rewards.get_ee_position = original_get_ee_position
+        rewards.get_object_position = original_get_object_position
+        env.close()
+
+    print("[INFO] Episode-best lift progress and registered-manager smoke passed.", flush=True)
 
 
 if __name__ == "__main__":

@@ -33,8 +33,8 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort:skip
 OBJECT_START_POSITION = (0.50, 0.0, 0.055)
 # Height threshold for the binary lift reward.
 OBJECT_LIFTED_HEIGHT = OBJECT_START_POSITION[2] + 0.05
-# Scale one episode's full 0-to-1 lift progress to roughly the prior 80-point return.
-LIFT_PROGRESS_REWARD_WEIGHT = 80.0
+# Preserve the prior lift term's PPO-scale importance while changing when it pays.
+LIFT_PROGRESS_REWARD_WEIGHT = 20.0
 LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
 VERIFIED_GRASP_FORCE_THRESHOLD = 1.0
 VERIFIED_GRASP_HISTORY_LENGTH = 2
