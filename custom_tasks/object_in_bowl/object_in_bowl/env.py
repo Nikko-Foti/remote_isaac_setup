@@ -669,6 +669,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_max_object_z = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_object_z_delta = torch.full((self.num_envs,), -torch.inf, device=self.device)
         self._episode_max_lift_progress = torch.zeros(self.num_envs, device=self.device)
+        self._lift_reward_best_progress = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_lift_progress_after_close_near_object = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_lift_progress_while_gate_active = torch.zeros(self.num_envs, device=self.device)
         self._episode_gate_active_at_max_lift_progress = torch.zeros(self.num_envs, device=self.device)
@@ -736,6 +737,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_max_object_z[env_ids] = object_position[:, 2]
         self._episode_max_object_z_delta[env_ids] = 0.0
         self._episode_max_lift_progress[env_ids] = 0.0
+        self._lift_reward_best_progress[env_ids] = 0.0
         self._episode_max_lift_progress_after_close_near_object[env_ids] = 0.0
         self._episode_max_lift_progress_while_gate_active[env_ids] = 0.0
         self._episode_gate_active_at_max_lift_progress[env_ids] = 0.0
