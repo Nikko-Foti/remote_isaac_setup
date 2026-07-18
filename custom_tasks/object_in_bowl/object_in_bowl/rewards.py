@@ -232,6 +232,37 @@ def compute_gated_object_height_progress_reward(
     return lift_progress * (is_near_object & is_closing_gripper).float()
 
 
+def compute_episode_best_progress_increment(
+    current_progress: torch.Tensor, previous_best_progress: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return only newly achieved progress and the updated episode high-water mark."""
+    next_best_progress = torch.maximum(current_progress, previous_best_progress)
+    return next_best_progress - previous_best_progress, next_best_progress
+
+
+# Rewards each newly reached lift height once instead of paying for holding high.
+def compute_gated_episode_best_object_height_progress_reward(
+    env: ManagerBasedRLEnv,
+    initial_height: float,
+    target_height: float,
+    near_distance: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Reward new episode-best lift progress during plausible grasp attempts."""
+    ee_position = get_ee_position(env)
+    object_position = get_object_position(env, object_cfg)
+    distance = torch.linalg.norm(ee_position - object_position, dim=1)
+    gripper_action = env.action_manager.get_term("gripper_action").raw_actions.squeeze(-1)
+    is_gate_active = (distance < near_distance) & (torch.clamp(-gripper_action, min=0.0, max=1.0) > 0.0)
+
+    lift_range = target_height - initial_height
+    lift_progress = torch.clamp((object_position[:, 2] - initial_height) / lift_range, min=0.0, max=1.0)
+    progress_increment, env._lift_reward_best_progress = compute_episode_best_progress_increment(
+        lift_progress, env._lift_reward_best_progress
+    )
+    return (progress_increment / env.step_dt) * is_gate_active.float()
+
+
 # Rewards the cube for clearing the table.
 def compute_object_lifted_reward(
     env: ManagerBasedRLEnv,
