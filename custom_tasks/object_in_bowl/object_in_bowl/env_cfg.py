@@ -161,6 +161,7 @@ class ObjectInBowlSceneCfg(InteractiveSceneCfg):
         update_period=0.0,
         history_length=1,
         debug_vis=False,
+        filter_prim_paths_expr=["{ENV_REGEX_NS}/BowlCollision.*"],
     )
 
     # fixed YCB bowl at the placement corner

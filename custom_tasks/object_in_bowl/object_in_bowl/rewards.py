@@ -179,9 +179,7 @@ def check_bowl_support_contact(
     sensor_cfg: SceneEntityCfg = SceneEntityCfg("object_bowl_support_contact"),
 ) -> torch.Tensor:
     """Check whether the object is supported by the bowl collision geometry."""
-    sensor: ContactSensor = env.scene[sensor_cfg.name]
-    force_magnitude = torch.linalg.vector_norm(sensor.data.net_forces_w, dim=-1)
-    return torch.any(force_magnitude > force_threshold, dim=1)
+    return check_filtered_contact(env, force_threshold, sensor_cfg)
 
 
 # Rewards verified bilateral contact before the cube reaches full lift.
