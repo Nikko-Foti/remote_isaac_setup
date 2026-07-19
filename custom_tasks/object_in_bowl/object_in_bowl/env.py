@@ -116,7 +116,14 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
         has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)
-        has_bowl_support = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)
+        has_bowl_support = check_bowl_support_contact(
+            self,
+            PLACEMENT_TARGET_POSITION,
+            BOWL_SUCCESS_RADIUS,
+            BOWL_SUCCESS_MIN_HEIGHT,
+            BOWL_SUCCESS_MAX_HEIGHT,
+            BOWL_SUPPORT_FORCE_THRESHOLD,
+        )
         current_step = self._episode_step_count + 1.0
 
         self._episode_step_count += 1.0
@@ -305,7 +312,14 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         is_not_spinning = object_angular_speed < BOWL_SUCCESS_MAX_ANGULAR_SPEED
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
         has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)[env_ids]
-        has_object_contact = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)[env_ids]
+        has_object_contact = check_bowl_support_contact(
+            self,
+            PLACEMENT_TARGET_POSITION,
+            BOWL_SUCCESS_RADIUS,
+            BOWL_SUCCESS_MIN_HEIGHT,
+            BOWL_SUCCESS_MAX_HEIGHT,
+            BOWL_SUPPORT_FORCE_THRESHOLD,
+        )[env_ids]
         is_released = is_gripper_open & torch.logical_not(has_finger_contact)
         has_bowl_support = is_inside_radius & is_inside_height & is_released & has_object_contact
         is_success_state = is_slow & is_not_spinning & has_bowl_support
