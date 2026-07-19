@@ -371,6 +371,12 @@ def compute_object_lowering_into_bowl_reward(
     return (1.0 - torch.tanh(height_distance / height_std)) * is_over_target.float() * is_lifted.float()
 
 
+# Rewards the single timestep when a named success termination fires.
+def compute_termination_reward(env: ManagerBasedRLEnv, termination_name: str) -> torch.Tensor:
+    """Return one for environments whose named termination fired this step."""
+    return env.termination_manager.get_term(termination_name).float()
+
+
 # Rewards the cube for ending up inside the bowl.
 def compute_object_in_bowl_success_reward(
     env: ManagerBasedRLEnv,

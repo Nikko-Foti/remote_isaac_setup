@@ -70,6 +70,7 @@ BOWL_SUCCESS_MIN_GRIPPER_OPEN = 0.03
 BOWL_SUPPORT_FORCE_THRESHOLD = 0.05
 BOWL_RELEASE_CONTACT_FORCE_THRESHOLD = 0.05
 BOWL_SUCCESS_DWELL_STEPS = 10
+STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT = 2000.0
 
 
 ##
@@ -386,6 +387,11 @@ class RewardsCfg:
             "radius": PLACEMENT_TARGET_RADIUS,
             "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
+    )
+    strict_placement_success = RewTerm(
+        func=rewards.compute_termination_reward,
+        weight=STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT,
+        params={"termination_name": "object_in_bowl"},
     )
 
 
