@@ -72,22 +72,24 @@ def check_object_in_bowl(
     """Check whether the released object is settled and supported inside the bowl."""
     robot: Articulation = env.scene[robot_cfg.name]
     object_asset: RigidObject = env.scene[object_cfg.name]
-    object_position = get_object_position(env, object_cfg)
-    target = get_placement_target_position(env, target_position)
-    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
     object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
     object_angular_speed = torch.linalg.norm(object_asset.data.root_ang_vel_w[:, :3], dim=1)
     finger_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
-    is_inside_radius = xy_distance < radius
-    is_inside_height = torch.logical_and(object_position[:, 2] > min_height, object_position[:, 2] < max_height)
     is_settled = object_speed < max_speed
     is_not_spinning = object_angular_speed < max_angular_speed
     is_gripper_open = torch.all(finger_joint_pos > min_gripper_open, dim=1)
     is_released = is_gripper_open & torch.logical_not(
         check_finger_object_contact(env, finger_contact_force_threshold)
     )
-    has_object_contact = check_bowl_support_contact(env, support_force_threshold)
-    is_bowl_supported = is_inside_radius & is_inside_height & is_released & has_object_contact
+    is_bowl_supported = is_released & check_bowl_support_contact(
+        env,
+        target_position,
+        radius,
+        min_height,
+        max_height,
+        support_force_threshold,
+        object_cfg=object_cfg,
+    )
     return is_settled & is_not_spinning & is_bowl_supported
 
 
@@ -175,11 +177,24 @@ def check_finger_object_contact(
 
 def check_bowl_support_contact(
     env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    min_height: float,
+    max_height: float,
     force_threshold: float,
     sensor_cfg: SceneEntityCfg = SceneEntityCfg("object_bowl_support_contact"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Check whether the object is supported by the bowl collision geometry."""
-    return check_filtered_contact(env, force_threshold, sensor_cfg)
+    """Check whether the object has support contact inside the bowl region."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    is_inside_radius = xy_distance < radius
+    is_inside_height = torch.logical_and(object_position[:, 2] > min_height, object_position[:, 2] < max_height)
+    sensor: ContactSensor = env.scene[sensor_cfg.name]
+    force_magnitude = torch.linalg.vector_norm(sensor.data.net_forces_w, dim=-1)
+    has_contact = torch.any(force_magnitude > force_threshold, dim=1)
+    return is_inside_radius & is_inside_height & has_contact
 
 
 # Rewards verified bilateral contact before the cube reaches full lift.
