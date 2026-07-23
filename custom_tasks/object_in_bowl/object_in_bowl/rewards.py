@@ -346,13 +346,13 @@ class ComputeObjectToTargetXYProgressReward(ManagerTermBase):
     def __init__(self, cfg, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
         self._previous_potential = torch.zeros(self.num_envs, device=self.device)
-        self._was_lifted = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self._has_lifted = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         if env_ids is None:
             env_ids = slice(None)
         self._previous_potential[env_ids] = 0.0
-        self._was_lifted[env_ids] = False
+        self._has_lifted[env_ids] = False
 
     def __call__(
         self,
@@ -373,10 +373,11 @@ class ComputeObjectToTargetXYProgressReward(ManagerTermBase):
         is_lifted = check_object_lifted(env, minimal_height, object_cfg)
 
         reward = (potential - self._previous_potential) / env.step_dt
-        reward = torch.where(is_lifted & self._was_lifted, reward, 0.0)
+        was_ever_lifted = self._has_lifted.clone()
+        reward = torch.where(was_ever_lifted, reward, 0.0)
 
         self._previous_potential.copy_(potential)
-        self._was_lifted.copy_(is_lifted)
+        self._has_lifted.logical_or_(is_lifted)
         return reward
 
 
