@@ -379,7 +379,7 @@ class RewardsCfg:
         },
     )
     object_to_bowl_xy = RewTerm(
-        func=rewards.compute_saturated_object_to_target_xy_reward,
+        func=rewards.ComputeObjectToTargetXYProgressReward,
         weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,

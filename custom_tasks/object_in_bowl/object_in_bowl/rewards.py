@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import torch
 
 from isaaclab.assets import Articulation, RigidObject
-from isaaclab.managers import SceneEntityCfg
+from isaaclab.managers import ManagerTermBase, SceneEntityCfg
 from isaaclab.sensors import ContactSensor
 from isaaclab.utils.math import combine_frame_transforms
 
@@ -337,6 +338,46 @@ def compute_saturated_object_to_target_xy_reward(
     saturated_reward = torch.clamp(base_reward / radius_reward, max=1.0)
     is_lifted = check_object_lifted(env, minimal_height, object_cfg)
     return saturated_reward * is_lifted.float()
+
+
+class ComputeObjectToTargetXYProgressReward(ManagerTermBase):
+    """Reward movement toward the target instead of paying for standing near it."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._previous_potential = torch.zeros(self.num_envs, device=self.device)
+        self._was_lifted = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        if env_ids is None:
+            env_ids = slice(None)
+        self._previous_potential[env_ids] = 0.0
+        self._was_lifted[env_ids] = False
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        target_position: tuple[float, float, float],
+        std: float,
+        radius: float,
+        minimal_height: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return positive reward for approaching, zero for holding, and negative reward for retreating."""
+        object_position = get_object_position(env, object_cfg)
+        target = get_placement_target_position(env, target_position)
+        xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+        base_potential = 1.0 - torch.tanh(xy_distance / std)
+        radius_potential = 1.0 - torch.tanh(torch.as_tensor(radius, device=env.device) / std)
+        potential = torch.clamp(base_potential / radius_potential, max=1.0)
+        is_lifted = check_object_lifted(env, minimal_height, object_cfg)
+
+        reward = (potential - self._previous_potential) / env.step_dt
+        reward = torch.where(is_lifted & self._was_lifted, reward, 0.0)
+
+        self._previous_potential.copy_(potential)
+        self._was_lifted.copy_(is_lifted)
+        return reward
 
 
 # Rewards the current success milestone.
