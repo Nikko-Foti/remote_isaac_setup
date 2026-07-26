@@ -246,6 +246,44 @@ def compute_gated_object_height_progress_reward(
     return lift_progress * (is_near_object & is_closing_gripper).float()
 
 
+class ComputeGatedObjectHeightProgressUntilTargetEntryReward(ManagerTermBase):
+    """Reward lift progress until the lifted object first enters the target radius."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        if env_ids is None:
+            env_ids = slice(None)
+        self._has_entered_target[env_ids] = False
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        initial_height: float,
+        target_height: float,
+        near_distance: float,
+        target_position: tuple[float, float, float],
+        disable_radius: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return lift progress before target entry and zero afterward."""
+        reward = compute_gated_object_height_progress_reward(
+            env,
+            initial_height,
+            target_height,
+            near_distance,
+            object_cfg,
+        )
+        object_position = get_object_position(env, object_cfg)
+        target = get_placement_target_position(env, target_position)
+        xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+        is_lifted = check_object_lifted(env, target_height, object_cfg)
+        self._has_entered_target.logical_or_(is_lifted & (xy_distance <= disable_radius))
+        return reward * torch.logical_not(self._has_entered_target).float()
+
+
 # Rewards the cube for clearing the table.
 def compute_object_lifted_reward(
     env: ManagerBasedRLEnv,

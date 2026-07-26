@@ -360,12 +360,14 @@ class RewardsCfg:
         params={"std": 0.10, "disable_after_lift_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lift_progress = RewTerm(
-        func=rewards.compute_gated_object_height_progress_reward,
+        func=rewards.ComputeGatedObjectHeightProgressUntilTargetEntryReward,
         weight=LIFT_PROGRESS_REWARD_WEIGHT,
         params={
             "initial_height": OBJECT_START_POSITION[2],
             "target_height": OBJECT_LIFTED_HEIGHT,
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "disable_radius": PLACEMENT_TARGET_RADIUS,
         },
     )
     verified_grasp = RewTerm(
