@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 import unittest
 from pathlib import Path
@@ -12,16 +13,21 @@ except ModuleNotFoundError:
 class EntryBonusStateTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        sys.path.insert(0, str(Path(__file__).parents[1] / "custom_tasks" / "object_in_bowl"))
-        from object_in_bowl.rewards import (
-            compute_lifted_object_inside_target_radius,
-            reset_event_latch,
-            update_first_event_latch,
+        module_path = (
+            Path(__file__).parents[1]
+            / "custom_tasks"
+            / "object_in_bowl"
+            / "object_in_bowl"
+            / "reward_state.py"
         )
+        spec = importlib.util.spec_from_file_location("object_in_bowl_reward_state", module_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
 
-        cls.compute_inside = staticmethod(compute_lifted_object_inside_target_radius)
-        cls.reset_latch = staticmethod(reset_event_latch)
-        cls.update_latch = staticmethod(update_first_event_latch)
+        cls.compute_inside = staticmethod(module.compute_lifted_object_inside_target_radius)
+        cls.reset_latch = staticmethod(module.reset_event_latch)
+        cls.update_latch = staticmethod(module.update_first_event_latch)
 
     def test_entry_pays_once_and_cannot_be_farmed(self):
         latch = torch.zeros(3, dtype=torch.bool)
