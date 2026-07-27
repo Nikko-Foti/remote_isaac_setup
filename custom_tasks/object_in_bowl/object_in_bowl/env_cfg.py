@@ -41,6 +41,7 @@ OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 40.0
 OBJECT_TO_BOWL_XY_REWARD_STD = 0.30
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_TARGET_RADIUS = 0.08
+TIGHT_TARGET_ENTRY_BONUS_WEIGHT = 1200.0
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
 BOWL_ASSET_POSITION = (PLACEMENT_TARGET_XY[0], PLACEMENT_TARGET_XY[1], 0.025)
 BOWL_ASSET_ROTATION = (0.7071068, -0.7071068, 0.0, 0.0)
@@ -368,6 +369,15 @@ class RewardsCfg:
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
             "target_position": PLACEMENT_TARGET_POSITION,
             "disable_radius": PLACEMENT_TARGET_RADIUS,
+        },
+    )
+    tight_target_entry_bonus = RewTerm(
+        func=rewards.ComputeFirstLiftedTargetEntryReward,
+        weight=TIGHT_TARGET_ENTRY_BONUS_WEIGHT,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
     )
     verified_grasp = RewTerm(

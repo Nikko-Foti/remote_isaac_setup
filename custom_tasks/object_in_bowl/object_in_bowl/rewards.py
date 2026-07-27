@@ -40,6 +40,20 @@ def check_object_lifted(
     return object_position[:, 2] > minimal_height
 
 
+def check_lifted_object_inside_target_radius(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Check the shared lift-cutoff and entry-bonus condition."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    return check_object_lifted(env, minimal_height, object_cfg) & (xy_distance <= radius)
+
+
 # Checks if the lifted cube is over the target area.
 def check_object_above_target(
     env: ManagerBasedRLEnv,
@@ -276,12 +290,48 @@ class ComputeGatedObjectHeightProgressUntilTargetEntryReward(ManagerTermBase):
             near_distance,
             object_cfg,
         )
-        object_position = get_object_position(env, object_cfg)
-        target = get_placement_target_position(env, target_position)
-        xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
-        is_lifted = check_object_lifted(env, target_height, object_cfg)
-        self._has_entered_target.logical_or_(is_lifted & (xy_distance <= disable_radius))
+        is_inside = check_lifted_object_inside_target_radius(
+            env,
+            target_position,
+            disable_radius,
+            target_height,
+            object_cfg,
+        )
+        self._has_entered_target.logical_or_(is_inside)
         return reward * torch.logical_not(self._has_entered_target).float()
+
+
+class ComputeFirstLiftedTargetEntryReward(ManagerTermBase):
+    """Reward the first lifted entry into the target radius once per episode."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        if env_ids is None:
+            env_ids = slice(None)
+        self._has_entered_target[env_ids] = False
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        target_position: tuple[float, float, float],
+        radius: float,
+        minimal_height: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return one on the first lifted-and-inside step, then zero."""
+        is_inside = check_lifted_object_inside_target_radius(
+            env,
+            target_position,
+            radius,
+            minimal_height,
+            object_cfg,
+        )
+        first_entry = is_inside & torch.logical_not(self._has_entered_target)
+        self._has_entered_target.logical_or_(is_inside)
+        return first_entry.float()
 
 
 # Rewards the cube for clearing the table.

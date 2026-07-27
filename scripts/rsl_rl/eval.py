@@ -159,6 +159,14 @@ RATIO_SPECS = {
         "Episode_Diagnostics/post_lift_020m_gate_off_open_count",
         "Episode_Diagnostics/post_lift_020m_step_count",
     ),
+    "Episode_Entry/post_entry_outside_rate": (
+        "Episode_Entry/post_entry_outside_step_count",
+        "Episode_Entry/post_entry_step_count",
+    ),
+    "Episode_Entry/post_entry_below_lift_rate": (
+        "Episode_Entry/post_entry_below_lift_step_count",
+        "Episode_Entry/post_entry_step_count",
+    ),
 }
 WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/gate_active_at_max_lift_rate_failed_partial_005m": (
@@ -207,6 +215,8 @@ WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/no_lift_start_y_positive_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
     "Episode_Diagnostics/arm_action_delta_rms_no_lift": "Episode_Diagnostics/no_lift_episode_count",
     "Episode_Diagnostics/gripper_switch_rate_no_lift": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Entry/first_lifted_tight_entry_step_mean": "Episode_Entry/lifted_tight_entry_count",
+    "Episode_Entry/pre_entry_ring_step_mean": "Episode_Entry/lifted_tight_entry_count",
 }
 
 
