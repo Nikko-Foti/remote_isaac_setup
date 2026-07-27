@@ -23,6 +23,7 @@ from eval_metrics import (  # isort: skip
     summarize_distribution,
     validate_exclusive_end_counts,
     validate_episode_log_total,
+    validate_one_time_reward,
     validate_sequential_funnel,
 )
 
@@ -437,6 +438,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                     count_totals.get("Episode_Success/success_10_count", 0.0),
                 ),
             ]
+        )
+        validate_one_time_reward(
+            completed_episodes,
+            count_totals.get("Episode_Entry/lifted_tight_entry_count", 0.0),
+            sum_totals.get("Episode_Reward_Sum/tight_target_entry_bonus_sum", 0.0),
+            reward_per_event=24.0,
         )
     except ValueError as exc:
         raise RuntimeError(f"Evaluation diagnostics are inconsistent: {exc}") from exc

@@ -9,6 +9,7 @@ from eval_metrics import (
     summarize_distribution,
     validate_episode_log_total,
     validate_exclusive_end_counts,
+    validate_one_time_reward,
     validate_sequential_funnel,
 )
 
@@ -80,6 +81,34 @@ class PlacementLogValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exceeds"):
             validate_sequential_funnel(
                 [("completed", 100.0), ("grasp", 90.0), ("lift", 95.0)]
+            )
+
+
+class OneTimeRewardValidationTest(unittest.TestCase):
+    def test_accepts_one_reward_per_event(self):
+        validate_one_time_reward(
+            completed_episodes=8192,
+            event_count=2048.0,
+            reward_sum=49_152.0,
+            reward_per_event=24.0,
+        )
+
+    def test_rejects_more_events_than_episodes(self):
+        with self.assertRaisesRegex(ValueError, "outside completed episode count"):
+            validate_one_time_reward(
+                completed_episodes=10,
+                event_count=11.0,
+                reward_sum=264.0,
+                reward_per_event=24.0,
+            )
+
+    def test_rejects_reward_sum_mismatch(self):
+        with self.assertRaisesRegex(ValueError, "does not match expected"):
+            validate_one_time_reward(
+                completed_episodes=10,
+                event_count=4.0,
+                reward_sum=120.0,
+                reward_per_event=24.0,
             )
 
 

@@ -50,8 +50,37 @@ def check_lifted_object_inside_target_radius(
     """Check the shared lift-cutoff and entry-bonus condition."""
     object_position = get_object_position(env, object_cfg)
     target = get_placement_target_position(env, target_position)
+    return compute_lifted_object_inside_target_radius(
+        object_position,
+        target,
+        radius,
+        minimal_height,
+    )
+
+
+def compute_lifted_object_inside_target_radius(
+    object_position: torch.Tensor,
+    target: torch.Tensor,
+    radius: float,
+    minimal_height: float,
+) -> torch.Tensor:
+    """Compute the shared lift-and-radius predicate from position tensors."""
     xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
-    return check_object_lifted(env, minimal_height, object_cfg) & (xy_distance <= radius)
+    return (object_position[:, 2] > minimal_height) & (xy_distance <= radius)
+
+
+def update_first_event_latch(active: torch.Tensor, has_fired: torch.Tensor) -> torch.Tensor:
+    """Latch active environments and return only their first active step."""
+    first_event = active & torch.logical_not(has_fired)
+    has_fired.logical_or_(active)
+    return first_event
+
+
+def reset_event_latch(has_fired: torch.Tensor, env_ids: Sequence[int] | None = None) -> None:
+    """Reset all or selected environments in an event latch."""
+    if env_ids is None:
+        env_ids = slice(None)
+    has_fired[env_ids] = False
 
 
 # Checks if the lifted cube is over the target area.
@@ -268,9 +297,7 @@ class ComputeGatedObjectHeightProgressUntilTargetEntryReward(ManagerTermBase):
         self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
-        if env_ids is None:
-            env_ids = slice(None)
-        self._has_entered_target[env_ids] = False
+        reset_event_latch(self._has_entered_target, env_ids)
 
     def __call__(
         self,
@@ -297,7 +324,7 @@ class ComputeGatedObjectHeightProgressUntilTargetEntryReward(ManagerTermBase):
             target_height,
             object_cfg,
         )
-        self._has_entered_target.logical_or_(is_inside)
+        update_first_event_latch(is_inside, self._has_entered_target)
         return reward * torch.logical_not(self._has_entered_target).float()
 
 
@@ -309,9 +336,7 @@ class ComputeFirstLiftedTargetEntryReward(ManagerTermBase):
         self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
-        if env_ids is None:
-            env_ids = slice(None)
-        self._has_entered_target[env_ids] = False
+        reset_event_latch(self._has_entered_target, env_ids)
 
     def __call__(
         self,
@@ -329,9 +354,7 @@ class ComputeFirstLiftedTargetEntryReward(ManagerTermBase):
             minimal_height,
             object_cfg,
         )
-        first_entry = is_inside & torch.logical_not(self._has_entered_target)
-        self._has_entered_target.logical_or_(is_inside)
-        return first_entry.float()
+        return update_first_event_latch(is_inside, self._has_entered_target).float()
 
 
 # Rewards the cube for clearing the table.

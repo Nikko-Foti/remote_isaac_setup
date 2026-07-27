@@ -47,6 +47,24 @@ def validate_sequential_funnel(stage_counts: list[tuple[str, float]]) -> None:
             )
 
 
+def validate_one_time_reward(
+    completed_episodes: int,
+    event_count: float,
+    reward_sum: float,
+    reward_per_event: float,
+) -> None:
+    """Require a one-time event reward to match its episode event count."""
+    if event_count < 0.0 or event_count > float(completed_episodes):
+        raise ValueError(
+            f"one-time event count {event_count} is outside completed episode count {completed_episodes}"
+        )
+    expected_reward_sum = event_count * reward_per_event
+    if not math.isclose(reward_sum, expected_reward_sum, rel_tol=1e-6, abs_tol=1e-4):
+        raise ValueError(
+            f"one-time reward sum {reward_sum} does not match expected {expected_reward_sum}"
+        )
+
+
 def summarize_distribution(values: list[float]) -> dict[str, float]:
     """Return exact summary statistics for collected episode samples."""
     if not values:
