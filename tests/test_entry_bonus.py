@@ -26,6 +26,7 @@ class EntryBonusStateTest(unittest.TestCase):
         spec.loader.exec_module(module)
 
         cls.compute_inside = staticmethod(module.compute_lifted_object_inside_target_radius)
+        cls.compute_excess_speed = staticmethod(module.compute_excess_speed_squared)
         cls.reset_latch = staticmethod(module.reset_event_latch)
         cls.update_latch = staticmethod(module.update_first_event_latch)
 
@@ -87,6 +88,14 @@ class EntryBonusStateTest(unittest.TestCase):
 
         self.assertEqual(lift_reward_enabled.tolist(), [False, True])
         self.assertEqual(entry_bonus.tolist(), [True, False])
+
+    def test_speed_penalty_has_free_threshold_and_gate(self):
+        speed = torch.tensor([0.05, 0.30, 0.30])
+        active = torch.tensor([True, True, False])
+
+        penalty = self.compute_excess_speed(speed, free_speed=0.10, active=active)
+
+        self.assertTrue(torch.allclose(penalty, torch.tensor([0.0, 0.04, 0.0])))
 
 
 if __name__ == "__main__":
