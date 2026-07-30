@@ -19,6 +19,7 @@ from .observations import get_ee_position, get_object_position, get_placement_ta
 from .reward_state import (
     compute_excess_speed_squared,
     compute_lifted_object_inside_target_radius,
+    compute_placement_speed_gate,
     reset_event_latch,
     update_first_event_latch,
 )
@@ -47,9 +48,8 @@ def compute_placement_speed_penalty(
     object_asset: RigidObject = env.scene[object_cfg.name]
     object_position = get_object_position(env, object_cfg)
     target = get_placement_target_position(env, target_position)
-    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
     object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
-    active = (xy_distance < radius) & (object_position[:, 2] < maximum_height)
+    active = compute_placement_speed_gate(object_position, target, radius, maximum_height)
     return compute_excess_speed_squared(object_speed, free_speed, active)
 
 

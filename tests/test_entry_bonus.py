@@ -27,6 +27,7 @@ class EntryBonusStateTest(unittest.TestCase):
 
         cls.compute_inside = staticmethod(module.compute_lifted_object_inside_target_radius)
         cls.compute_excess_speed = staticmethod(module.compute_excess_speed_squared)
+        cls.compute_speed_gate = staticmethod(module.compute_placement_speed_gate)
         cls.reset_latch = staticmethod(module.reset_event_latch)
         cls.update_latch = staticmethod(module.update_first_event_latch)
 
@@ -96,6 +97,20 @@ class EntryBonusStateTest(unittest.TestCase):
         penalty = self.compute_excess_speed(speed, free_speed=0.10, active=active)
 
         self.assertTrue(torch.allclose(penalty, torch.tensor([0.0, 0.04, 0.0])))
+
+    def test_speed_gate_uses_both_radius_and_height(self):
+        target = torch.zeros((3, 3))
+        object_position = torch.tensor(
+            [
+                [0.10, 0.0, 0.19],
+                [0.12, 0.0, 0.19],
+                [0.10, 0.0, 0.21],
+            ]
+        )
+
+        active = self.compute_speed_gate(object_position, target, radius=0.11, maximum_height=0.20)
+
+        self.assertEqual(active.tolist(), [True, False, False])
 
 
 if __name__ == "__main__":
