@@ -17,6 +17,8 @@ from isaaclab.utils.math import combine_frame_transforms
 
 from .observations import get_ee_position, get_object_position, get_placement_target_position
 from .reward_state import (
+    compute_action_rate_l2,
+    compute_excess_speed_squared,
     compute_lifted_object_inside_target_radius,
     reset_event_latch,
     update_first_event_latch,
@@ -32,6 +34,52 @@ def update_episode_diagnostics(env: ManagerBasedRLEnv) -> torch.Tensor:
     if hasattr(env, "update_episode_diagnostics"):
         env.update_episode_diagnostics()
     return torch.zeros(env.num_envs, device=env.device)
+
+
+class ComputeArmActionRatePenalty(ManagerTermBase):
+    """Penalize changes in arm commands without penalizing the binary gripper."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        arm_action = env.action_manager.get_term("arm_action").raw_actions
+        self._previous_action = torch.zeros_like(arm_action)
+        self._has_previous_action = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        if env_ids is None:
+            env_ids = slice(None)
+        self._previous_action[env_ids] = 0.0
+        self._has_previous_action[env_ids] = False
+
+    def __call__(self, env: ManagerBasedRLEnv) -> torch.Tensor:
+        """Return the squared arm-command change for each environment."""
+        current_action = env.action_manager.get_term("arm_action").raw_actions
+        penalty = compute_action_rate_l2(
+            current_action,
+            self._previous_action,
+            self._has_previous_action,
+        )
+        self._previous_action.copy_(current_action)
+        self._has_previous_action.fill_(True)
+        return penalty
+
+
+def compute_placement_speed_penalty(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    maximum_height: float,
+    free_speed: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Penalize cube speed above a free threshold only near the bowl."""
+    object_asset: RigidObject = env.scene[object_cfg.name]
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
+    active = (xy_distance < radius) & (object_position[:, 2] < maximum_height)
+    return compute_excess_speed_squared(object_speed, free_speed, active)
 
 
 # Checks if the cube has been lifted off the table.
