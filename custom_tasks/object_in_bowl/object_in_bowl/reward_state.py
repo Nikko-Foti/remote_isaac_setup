@@ -36,6 +36,17 @@ def compute_excess_speed_squared(
     return torch.square(excess_speed) * active.float()
 
 
+def compute_placement_speed_gate(
+    object_position: torch.Tensor,
+    target: torch.Tensor,
+    radius: float,
+    maximum_height: float,
+) -> torch.Tensor:
+    """Return the exact spatial gate shared by the speed penalty and diagnostics."""
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    return (xy_distance < radius) & (object_position[:, 2] < maximum_height)
+
+
 def update_first_event_latch(active: torch.Tensor, has_fired: torch.Tensor) -> torch.Tensor:
     """Latch active environments and return only their first active step."""
     first_event = active & torch.logical_not(has_fired)

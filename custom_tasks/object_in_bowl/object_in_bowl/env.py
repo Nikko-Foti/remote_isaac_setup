@@ -35,6 +35,7 @@ from .env_cfg import (
     VERIFIED_GRASP_HISTORY_LENGTH,
 )
 from .observations import get_ee_position, get_object_position, get_placement_target_position
+from .reward_state import compute_placement_speed_gate
 from .rewards import (
     check_bowl_support_contact,
     check_finger_object_contact,
@@ -291,9 +292,15 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_post_lifted_tight_entry_below_lift_step_count += (
             has_lifted_tight_entry & torch.logical_not(crossed_lift_threshold)
         ).float()
-        placement_speed_gate = (
-            (xy_distance_to_bowl < BOWL_SUCCESS_RADIUS)
-            & (object_z < PLACEMENT_SPEED_GATE_MAX_HEIGHT)
+        placement_speed_gate = compute_placement_speed_gate(
+            object_position,
+            target,
+            BOWL_SUCCESS_RADIUS,
+            PLACEMENT_SPEED_GATE_MAX_HEIGHT,
+        )
+        self._episode_placement_speed_gate_hit = torch.maximum(
+            self._episode_placement_speed_gate_hit,
+            placement_speed_gate.float(),
         )
         self._episode_max_object_speed_in_placement_gate = torch.where(
             placement_speed_gate,
@@ -438,7 +445,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         lifted_tight_entry = self._episode_first_lifted_tight_entry_step[env_ids] >= 0.0
         lifted_tight_entry_count = lifted_tight_entry.float().sum()
         released = self._episode_funnel_released_hit[env_ids] > 0.0
-        entered_broad_area = self._episode_funnel_broad_entry_hit[env_ids] > 0.0
+        placement_speed_gate_hit = self._episode_placement_speed_gate_hit[env_ids] > 0.0
         action_delta_count = torch.clamp(self._episode_action_delta_count[env_ids], min=1.0)
         arm_action_delta_rms = torch.sqrt(self._episode_arm_action_delta_sq_sum[env_ids] / action_delta_count)
         gripper_switch_rate = self._episode_gripper_switch_count[env_ids] / action_delta_count
@@ -715,8 +722,9 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             ),
             "Episode_Motion/max_object_speed_in_placement_gate_mean": self._masked_mean(
                 self._episode_max_object_speed_in_placement_gate[env_ids],
-                entered_broad_area,
+                placement_speed_gate_hit,
             ),
+            "Episode_Motion/placement_speed_gate_hit_rate": placement_speed_gate_hit.float().mean(),
             "Episode_Motion/fast_tight_entry_rate": self._masked_mean(
                 (self._episode_object_speed_at_first_tight_entry[env_ids] > PLACEMENT_SPEED_FREE_THRESHOLD).float(),
                 lifted_tight_entry,
@@ -829,6 +837,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_object_speed_at_first_tight_entry = torch.zeros(self.num_envs, device=self.device)
         self._episode_object_speed_at_first_release = torch.zeros(self.num_envs, device=self.device)
         self._episode_max_object_speed_in_placement_gate = torch.zeros(self.num_envs, device=self.device)
+        self._episode_placement_speed_gate_hit = torch.zeros(self.num_envs, device=self.device)
 
     def _reset_episode_diagnostics(self, env_ids: Sequence[int]):
         """Reset episode diagnostic buffers after the scene has been reset."""
@@ -903,6 +912,7 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_object_speed_at_first_tight_entry[env_ids] = 0.0
         self._episode_object_speed_at_first_release[env_ids] = 0.0
         self._episode_max_object_speed_in_placement_gate[env_ids] = 0.0
+        self._episode_placement_speed_gate_hit[env_ids] = 0.0
 
     def _safe_rate(self, numerator: torch.Tensor, denominator: torch.Tensor) -> torch.Tensor:
         """Return numerator / denominator, or zero when no samples exist."""
