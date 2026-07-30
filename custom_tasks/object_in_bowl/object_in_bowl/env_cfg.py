@@ -72,6 +72,9 @@ BOWL_SUPPORT_FORCE_THRESHOLD = 0.05
 BOWL_RELEASE_CONTACT_FORCE_THRESHOLD = 0.05
 BOWL_SUCCESS_DWELL_STEPS = 10
 STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT = 2000.0
+ARM_ACTION_RATE_PENALTY_WEIGHT = -1.5
+PLACEMENT_SPEED_FREE_THRESHOLD = 0.10
+PLACEMENT_SPEED_GATE_MAX_HEIGHT = 0.20
 
 
 ##
@@ -404,6 +407,10 @@ class RewardsCfg:
         func=rewards.compute_termination_reward,
         weight=STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT,
         params={"termination_name": "object_in_bowl"},
+    )
+    arm_action_rate_penalty = RewTerm(
+        func=rewards.ComputeArmActionRatePenalty,
+        weight=ARM_ACTION_RATE_PENALTY_WEIGHT,
     )
 
 
