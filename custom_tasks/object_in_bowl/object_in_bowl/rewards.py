@@ -5,16 +5,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import torch
 
 from isaaclab.assets import Articulation, RigidObject
-from isaaclab.managers import SceneEntityCfg
+from isaaclab.managers import ManagerTermBase, SceneEntityCfg
 from isaaclab.sensors import ContactSensor
 from isaaclab.utils.math import combine_frame_transforms
 
 from .observations import get_ee_position, get_object_position, get_placement_target_position
+from .reward_state import (
+    compute_lifted_object_inside_target_radius,
+    reset_event_latch,
+    update_first_event_latch,
+)
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -37,6 +43,24 @@ def check_object_lifted(
     """Check whether the object has cleared the table by enough height."""
     object_position = get_object_position(env, object_cfg)
     return object_position[:, 2] > minimal_height
+
+
+def check_lifted_object_inside_target_radius(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    minimal_height: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Check the shared lift-cutoff and entry-bonus condition."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    return compute_lifted_object_inside_target_radius(
+        object_position,
+        target,
+        radius,
+        minimal_height,
+    )
 
 
 # Checks if the lifted cube is over the target area.
@@ -72,22 +96,24 @@ def check_object_in_bowl(
     """Check whether the released object is settled and supported inside the bowl."""
     robot: Articulation = env.scene[robot_cfg.name]
     object_asset: RigidObject = env.scene[object_cfg.name]
-    object_position = get_object_position(env, object_cfg)
-    target = get_placement_target_position(env, target_position)
-    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
     object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
     object_angular_speed = torch.linalg.norm(object_asset.data.root_ang_vel_w[:, :3], dim=1)
     finger_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
-    is_inside_radius = xy_distance < radius
-    is_inside_height = torch.logical_and(object_position[:, 2] > min_height, object_position[:, 2] < max_height)
     is_settled = object_speed < max_speed
     is_not_spinning = object_angular_speed < max_angular_speed
     is_gripper_open = torch.all(finger_joint_pos > min_gripper_open, dim=1)
     is_released = is_gripper_open & torch.logical_not(
         check_finger_object_contact(env, finger_contact_force_threshold)
     )
-    has_object_contact = check_bowl_support_contact(env, support_force_threshold)
-    is_bowl_supported = is_inside_radius & is_inside_height & is_released & has_object_contact
+    is_bowl_supported = is_released & check_bowl_support_contact(
+        env,
+        target_position,
+        radius,
+        min_height,
+        max_height,
+        support_force_threshold,
+        object_cfg=object_cfg,
+    )
     return is_settled & is_not_spinning & is_bowl_supported
 
 
@@ -175,13 +201,24 @@ def check_finger_object_contact(
 
 def check_bowl_support_contact(
     env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    min_height: float,
+    max_height: float,
     force_threshold: float,
     sensor_cfg: SceneEntityCfg = SceneEntityCfg("object_bowl_support_contact"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
 ) -> torch.Tensor:
-    """Check whether the object is supported by the bowl collision geometry."""
+    """Check whether the object has support contact inside the bowl region."""
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+    is_inside_radius = xy_distance < radius
+    is_inside_height = torch.logical_and(object_position[:, 2] > min_height, object_position[:, 2] < max_height)
     sensor: ContactSensor = env.scene[sensor_cfg.name]
     force_magnitude = torch.linalg.vector_norm(sensor.data.net_forces_w, dim=-1)
-    return torch.any(force_magnitude > force_threshold, dim=1)
+    has_contact = torch.any(force_magnitude > force_threshold, dim=1)
+    return is_inside_radius & is_inside_height & has_contact
 
 
 # Rewards verified bilateral contact before the cube reaches full lift.
@@ -230,6 +267,74 @@ def compute_gated_object_height_progress_reward(
     lift_range = target_height - initial_height
     lift_progress = torch.clamp((object_position[:, 2] - initial_height) / lift_range, min=0.0, max=1.0)
     return lift_progress * (is_near_object & is_closing_gripper).float()
+
+
+class ComputeGatedObjectHeightProgressUntilTargetEntryReward(ManagerTermBase):
+    """Reward lift progress until the lifted object first enters the target radius."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        reset_event_latch(self._has_entered_target, env_ids)
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        initial_height: float,
+        target_height: float,
+        near_distance: float,
+        target_position: tuple[float, float, float],
+        disable_radius: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return lift progress before target entry and zero afterward."""
+        reward = compute_gated_object_height_progress_reward(
+            env,
+            initial_height,
+            target_height,
+            near_distance,
+            object_cfg,
+        )
+        is_inside = check_lifted_object_inside_target_radius(
+            env,
+            target_position,
+            disable_radius,
+            target_height,
+            object_cfg,
+        )
+        update_first_event_latch(is_inside, self._has_entered_target)
+        return reward * torch.logical_not(self._has_entered_target).float()
+
+
+class ComputeFirstLiftedTargetEntryReward(ManagerTermBase):
+    """Reward the first lifted entry into the target radius once per episode."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._has_entered_target = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        reset_event_latch(self._has_entered_target, env_ids)
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        target_position: tuple[float, float, float],
+        radius: float,
+        minimal_height: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return one on the first lifted-and-inside step, then zero."""
+        is_inside = check_lifted_object_inside_target_radius(
+            env,
+            target_position,
+            radius,
+            minimal_height,
+            object_cfg,
+        )
+        return update_first_event_latch(is_inside, self._has_entered_target).float()
 
 
 # Rewards the cube for clearing the table.
@@ -326,6 +431,47 @@ def compute_saturated_object_to_target_xy_reward(
     return saturated_reward * is_lifted.float()
 
 
+class ComputeObjectToTargetXYProgressReward(ManagerTermBase):
+    """Reward movement toward the target instead of paying for standing near it."""
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self._previous_potential = torch.zeros(self.num_envs, device=self.device)
+        self._has_lifted = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        if env_ids is None:
+            env_ids = slice(None)
+        self._previous_potential[env_ids] = 0.0
+        self._has_lifted[env_ids] = False
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        target_position: tuple[float, float, float],
+        std: float,
+        radius: float,
+        minimal_height: float,
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ) -> torch.Tensor:
+        """Return positive reward for approaching, zero for holding, and negative reward for retreating."""
+        object_position = get_object_position(env, object_cfg)
+        target = get_placement_target_position(env, target_position)
+        xy_distance = torch.linalg.norm(object_position[:, :2] - target[:, :2], dim=1)
+        base_potential = 1.0 - torch.tanh(xy_distance / std)
+        radius_potential = 1.0 - torch.tanh(torch.as_tensor(radius, device=env.device) / std)
+        potential = torch.clamp(base_potential / radius_potential, max=1.0)
+        is_lifted = check_object_lifted(env, minimal_height, object_cfg)
+
+        reward = (potential - self._previous_potential) / env.step_dt
+        was_ever_lifted = self._has_lifted.clone()
+        reward = torch.where(was_ever_lifted, reward, 0.0)
+
+        self._previous_potential.copy_(potential)
+        self._has_lifted.logical_or_(is_lifted)
+        return reward
+
+
 # Rewards the current success milestone.
 def compute_object_above_target_reward(
     env: ManagerBasedRLEnv,
@@ -356,6 +502,12 @@ def compute_object_lowering_into_bowl_reward(
     is_over_target = xy_distance < radius
     is_lifted = check_object_lifted(env, minimal_height, object_cfg)
     return (1.0 - torch.tanh(height_distance / height_std)) * is_over_target.float() * is_lifted.float()
+
+
+# Rewards the single timestep when a named success termination fires.
+def compute_termination_reward(env: ManagerBasedRLEnv, termination_name: str) -> torch.Tensor:
+    """Return one for environments whose named termination fired this step."""
+    return env.termination_manager.get_term(termination_name).float()
 
 
 # Rewards the cube for ending up inside the bowl.

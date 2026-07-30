@@ -33,7 +33,12 @@ from .env_cfg import (
     VERIFIED_GRASP_HISTORY_LENGTH,
 )
 from .observations import get_ee_position, get_object_position, get_placement_target_position
-from .rewards import check_bowl_support_contact, check_finger_object_contact, check_verified_grasp
+from .rewards import (
+    check_bowl_support_contact,
+    check_finger_object_contact,
+    check_lifted_object_inside_target_radius,
+    check_verified_grasp,
+)
 
 
 class ObjectInBowlEnv(ManagerBasedRLEnv):
@@ -116,7 +121,14 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
         has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)
-        has_bowl_support = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)
+        has_bowl_support = check_bowl_support_contact(
+            self,
+            PLACEMENT_TARGET_POSITION,
+            BOWL_SUCCESS_RADIUS,
+            BOWL_SUCCESS_MIN_HEIGHT,
+            BOWL_SUCCESS_MAX_HEIGHT,
+            BOWL_SUPPORT_FORCE_THRESHOLD,
+        )
         current_step = self._episode_step_count + 1.0
 
         self._episode_step_count += 1.0
@@ -236,8 +248,36 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         )
         self._episode_tight_radius_hit_after_lift = torch.maximum(
             self._episode_tight_radius_hit_after_lift,
-            (has_lifted & (xy_distance_to_bowl < PLACEMENT_TARGET_RADIUS)).float(),
+            (has_lifted & (xy_distance_to_bowl <= PLACEMENT_TARGET_RADIUS)).float(),
         )
+        lifted_tight_entry = check_lifted_object_inside_target_radius(
+            self,
+            PLACEMENT_TARGET_POSITION,
+            PLACEMENT_TARGET_RADIUS,
+            OBJECT_LIFTED_HEIGHT,
+        )
+        has_lifted_tight_entry = self._episode_first_lifted_tight_entry_step >= 0.0
+        first_lifted_tight_entry = lifted_tight_entry & torch.logical_not(has_lifted_tight_entry)
+        pre_entry_ring = (
+            torch.logical_not(has_lifted_tight_entry)
+            & crossed_lift_threshold
+            & (xy_distance_to_bowl > PLACEMENT_TARGET_RADIUS)
+            & (xy_distance_to_bowl <= BOWL_SUCCESS_RADIUS)
+        )
+        self._episode_pre_lifted_tight_entry_ring_step_count += pre_entry_ring.float()
+        self._episode_first_lifted_tight_entry_step = torch.where(
+            first_lifted_tight_entry,
+            current_step,
+            self._episode_first_lifted_tight_entry_step,
+        )
+        has_lifted_tight_entry = has_lifted_tight_entry | first_lifted_tight_entry
+        self._episode_post_lifted_tight_entry_step_count += has_lifted_tight_entry.float()
+        self._episode_post_lifted_tight_entry_outside_step_count += (
+            has_lifted_tight_entry & (xy_distance_to_bowl > PLACEMENT_TARGET_RADIUS)
+        ).float()
+        self._episode_post_lifted_tight_entry_below_lift_step_count += (
+            has_lifted_tight_entry & torch.logical_not(crossed_lift_threshold)
+        ).float()
 
         crossed_lift_005m = object_z_delta > 0.005
         crossed_lift_020m = object_z_delta > 0.020
@@ -305,7 +345,14 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         is_not_spinning = object_angular_speed < BOWL_SUCCESS_MAX_ANGULAR_SPEED
         is_gripper_open = torch.all(finger_joint_pos > BOWL_SUCCESS_MIN_GRIPPER_OPEN, dim=1)
         has_finger_contact = check_finger_object_contact(self, BOWL_RELEASE_CONTACT_FORCE_THRESHOLD)[env_ids]
-        has_object_contact = check_bowl_support_contact(self, BOWL_SUPPORT_FORCE_THRESHOLD)[env_ids]
+        has_object_contact = check_bowl_support_contact(
+            self,
+            PLACEMENT_TARGET_POSITION,
+            BOWL_SUCCESS_RADIUS,
+            BOWL_SUCCESS_MIN_HEIGHT,
+            BOWL_SUCCESS_MAX_HEIGHT,
+            BOWL_SUPPORT_FORCE_THRESHOLD,
+        )[env_ids]
         is_released = is_gripper_open & torch.logical_not(has_finger_contact)
         has_bowl_support = is_inside_radius & is_inside_height & is_released & has_object_contact
         is_success_state = is_slow & is_not_spinning & has_bowl_support
@@ -366,6 +413,8 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         post_lift_step_count = torch.clamp(self._episode_post_lift_threshold_step_count[env_ids], min=1.0)
         lift_retention = self._episode_above_lift_threshold_step_count[env_ids] / post_lift_step_count
         first_lift_threshold_count = (self._episode_first_lift_threshold_step[env_ids] >= 0.0).float().sum()
+        lifted_tight_entry = self._episode_first_lifted_tight_entry_step[env_ids] >= 0.0
+        lifted_tight_entry_count = lifted_tight_entry.float().sum()
         action_delta_count = torch.clamp(self._episode_action_delta_count[env_ids], min=1.0)
         arm_action_delta_rms = torch.sqrt(self._episode_arm_action_delta_sq_sum[env_ids] / action_delta_count)
         gripper_switch_rate = self._episode_gripper_switch_count[env_ids] / action_delta_count
@@ -431,6 +480,24 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
             ),
             "Episode_Diagnostics/tight_radius_hit_after_lift_rate": (
                 self._episode_tight_radius_hit_after_lift[env_ids].mean()
+            ),
+            "Episode_Entry/lifted_tight_entry_count": lifted_tight_entry_count,
+            "Episode_Entry/first_lifted_tight_entry_step_mean": self._masked_mean(
+                self._episode_first_lifted_tight_entry_step[env_ids],
+                lifted_tight_entry,
+            ),
+            "Episode_Entry/pre_entry_ring_step_mean": self._masked_mean(
+                self._episode_pre_lifted_tight_entry_ring_step_count[env_ids],
+                lifted_tight_entry,
+            ),
+            "Episode_Entry/post_entry_step_count": self._episode_post_lifted_tight_entry_step_count[
+                env_ids
+            ].sum(),
+            "Episode_Entry/post_entry_outside_step_count": (
+                self._episode_post_lifted_tight_entry_outside_step_count[env_ids].sum()
+            ),
+            "Episode_Entry/post_entry_below_lift_step_count": (
+                self._episode_post_lifted_tight_entry_below_lift_step_count[env_ids].sum()
             ),
             "Episode_Diagnostics/max_lift_progress_after_close_near_object": (
                 self._episode_max_lift_progress_after_close_near_object[env_ids].mean()
@@ -686,6 +753,13 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_min_xy_distance_after_lift = torch.full((self.num_envs,), torch.inf, device=self.device)
         self._episode_bowl_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
         self._episode_tight_radius_hit_after_lift = torch.zeros(self.num_envs, device=self.device)
+        self._episode_first_lifted_tight_entry_step = torch.full((self.num_envs,), -1.0, device=self.device)
+        self._episode_pre_lifted_tight_entry_ring_step_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_post_lifted_tight_entry_step_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_post_lifted_tight_entry_outside_step_count = torch.zeros(self.num_envs, device=self.device)
+        self._episode_post_lifted_tight_entry_below_lift_step_count = torch.zeros(
+            self.num_envs, device=self.device
+        )
         self._episode_post_lift_005m_step_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_post_lift_005m_gate_count = torch.zeros(self.num_envs, device=self.device)
         self._episode_post_lift_005m_near_count = torch.zeros(self.num_envs, device=self.device)
@@ -753,6 +827,11 @@ class ObjectInBowlEnv(ManagerBasedRLEnv):
         self._episode_min_xy_distance_after_lift[env_ids] = torch.inf
         self._episode_bowl_radius_hit_after_lift[env_ids] = 0.0
         self._episode_tight_radius_hit_after_lift[env_ids] = 0.0
+        self._episode_first_lifted_tight_entry_step[env_ids] = -1.0
+        self._episode_pre_lifted_tight_entry_ring_step_count[env_ids] = 0.0
+        self._episode_post_lifted_tight_entry_step_count[env_ids] = 0.0
+        self._episode_post_lifted_tight_entry_outside_step_count[env_ids] = 0.0
+        self._episode_post_lifted_tight_entry_below_lift_step_count[env_ids] = 0.0
         self._episode_post_lift_005m_step_count[env_ids] = 0.0
         self._episode_post_lift_005m_gate_count[env_ids] = 0.0
         self._episode_post_lift_005m_near_count[env_ids] = 0.0

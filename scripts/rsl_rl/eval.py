@@ -23,6 +23,7 @@ from eval_metrics import (  # isort: skip
     summarize_distribution,
     validate_exclusive_end_counts,
     validate_episode_log_total,
+    validate_one_time_reward,
     validate_sequential_funnel,
 )
 
@@ -159,6 +160,14 @@ RATIO_SPECS = {
         "Episode_Diagnostics/post_lift_020m_gate_off_open_count",
         "Episode_Diagnostics/post_lift_020m_step_count",
     ),
+    "Episode_Entry/post_entry_outside_rate": (
+        "Episode_Entry/post_entry_outside_step_count",
+        "Episode_Entry/post_entry_step_count",
+    ),
+    "Episode_Entry/post_entry_below_lift_rate": (
+        "Episode_Entry/post_entry_below_lift_step_count",
+        "Episode_Entry/post_entry_step_count",
+    ),
 }
 WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/gate_active_at_max_lift_rate_failed_partial_005m": (
@@ -207,6 +216,8 @@ WEIGHT_KEY_BY_METRIC = {
     "Episode_Diagnostics/no_lift_start_y_positive_offset_rate": "Episode_Diagnostics/no_lift_episode_count",
     "Episode_Diagnostics/arm_action_delta_rms_no_lift": "Episode_Diagnostics/no_lift_episode_count",
     "Episode_Diagnostics/gripper_switch_rate_no_lift": "Episode_Diagnostics/no_lift_episode_count",
+    "Episode_Entry/first_lifted_tight_entry_step_mean": "Episode_Entry/lifted_tight_entry_count",
+    "Episode_Entry/pre_entry_ring_step_mean": "Episode_Entry/lifted_tight_entry_count",
 }
 
 
@@ -427,6 +438,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                     count_totals.get("Episode_Success/success_10_count", 0.0),
                 ),
             ]
+        )
+        validate_one_time_reward(
+            completed_episodes,
+            count_totals.get("Episode_Entry/lifted_tight_entry_count", 0.0),
+            sum_totals.get("Episode_Reward_Sum/tight_target_entry_bonus_sum", 0.0),
+            reward_per_event=24.0,
         )
     except ValueError as exc:
         raise RuntimeError(f"Evaluation diagnostics are inconsistent: {exc}") from exc

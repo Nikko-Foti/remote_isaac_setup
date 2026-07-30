@@ -37,10 +37,11 @@ LIFT_PROGRESS_REWARD_WEIGHT = 20.0
 LIFT_PROGRESS_NEAR_OBJECT_DISTANCE = 0.08
 VERIFIED_GRASP_FORCE_THRESHOLD = 1.0
 VERIFIED_GRASP_HISTORY_LENGTH = 2
-OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 10.0
-OBJECT_TO_BOWL_XY_REWARD_STD = 0.15
+OBJECT_TO_BOWL_XY_REWARD_WEIGHT = 40.0
+OBJECT_TO_BOWL_XY_REWARD_STD = 0.30
 PLACEMENT_TARGET_XY = (0.70, 0.20)
 PLACEMENT_TARGET_RADIUS = 0.08
+TIGHT_TARGET_ENTRY_BONUS_WEIGHT = 1200.0
 BOWL_USD_PATH = f"{ISAAC_NUCLEUS_DIR}/Props/YCB/Axis_Aligned/024_bowl.usd"
 BOWL_ASSET_POSITION = (PLACEMENT_TARGET_XY[0], PLACEMENT_TARGET_XY[1], 0.025)
 BOWL_ASSET_ROTATION = (0.7071068, -0.7071068, 0.0, 0.0)
@@ -70,6 +71,7 @@ BOWL_SUCCESS_MIN_GRIPPER_OPEN = 0.03
 BOWL_SUPPORT_FORCE_THRESHOLD = 0.05
 BOWL_RELEASE_CONTACT_FORCE_THRESHOLD = 0.05
 BOWL_SUCCESS_DWELL_STEPS = 10
+STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT = 2000.0
 
 
 ##
@@ -359,12 +361,23 @@ class RewardsCfg:
         params={"std": 0.10, "disable_after_lift_height": OBJECT_LIFTED_HEIGHT},
     )
     object_lift_progress = RewTerm(
-        func=rewards.compute_gated_object_height_progress_reward,
+        func=rewards.ComputeGatedObjectHeightProgressUntilTargetEntryReward,
         weight=LIFT_PROGRESS_REWARD_WEIGHT,
         params={
             "initial_height": OBJECT_START_POSITION[2],
             "target_height": OBJECT_LIFTED_HEIGHT,
             "near_distance": LIFT_PROGRESS_NEAR_OBJECT_DISTANCE,
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "disable_radius": PLACEMENT_TARGET_RADIUS,
+        },
+    )
+    tight_target_entry_bonus = RewTerm(
+        func=rewards.ComputeFirstLiftedTargetEntryReward,
+        weight=TIGHT_TARGET_ENTRY_BONUS_WEIGHT,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": PLACEMENT_TARGET_RADIUS,
+            "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
     )
     verified_grasp = RewTerm(
@@ -378,7 +391,7 @@ class RewardsCfg:
         },
     )
     object_to_bowl_xy = RewTerm(
-        func=rewards.compute_saturated_object_to_target_xy_reward,
+        func=rewards.ComputeObjectToTargetXYProgressReward,
         weight=OBJECT_TO_BOWL_XY_REWARD_WEIGHT,
         params={
             "target_position": PLACEMENT_TARGET_POSITION,
@@ -386,6 +399,11 @@ class RewardsCfg:
             "radius": PLACEMENT_TARGET_RADIUS,
             "minimal_height": OBJECT_LIFTED_HEIGHT,
         },
+    )
+    strict_placement_success = RewTerm(
+        func=rewards.compute_termination_reward,
+        weight=STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT,
+        params={"termination_name": "object_in_bowl"},
     )
 
 
