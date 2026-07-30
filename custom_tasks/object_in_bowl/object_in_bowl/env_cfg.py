@@ -72,6 +72,9 @@ BOWL_SUPPORT_FORCE_THRESHOLD = 0.05
 BOWL_RELEASE_CONTACT_FORCE_THRESHOLD = 0.05
 BOWL_SUCCESS_DWELL_STEPS = 10
 STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT = 2000.0
+PLACEMENT_SPEED_FREE_THRESHOLD = 0.10
+PLACEMENT_SPEED_GATE_MAX_HEIGHT = 0.20
+PLACEMENT_SPEED_PENALTY_WEIGHT = -5.0
 
 
 ##
@@ -404,6 +407,16 @@ class RewardsCfg:
         func=rewards.compute_termination_reward,
         weight=STRICT_PLACEMENT_SUCCESS_REWARD_WEIGHT,
         params={"termination_name": "object_in_bowl"},
+    )
+    placement_speed_penalty = RewTerm(
+        func=rewards.compute_placement_speed_penalty,
+        weight=PLACEMENT_SPEED_PENALTY_WEIGHT,
+        params={
+            "target_position": PLACEMENT_TARGET_POSITION,
+            "radius": BOWL_SUCCESS_RADIUS,
+            "maximum_height": PLACEMENT_SPEED_GATE_MAX_HEIGHT,
+            "free_speed": PLACEMENT_SPEED_FREE_THRESHOLD,
+        },
     )
 
 

@@ -17,7 +17,9 @@ from isaaclab.utils.math import combine_frame_transforms
 
 from .observations import get_ee_position, get_object_position, get_placement_target_position
 from .reward_state import (
+    compute_excess_speed_squared,
     compute_lifted_object_inside_target_radius,
+    compute_placement_speed_gate,
     reset_event_latch,
     update_first_event_latch,
 )
@@ -32,6 +34,23 @@ def update_episode_diagnostics(env: ManagerBasedRLEnv) -> torch.Tensor:
     if hasattr(env, "update_episode_diagnostics"):
         env.update_episode_diagnostics()
     return torch.zeros(env.num_envs, device=env.device)
+
+
+def compute_placement_speed_penalty(
+    env: ManagerBasedRLEnv,
+    target_position: tuple[float, float, float],
+    radius: float,
+    maximum_height: float,
+    free_speed: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Penalize cube speed above a free threshold only near the bowl."""
+    object_asset: RigidObject = env.scene[object_cfg.name]
+    object_position = get_object_position(env, object_cfg)
+    target = get_placement_target_position(env, target_position)
+    object_speed = torch.linalg.norm(object_asset.data.root_lin_vel_w[:, :3], dim=1)
+    active = compute_placement_speed_gate(object_position, target, radius, maximum_height)
+    return compute_excess_speed_squared(object_speed, free_speed, active)
 
 
 # Checks if the cube has been lifted off the table.
