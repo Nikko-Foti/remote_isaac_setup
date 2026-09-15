@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="training_reports/2026-07-05-repro-lift-baseline-2500/media/repro_2500_model_2499_center_crop_mid.jpg" width="49%" alt="16 Franka arms training in parallel" />
+  <img src="training_reports/2026-07-05-repro-lift-baseline-2500/media/repro_2500_model_2499_left_crop_mid.jpg" width="49%" alt="Franka arms training in parallel, tight crop" />
   <img src="training_reports/2026-06-28-gated-lift-progress-cont-1000/media/gated_lift_progress_cont_1000_model_2498_play_16env_750steps_mid.jpg" width="49%" alt="16 parallel environments" />
 </p>
 
