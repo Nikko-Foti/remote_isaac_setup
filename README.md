@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="training_reports/2026-06-28-gated-lift-progress/media/gated_lift_progress_front_close_750steps_mid.jpg" width="49%" alt="close-up: cube and bowl" />
+  <img src="training_reports/2026-06-28-gated-lift-progress/media/gated_lift_progress_high_oblique_close_750steps_mid.jpg" width="49%" alt="gripper, cube, and bowl" />
   <img src="training_reports/2026-06-28-gated-lift-progress-cont-1000/media/gated_lift_progress_cont_1000_model_2498_play_16env_750steps_mid.jpg" width="49%" alt="16 parallel environments" />
 </p>
 
